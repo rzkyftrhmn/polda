@@ -18,6 +18,9 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'institution_id',
+        'division_id',
+        'username',
         'name',
         'email',
         'password',
@@ -42,4 +45,20 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Get the institution that the user belongs to.
+     */
+    public function institution()
+    {
+        return $this->belongsTo(Institution::class);
+    }
+
+    /**
+     * Get the division that the user belongs to.
+     */
+    public function division()
+    {
+        return $this->belongsTo(Division::class);
+    }
 }

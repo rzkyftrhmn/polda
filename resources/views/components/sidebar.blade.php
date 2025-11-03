@@ -53,7 +53,7 @@
                         <span class="nav-text">User Management</span>
                     </a>
                     <ul aria-expanded="false">
-                        <li><a href="#">User</a></li>
+                        <li><a href="{{ route('users.index') }}">User</a></li>
                         <li><a href="#">Role</a></li>
                     </ul>
                 </li>
