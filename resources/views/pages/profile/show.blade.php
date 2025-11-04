@@ -41,11 +41,6 @@
                             </li>
                         </ul>
                     </div>
-                    <div class="mt-4 text-center">
-                        <a href="{{ route('profile.edit') }}" class="btn btn-primary w-100">
-                            Edit Profil
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
