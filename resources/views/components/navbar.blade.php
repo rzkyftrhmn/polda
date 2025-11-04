@@ -43,61 +43,6 @@
                                     </div>
                                 </div>
                             </li>
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2 media-info">
-                                        KG
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Resport created successfully</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2 media-success">
-                                        <i class="fa fa-home"></i>
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Reminder : Treatment Time!</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
-                                <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2">
-                                        <img alt="image" width="50" src="images/avatar/1.jpg">
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Dr sultads Send you Photo</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2 media-danger">
-                                        KG
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Resport created successfully</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2 media-primary">
-                                        <i class="fa fa-home"></i>
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Reminder : Treatment Time!</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
                         </ul>
                     </div>
                     <a class="all-notification" href="javascript:void(0);">See all notifications <i class="ti-arrow-end"></i></a>
@@ -109,15 +54,15 @@
                         <div class="header-info2 d-flex align-items-center">
                             <div class="d-flex align-items-center sidebar-info">
                                 <div>
-                                    <h5 class="mb-0 text-white">James Supardi</h5>
-                                    <span class="d-block text-end">@ilhamsupardi</span>
+                                    <h5 class="mb-0 text-white">{{ auth()->user()->name }}</h5>
+                                    <span class="d-block text-end">{{ auth()->user()->email }}</span>
                                 </div>
                             </div>
                             <img src="{{ asset('dashboard/images/user.jpg') }}" alt="">
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
-                        <a href="app-profile.html" class="dropdown-item ai-icon ">
+                        <a href="{{ route('profile.show') }}" class="dropdown-item ai-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="24px" height="24px" viewBox="0 0 24 24" version="1.1" class="svg-main-icon">
                                 <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
                                     <polygon points="0 0 24 0 24 24 0 24"/>
@@ -127,10 +72,20 @@
                             </svg>
                             <span class="ms-2">Profile </span>
                         </a>
-                        <a href="page-login.html" class="dropdown-item ai-icon">
-                            <svg class="logout" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fd5353" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                            <span class="ms-2 text-danger">Logout </span>
+                        <a href="#" class="dropdown-item ai-icon"
+                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <svg class="logout" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fd5353" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span class="ms-2 text-danger">Logout</span>
                         </a>
+
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            @csrf
+                        </form>
+
                     </div>
                 </div>
             </li>
