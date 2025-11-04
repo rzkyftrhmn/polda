@@ -54,7 +54,7 @@
             Nav header start
         ***********************************-->
         <div class="nav-header">
-            <a href="index.html" class="brand-logo">
+            <a href="{{ route('dashboard.index') }}" class="brand-logo">
 				<svg class="logo-abbr"
 					 xmlns="http://www.w3.org/2000/svg"
 					 xmlns:xlink="http://www.w3.org/1999/xlink"
