@@ -3,36 +3,36 @@
 @php($roleNames = $user->getRoleNames())
 
 @section('content')
-<div class="container-fluid pb-4">
-    <div class="row align-items-start g-4">
+<div class="container-fluid">
+    <div class="row">
         <div class="col-xl-4 col-lg-5">
-            <div class="card card-bx profile-card mb-4">
+            <div class="card card-bx profile-card m-b30">
                 <div class="card-body p-4">
                     <div class="author-profile text-center mb-4">
                         <div class="author-media mb-3">
-                            <img src="{{ asset('dashboard/images/user.jpg') }}" alt="Avatar" class="rounded-circle">
+                            <img src="{{ $user->photo_url ?: asset('dashboard/images/user.jpg') }}" alt="Avatar" class="rounded-circle img-fluid object-fit-cover">
                         </div>
                         <div class="author-info">
-                            <h4 class="title text-white mb-1">{{ $user->name }}</h4>
+                            <h4 class="title text-body-emphasis mb-1">{{ $user->name }}</h4>
                             <span class="text-muted">{{ $roleNames->implode(', ') ?: 'Pengguna' }}</span>
                         </div>
                     </div>
                     <ul class="list-unstyled mb-0">
-                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-dark">
+                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-secondary">
                             <span class="text-muted">Email</span>
-                            <span class="text-white">{{ $user->email }}</span>
+                            <span class="text-body">{{ $user->email }}</span>
                         </li>
-                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-dark">
+                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-secondary">
                             <span class="text-muted">Instansi</span>
-                            <span class="text-white">{{ optional($user->institution)->name ?? '-' }}</span>
+                            <span class="text-body">{{ optional($user->institution)->name ?? '-' }}</span>
                         </li>
-                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-dark">
+                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-secondary">
                             <span class="text-muted">Divisi</span>
-                            <span class="text-white">{{ optional($user->division)->name ?? '-' }}</span>
+                            <span class="text-body">{{ optional($user->division)->name ?? '-' }}</span>
                         </li>
-                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-dark">
+                        <li class="d-flex justify-content-between align-items-center py-3 border-top border-secondary">
                             <span class="text-muted">Username</span>
-                            <span class="text-white">{{ $user->username ?? '-' }}</span>
+                            <span class="text-body">{{ $user->username ?? '-' }}</span>
                         </li>
                     </ul>
                     <div class="mt-4">
@@ -43,128 +43,116 @@
                 </div>
             </div>
         </div>
-
         <div class="col-xl-8 col-lg-7">
-            <div class="d-flex flex-column gap-4">
-                <div class="card profile-card card-bx">
-                    <div class="card-header border-0 pb-0">
-                        <h4 class="card-title text-white mb-1">Pengaturan Profil</h4>
-                        <span class="text-muted">Perbarui informasi utama akun Anda</span>
-                    </div>
-                    <form id="profileUpdateForm" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
-                        <div class="card-body p-4">
-                            <div class="row gy-4 gx-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Foto Profil</label>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <input type="file" name="photo" class="form-control" accept="image/*">
-                                        @if ($user->photo)
-                                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                                    onclick="event.preventDefault(); document.getElementById('delete-photo-form').submit();">
-                                                Hapus
-                                            </button>
-                                        @endif
-                                    </div>
-                                    <small class="text-muted">Maks 2MB, format JPG/PNG/WebP.</small>
-                                    @error('photo')
-                                        <small class="text-danger d-block">{{ $message }}</small>
-                                    @enderror
-                                </div>
-s
-                                @if ($user->photo)
-                                <form id="delete-photo-form" method="POST" action="{{ route('profile.photo.delete') }}" style="display: none;">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
-                                @endif
-                             
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Nama Lengkap</label>
-                                    <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
-                                    @error('name') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Username</label>
-                                    <input type="text" name="username" class="form-control" value="{{ old('username', $user->username) }}" required>
-                                    @error('username') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Email</label>
-                                    <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
-                                    @error('email') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Instansi</label>
-                                    <select name="institution_id" class="default-select form-control select2" required>
-                                        <option value="" disabled {{ old('institution_id', $user->institution_id) ? '' : 'selected' }}>-- Pilih Instansi --</option>
-                                        @foreach($institutions as $inst)
-                                            <option value="{{ $inst->id }}" @selected(old('institution_id', $user->institution_id) == $inst->id)>
-                                                {{ $inst->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('institution_id') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Divisi</label>
-                                    <select name="division_id" class="default-select form-control select2" required>
-                                        <option value="" disabled {{ old('division_id', $user->division_id) ? '' : 'selected' }}>-- Pilih Divisi --</option>
-                                        @foreach($divisions as $div)
-                                            <option value="{{ $div->id }}" @selected(old('division_id', $user->division_id) == $div->id)>
-                                                {{ $div->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('division_id') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
+            <div class="card profile-card card-bx m-b30">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title text-body-emphasis mb-1">Pengaturan Profil</h4>
+                    <span class="text-muted">Perbarui informasi utama akun Anda</span>
+                </div>
+                <form class="profile-form" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+                    <div class="card-body p-4">
+                        <div class="row gy-4 gx-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Nama Lengkap</label>
+                                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
+                                @error('name')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Username</label>
+                                <input type="text" name="username" class="form-control" value="{{ old('username', $user->username) }}" required>
+                                @error('username')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                                @error('email')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Foto Profil</label>
+                                <input type="file" name="photo" class="form-control" accept="image/*">
+                                <small class="text-muted">Maksimal 2MB, format JPG, PNG, atau WebP.</small>
+                                @error('photo')
+                                    <small class="text-danger d-block">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Instansi</label>
+                                <select name="institution_id" class="default-select form-control select2" required>
+                                    <option value="" disabled {{ old('institution_id', $user->institution_id) ? '' : 'selected' }}>-- Pilih Instansi --</option>
+                                    @foreach($institutions as $inst)
+                                        <option value="{{ $inst->id }}" @selected(old('institution_id', $user->institution_id) == $inst->id)>
+                                            {{ $inst->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('institution_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Divisi</label>
+                                <select name="division_id" class="default-select form-control select2" required>
+                                    <option value="" disabled {{ old('division_id', $user->division_id) ? '' : 'selected' }}>-- Pilih Divisi --</option>
+                                    @foreach($divisions as $div)
+                                        <option value="{{ $div->id }}" @selected(old('division_id', $user->division_id) == $div->id)>
+                                            {{ $div->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('division_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
                             </div>
                         </div>
-                        <div class="card-footer border-0 pt-0 px-4 pb-4 d-flex flex-wrap gap-3 justify-content-between">
-                            <button type="submit" class="btn btn-primary" data-loading="true">
-                                <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                                Simpan Perubahan
-                            </button>
-                            <a href="{{ route('profile.show') }}" class="btn btn-outline-light">Batal</a>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="card card-bx mb-4">
-                    <div class="card-header border-0 pb-0">
-                        <h4 class="card-title text-white mb-1">Ubah Password</h4>
-                        <span class="text-muted">Pastikan password baru kuat dan unik</span>
                     </div>
-                    <form id="passwordUpdateForm" method="POST" action="{{ route('profile.password.update') }}">
-                        @csrf
-                        @method('PUT')
-                        <div class="card-body p-4">
-                            <div class="row gy-4 gx-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Password Saat Ini</label>
-                                    <input type="password" name="current_password" class="form-control" required>
-                                    @error('current_password') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-white">Password Baru</label>
-                                    <input type="password" name="password" class="form-control" required minlength="6">
-                                    @error('password') <small class="text-danger">{{ $message }}</small> @enderror
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label text-white">Konfirmasi Password Baru</label>
-                                    <input type="password" name="password_confirmation" class="form-control" required>
-                                </div>
+                    <div class="card-footer border-0 pt-0 px-4 pb-4 d-flex flex-wrap gap-3 justify-content-between">
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        <a href="{{ route('profile.show') }}" class="btn btn-outline-secondary">Batal</a>
+                    </div>
+                </form>
+            </div>
+            <div class="card card-bx">
+                <div class="card-header border-0 pb-0">
+                    <h4 class="card-title text-body-emphasis mb-1">Ubah Password</h4>
+                    <span class="text-muted">Pastikan password baru kuat dan unik</span>
+                </div>
+                <form method="POST" action="{{ route('profile.password.update') }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="card-body p-4">
+                        <div class="row gy-4 gx-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Password Saat Ini</label>
+                                <input type="password" name="current_password" class="form-control" required>
+                                @error('current_password')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-body">Password Baru</label>
+                                <input type="password" name="password" class="form-control" required minlength="6">
+                                @error('password')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label text-body">Konfirmasi Password Baru</label>
+                                <input type="password" name="password_confirmation" class="form-control" required>
                             </div>
                         </div>
-                        <div class="card-footer border-0 pt-0 px-4 pb-4">
-                            <button type="submit" class="btn btn-warning" data-loading="true">
-                                <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-                                Perbarui Password
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
+                    <div class="card-footer border-0 pt-0 px-4 pb-4">
+                        <button type="submit" class="btn btn-warning">Perbarui Password</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

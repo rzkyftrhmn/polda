@@ -54,11 +54,11 @@
                         <div class="header-info2 d-flex align-items-center">
                             <div class="d-flex align-items-center sidebar-info">
                                 <div>
-                                    <h5 class="mb-0 text-white">{{ auth()->user()->name }}</h5>
-                                    <span class="d-block text-end">{{ auth()->user()->email }}</span>
+                                    <h5 class="mb-0 text-body">{{ auth()->user()->name }}</h5>
+                                    <span class="d-block text-end text-muted small">{{ auth()->user()->email }}</span>
                                 </div>
                             </div>
-                            <img src="{{ auth()->user()->photo_url }}" alt="Foto Profil" class="rounded-circle" width="45" height="45">
+                            <img src="{{ auth()->user()->photo_url ?: asset('dashboard/images/user.jpg') }}" alt="Foto Profil" class="rounded-circle object-fit-cover" width="45" height="45">
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">

@@ -12,7 +12,7 @@ class ProfileRepository implements ProfileRepositoryInterface
     public function findById($id)
     {
         return $this->model->newQuery()
-            ->with(['institution', 'division'])
+            ->with(['institution', 'division', 'roles'])
             ->findOrFail($id);
     }
 
