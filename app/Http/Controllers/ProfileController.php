@@ -14,11 +14,23 @@ class ProfileController extends Controller
         $this->middleware('auth');
     }
 
+    public function show()
+    {
+        $user = auth()->user()->load('institution', 'division', 'roles');
+
+        return view('pages.profile.show', [
+            'title' => 'Profile',
+            'user' => $user,
+        ]);
+    }
+
     public function edit()
     {
+        $user = auth()->user()->load('institution', 'division', 'roles');
+
         return view('pages.profile.edit', [
             'title' => 'Profile',
-            'user' => auth()->user(),
+            'user' => $user,
             'institutions' => $this->service->getInstitutions(),
             'divisions' => $this->service->getDivisions(),
         ]);
@@ -26,22 +38,37 @@ class ProfileController extends Controller
 
     public function update(Request $request)
     {
+        $user = $request->user();
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user()->id)],
-            'username' => ['nullable', 'string', 'max:255', Rule::unique('users', 'username')->ignore($request->user()->id)],
-            'institution_id' => ['nullable', 'integer', 'exists:institutions,id'],
-            'division_id' => ['nullable', 'integer', 'exists:divisions,id'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'username')->ignore($user->id),
+            ],
+            'institution_id' => ['required', 'integer', 'exists:institutions,id'],
+            'division_id' => ['required', 'integer', 'exists:divisions,id'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
         DB::beginTransaction();
         try {
-            $this->service->updateProfile($request->user()->id, $data);
+            $this->service->updateProfile($user->id, $data, $request->file('photo'));
             DB::commit();
-            return back()->with('success', 'Profil berhasil diperbarui.');
+
+            return redirect()->route('profile.show')->with('success', 'Profil berhasil diperbarui.');
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
+
             return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui profil.');
         }
     }
