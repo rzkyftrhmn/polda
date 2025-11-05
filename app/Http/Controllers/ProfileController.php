@@ -56,11 +56,12 @@ class ProfileController extends Controller
             ],
             'institution_id' => ['required', 'integer', 'exists:institutions,id'],
             'division_id' => ['required', 'integer', 'exists:divisions,id'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
         DB::beginTransaction();
         try {
-            $this->service->updateProfile($user->id, $data);
+            $this->service->updateProfile($user->id, $data, $request->file('photo'));
             DB::commit();
 
             return redirect()->route('profile.show')->with('success', 'Profil berhasil diperbarui.');

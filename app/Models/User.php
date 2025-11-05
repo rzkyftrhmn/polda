@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'photo',
     ];
 
     /**
@@ -60,5 +62,17 @@ class User extends Authenticatable
     public function division()
     {
         return $this->belongsTo(Division::class);
+    }
+
+    /**
+     * Get the full URL for the user's profile photo.
+     */
+    public function getPhotoUrlAttribute(): string
+    {
+        if ($this->photo) {
+            return Storage::disk('public')->url($this->photo);
+        }
+
+        return asset('dashboard/images/user.jpg');
     }
 }
