@@ -597,7 +597,7 @@
 				<div class="sub-dz-head">
 					<div class="d-flex align-items-center dz-head-title">
 						<h2 class="text-white m-0">Dashboard</h2>
-						<p class="ms-2 text-warning">Welcome Back Yatin Sharma!</p>
+						<p class="ms-2 text-warning">Welcome Back {{ auth()->user()->name }}</p>
 					</div>
 					
 				</div>	

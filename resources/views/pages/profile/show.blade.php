@@ -39,9 +39,6 @@
                             <span class="text-white">{{ optional($user->division)->name ?? '-' }}</span>
                         </li>
                     </ul>
-                    <div class="mt-4">
-                        <a href="{{ route('profile.edit') }}" class="btn btn-primary w-100">Edit Profil</a>
-                    </div>
                 </div>
             </div>
         </div>
