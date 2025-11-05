@@ -1,0 +1,79 @@
+:root {
+    --txt-main-dark: #f8f9fa;
+    --txt-sec-dark: #adb5bd;
+    --bg-card-dark: #111827;
+
+    --txt-main-light: #212529;
+    --txt-sec-light: #6c757d;
+    --bg-card-light: #ffffff;
+}
+
+.theme-text-main {
+    color: var(--txt-main-light);
+}
+
+.theme-text-secondary {
+    color: var(--txt-sec-light);
+}
+
+.theme-bg-card {
+    background: var(--bg-card-light);
+}
+
+body.dark-mode .theme-text-main {
+    color: var(--txt-main-dark) !important;
+}
+
+body.dark-mode .theme-text-secondary {
+    color: var(--txt-sec-dark) !important;
+}
+
+body.dark-mode .theme-bg-card {
+    background: var(--bg-card-dark) !important;
+}
+
+body.light-mode .theme-text-main {
+    color: var(--txt-main-light) !important;
+}
+
+body.light-mode .theme-text-secondary {
+    color: var(--txt-sec-light) !important;
+}
+
+body.light-mode .theme-bg-card {
+    background: var(--bg-card-light) !important;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+    color: var(--txt-main-dark);
+    background-color: rgba(17, 24, 39, 0.65);
+    border-color: rgba(148, 163, 184, 0.5);
+}
+
+body.light-mode .form-control,
+body.light-mode .form-select,
+body.light-mode .form-control:focus,
+body.light-mode .form-select:focus {
+    color: var(--txt-main-light);
+    background-color: var(--bg-card-light);
+}
+
+body.dark-mode .form-control::placeholder,
+body.dark-mode .form-select::placeholder {
+    color: var(--txt-sec-dark);
+    opacity: 1;
+}
+
+body.light-mode .form-control::placeholder,
+body.light-mode .form-select::placeholder {
+    color: var(--txt-sec-light);
+    opacity: 1;
+}
+
+.object-fit-cover {
+    object-fit: cover;
+    border-radius: 50%;
+}

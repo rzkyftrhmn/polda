@@ -6,6 +6,7 @@
 
 <!-- Style css -->
 <link href="{{ asset('dashboard/css/style.css') }}" rel="stylesheet"/>
+<link href="{{ asset('dashboard/css/theme-fixes.css') }}" rel="stylesheet"/>
 <!-- Datatable -->
 <link href="{{ asset('dashboard/vendor/datatables/css/jquery.dataTables.min.css') }}" rel="stylesheet">
 <!-- Select2 -->
