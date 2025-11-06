@@ -36,7 +36,7 @@ class User extends Authenticatable
     public function getPhotoUrlAttribute(): string
     {
         if ($this->photo && Storage::disk('public')->exists($this->photo)) {
-            return Storage::disk('public')->url($this->photo);
+            return route('profile.photo.show', ['path' => $this->photo]);
         }
 
         return asset('dashboard/images/user.jpg'); // fallback default
