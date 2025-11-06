@@ -56,6 +56,19 @@ class ProfileService
         }
     }
 
+    public function deletePhoto($id)
+    {
+        $user = $this->repo->findById($id);
+
+        if (! $user->photo) {
+            return $user;
+        }
+
+        Storage::disk('public')->delete($user->photo);
+
+        return $this->repo->update($id, ['photo' => null]);
+    }
+
     public function updatePassword($id, string $password)
     {
         return $this->repo->update($id, ['password' => Hash::make($password)]);

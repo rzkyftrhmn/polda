@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
@@ -36,9 +35,10 @@ class User extends Authenticatable
      */
     public function getPhotoUrlAttribute(): string
     {
-        if ($this->photo) {
+        if ($this->photo && Storage::disk('public')->exists($this->photo)) {
             return Storage::disk('public')->url($this->photo);
         }
+
         return asset('dashboard/images/user.jpg'); // fallback default
     }
     
@@ -78,17 +78,4 @@ class User extends Authenticatable
         return $this->belongsTo(Division::class);
     }
 
-    /**
-     * Resolve the public URL for the stored profile photo.
-     */
-    protected function photoUrl(): Attribute
-    {
-        return Attribute::get(function (): ?string {
-            if (! $this->photo) {
-                return null;
-            }
-
-            return Storage::disk('public')->url($this->photo);
-        });
-    }
 }
