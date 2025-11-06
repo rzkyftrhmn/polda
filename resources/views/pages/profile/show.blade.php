@@ -1,8 +1,6 @@
 @extends('layouts.dashboard')
 
 @php($roleNames = $user->getRoleNames())
-@php($profilePhoto = $user->photo_url ?: asset('dashboard/images/user.jpg'))
-
 @section('content')
 <div class="container-fluid">
     <div class="row g-4 g-xl-5 align-items-stretch">
