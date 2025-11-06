@@ -1,6 +1,4 @@
 @php($currentUser = auth()->user())
-@php($currentUserPhoto = $currentUser?->photo_url ?: asset('dashboard/images/user.jpg'))
-
 <nav class="navbar navbar-expand">
     <div class="collapse navbar-collapse justify-content-between">
         <div class="header-left">
@@ -61,7 +59,7 @@
                                     <span class="d-block small theme-text-secondary">{{ $currentUser?->email }}</span>
                                 </div>
                             </div>
-                            <img src="{{ $currentUserPhoto }}" alt="Foto Profil" class="rounded-circle object-fit-cover" width="45" height="45">
+                            <img src="{{ $currentUser?->photo_url ?? asset('dashboard/images/user.jpg') }}" alt="{{ $currentUser?->name ?? 'User' }}" class="rounded-circle object-fit-cover" width="45" height="45">
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
