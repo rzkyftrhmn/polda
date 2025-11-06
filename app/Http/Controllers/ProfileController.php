@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -86,6 +87,15 @@ class ProfileController extends Controller
             report($e);
             return back()->with('error', 'Gagal menghapus foto profil.');
         }
+    }
+
+    public function photo(string $path)
+    {
+        if (! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->response($path);
     }
 
     public function updatePassword(Request $request)
