@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\ProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
@@ -56,11 +57,12 @@ class ProfileController extends Controller
             ],
             'institution_id' => ['required', 'integer', 'exists:institutions,id'],
             'division_id' => ['required', 'integer', 'exists:divisions,id'],
+            'photo' => ['nullable', 'image', 'max:2048'],
         ]);
 
         DB::beginTransaction();
         try {
-            $this->service->updateProfile($user->id, $data);
+            $this->service->updateProfile($user->id, $data, $request->file('photo'));
             DB::commit();
 
             return redirect()->route('profile.show')->with('success', 'Profil berhasil diperbarui.');
@@ -70,6 +72,30 @@ class ProfileController extends Controller
 
             return back()->withInput()->with('error', 'Terjadi kesalahan saat memperbarui profil.');
         }
+    }
+
+    public function deletePhoto(Request $request)
+    {
+        $user = $request->user();
+        DB::beginTransaction();
+        try {
+            $this->service->deletePhoto($user->id);
+            DB::commit();
+            return back()->with('success', 'Foto profil berhasil dihapus.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            return back()->with('error', 'Gagal menghapus foto profil.');
+        }
+    }
+
+    public function photo(string $path)
+    {
+        if (! Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->response($path);
     }
 
     public function updatePassword(Request $request)

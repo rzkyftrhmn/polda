@@ -1,3 +1,4 @@
+@php($currentUser = auth()->user())
 <nav class="navbar navbar-expand">
     <div class="collapse navbar-collapse justify-content-between">
         <div class="header-left">
@@ -53,12 +54,12 @@
                     <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <div class="header-info2 d-flex align-items-center">
                             <div class="d-flex align-items-center sidebar-info">
-                                <div>
-                                    <h5 class="mb-0 text-white">{{ auth()->user()->name }}</h5>
-                                    <span class="d-block text-end">{{ auth()->user()->email }}</span>
+                                <div class="text-end me-3">
+                                    <h5 class="mb-0 theme-text-main">{{ $currentUser?->name }}</h5>
+                                    <span class="d-block small theme-text-secondary">{{ $currentUser?->email }}</span>
                                 </div>
                             </div>
-                            <img src="{{ asset('dashboard/images/user.jpg') }}" alt="">
+                            <img src="{{ $currentUser?->photo_url ?? asset('dashboard/images/user.jpg') }}" alt="{{ $currentUser?->name ?? 'User' }}" class="rounded-circle object-fit-cover" width="45" height="45">
                         </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">

@@ -1,0 +1,26 @@
+:root {
+    --txt-main-dark: #f8f9fa;
+    --txt-sec-dark: #adb5bd;
+    --bg-card-dark: #111827;
+    --border-dark: #1f2937;
+
+    --txt-main-light: #212529;
+    --txt-sec-light: #6c757d;
+    --bg-card-light: #ffffff;
+    --border-light: #dee2e6;
+}
+
+body.dark-mode .theme-text-main { color: var(--txt-main-dark) !important; }
+body.dark-mode .theme-text-secondary { color: var(--txt-sec-dark) !important; }
+body.dark-mode .theme-bg-card { background-color: var(--bg-card-dark) !important; }
+body.dark-mode .theme-border { border-color: var(--border-dark) !important; }
+
+body.light-mode .theme-text-main { color: var(--txt-main-light) !important; }
+body.light-mode .theme-text-secondary { color: var(--txt-sec-light) !important; }
+body.light-mode .theme-bg-card { background-color: var(--bg-card-light) !important; }
+body.light-mode .theme-border { border-color: var(--border-light) !important; }
+
+.object-fit-cover {
+    object-fit: cover;
+    border-radius: 50%;
+}

@@ -33,5 +33,9 @@ Route::middleware(['auth'])->group(
         Route::get('profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+        Route::delete('profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
+        Route::get('profile/photo/{path}', [ProfileController::class, 'photo'])
+            ->where('path', '.*')
+            ->name('profile.photo.show');
     }
 );
