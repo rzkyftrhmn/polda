@@ -37,5 +37,9 @@ Route::middleware(['auth'])->group(
         Route::get('profile/photo/{path}', [ProfileController::class, 'photo'])
             ->where('path', '.*')
             ->name('profile.photo.show');
+
+        //intitution routes
+         Route::resource('institutions', \App\Http\Controllers\InstitutionController::class);
+    Route::get('institutions/datatables', [\App\Http\Controllers\InstitutionController::class, 'datatables'])->name('institutions.datatables');
     }
 );
