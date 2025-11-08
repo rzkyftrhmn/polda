@@ -2,15 +2,21 @@
 
 namespace App\Repositories;
 
+use App\Interfaces\InstitutionRepositoryInterface;
 use App\Models\Institution;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
-class InstitutionRepository
+class InstitutionRepository implements InstitutionRepositoryInterface
 {
     protected function query(): Builder
     {
         return Institution::query();
+    }
+
+    public function getAllOrderedByName(): Collection
+    {
+        return $this->query()->orderBy('name')->get();
     }
 
     public function getAllForDatatable(): Builder
@@ -37,6 +43,7 @@ class InstitutionRepository
     {
         $institution = $this->findById($id);
         if (!$institution) return null;
+
         $institution->update($payload);
         return $institution->refresh();
     }

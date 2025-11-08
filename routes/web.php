@@ -39,7 +39,7 @@ Route::middleware(['auth'])->group(
             ->name('profile.photo.show');
 
         //intitution routes
-         Route::resource('institutions', \App\Http\Controllers\InstitutionController::class);
-    Route::get('institutions/datatables', [\App\Http\Controllers\InstitutionController::class, 'datatables'])->name('institutions.datatables');
+        Route::resource('institutions', \App\Http\Controllers\InstitutionController::class);
+        Route::get('institutions/datatables', [\App\Http\Controllers\InstitutionController::class, 'datatables'])->name('institutions.datatables');
     }
 );
