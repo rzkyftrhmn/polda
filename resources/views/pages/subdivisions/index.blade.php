@@ -98,7 +98,7 @@ jQuery(function($) {
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex' },
             { data: 'name', name: 'name' },
-            { data: 'parent_name', name: 'parent_name' },
+            { data: 'parent', name: 'parent' },
             { data: 'type', name: 'type' },
             { data: 'action', name: 'action', orderable: false, searchable: false },
         ],
