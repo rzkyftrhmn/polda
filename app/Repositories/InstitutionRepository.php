@@ -7,13 +7,40 @@ use App\Interfaces\InstitutionRepositoryInterface;
 
 class InstitutionRepository implements InstitutionRepositoryInterface
 {
-    public function query()
+    public function getAllForDatatable()
     {
-        return new Institution();
+        return Institution::select(['id', 'name', 'type', 'created_at']);
     }
 
     public function getAllOrderedByName()
     {
-        return $this->query()->orderBy('name')->get();
+        return Institution::orderBy('name')->get();
+    }
+
+    public function getDistinctTypes()
+    {
+        return Institution::select('type')->distinct()->pluck('type');
+    }
+
+    public function store(array $data)
+    {
+        return Institution::create($data);
+    }
+
+    public function findById($id)
+    {
+        return Institution::findOrFail($id);
+    }
+
+    public function update($id, array $data)
+    {
+        $institution = Institution::findOrFail($id);
+        return $institution->update($data);
+    }
+
+    public function delete($id)
+    {
+        $institution = Institution::findOrFail($id);
+        return $institution->delete();
     }
 }

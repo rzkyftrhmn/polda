@@ -4,8 +4,11 @@ namespace App\Interfaces;
 
 interface InstitutionRepositoryInterface
 {
-    /**
-     * Return all institutions ordered by name.
-     */
+    public function getAllForDatatable();
     public function getAllOrderedByName();
+    public function getDistinctTypes();
+    public function store(array $data);
+    public function findById($id);
+    public function update($id, array $data);
+    public function delete($id);
 }

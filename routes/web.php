@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 
@@ -37,5 +38,10 @@ Route::middleware(['auth'])->group(
         Route::get('profile/photo/{path}', [ProfileController::class, 'photo'])
             ->where('path', '.*')
             ->name('profile.photo.show');
+
+        //intitution routes
+        Route::get('institutions/datatables', [InstitutionController::class, 'datatables'])->name('institutions.datatables');
+        Route::resource('institutions',InstitutionController::class);
+        
     }
 );

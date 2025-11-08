@@ -124,7 +124,13 @@
                 cancelButtonText: 'Batal'
             }).then(function(result){
                 if (!result.isConfirmed) return;
-                var url = "{{ route('users.destroy', ':id') }}".replace(':id', id);
+                var currentPage = window.location.pathname;
+                if (currentPage.includes('/institutions')) {
+                    var url = "{{ route('institutions.destroy', ':id') }}".replace(':id', id);
+                } else if (currentPage.includes('/users')) {
+                    var url = "{{ route('users.destroy', ':id') }}".replace(':id', id);
+                }
+                // var url = "{{ route('users.destroy', ':id') }}".replace(':id', id);
                 $.ajax({
                     url: url,
                     type: 'POST',
