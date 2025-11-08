@@ -31,7 +31,83 @@ class InstitutionController extends Controller
         ]);
     }
 
-    public function datatables(Request $request)
+    // public function datatables(Request $request)
+    // {
+    //     if ($request->ajax()) {
+    //         $columns = [
+    //             null,
+    //             'name',
+    //             'type',
+    //             'created_at',
+    //             null,
+    //         ];
+
+    //         $limit = $request->input('length');
+    //         $start = $request->input('start');
+    //         $orderColIndex = $request->input('order.0.column');
+    //         $dir = $request->input('order.0.dir', 'asc');
+    //         $order = $columns[$orderColIndex] ?? 'created_at';
+    //         $filter_q = $request->input('filter_q');
+    //         $filter_type = $request->input('filter_type');
+
+    //         $query = $this->institutionRepository->getAllForDatatable();
+
+    //         if (!empty($filter_q)) {
+    //             $query->where('name', 'like', "%{$filter_q}%");
+    //         }
+
+    //         if (!empty($filter_type)) {
+    //             $query->where('type', $filter_type);
+    //         }
+
+    //         $search = $request->input('search.value');
+    //         if (!empty($search)) {
+    //             $query->where('name', 'like', "%{$search}%");
+    //         }
+
+    //         $totalData = $query->count();
+
+    //         if ($order) {
+    //             $query->orderBy($order, $dir);
+    //         }
+
+    //         $institutions = $query->skip($start)->take($limit)->get();
+
+    //         $data = [];
+    //         foreach ($institutions as $key => $institution) {
+    //             $htmlButton = '<td class="text-nowrap">
+    //                 <a href="' . route('institutions.edit', $institution->id) . '" class="btn btn-warning btn-sm content-icon">
+    //                     <i class="fa fa-edit"></i>
+    //                 </a>
+    //                 <a href="javascript:void(0);" 
+    //                     class="btn btn-danger btn-sm content-icon btn-delete"
+    //                     data-id="' . $institution->id . '"
+    //                     data-name="' . htmlspecialchars($institution->name, ENT_QUOTES) . '"
+    //                     data-url="' . route('institutions.destroy', $institution->id) . '"
+    //                     data-title="Hapus Institusi?">
+    //                     <i class="fa fa-times"></i>
+    //                 </a>
+    //             </td>';
+
+    //             $data[] = [
+    //                 'DT_RowIndex' => $key + 1 + $start,
+    //                 'name' => $institution->name,
+    //                 'type' => $institution->type,
+    //                 'created_at' => $institution->created_at ? $institution->created_at->format('d-m-Y') : '-',
+    //                 'action' => $htmlButton,
+    //             ];
+    //         }
+
+    //         return response()->json([
+    //             'draw' => intval($request->input('draw')),
+    //             'recordsTotal' => $totalData,
+    //             'recordsFiltered' => $totalData,
+    //             'data' => $data,
+    //         ]);
+    //     }
+    // }
+
+      public function datatables(Request $request)
     {
         if ($request->ajax()) {
             $columns = [
@@ -106,6 +182,7 @@ class InstitutionController extends Controller
             ]);
         }
     }
+
 
     public function create()
     {
