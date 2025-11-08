@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SubDivisionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,5 +45,9 @@ Route::middleware(['auth'])->group(
         Route::get('institutions/datatables', [InstitutionController::class, 'datatables'])->name('institutions.datatables');
         Route::resource('institutions',InstitutionController::class);
         
+        //division and sub duvision routes
+        Route::get('subdivisions/datatables', [SubDivisionController::class, 'datatables'])
+            ->name('subdivisions.datatables');
+        Route::resource('subdivisions', SubDivisionController::class)->except('show');
     }
 );
