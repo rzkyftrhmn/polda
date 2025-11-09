@@ -25,7 +25,7 @@
 
 	<!-- MOBILE SPECIFIC -->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
+
     @include('components.style')
 </head>
 <body>

@@ -133,9 +133,13 @@ class UserController extends Controller
                             <i class="fa fa-edit"></i> 
                         </a> 
                         <a href="javascript:void(0);" 
-                            class="btn btn-danger btn-sm content-icon btn-delete" data-id="' . $post->id . '" data-name="' . htmlspecialchars($post->name ?? '', ENT_QUOTES) . '"> 
-                            <i class="fa fa-times"></i> 
-                        </a> 
+                            class="btn btn-danger btn-sm content-icon btn-delete"
+                            data-id="' . $post->id . '"
+                            data-name="' . htmlspecialchars($post->name ?? '', ENT_QUOTES) . '"
+                            data-url="' . route('users.destroy', $post->id) . '"
+                            data-title="Hapus User?">
+                            <i class="fa fa-times"></i>
+                        </a>
                     </td>';
 
                     $nestedData['username'] = $post->username ?? '-';

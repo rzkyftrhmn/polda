@@ -19,4 +19,14 @@ class Division extends Model
         'name',
         'type',
     ];
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Division::class, 'parent_id');
+    }
 }

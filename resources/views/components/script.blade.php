@@ -104,49 +104,59 @@
 </script>
 
 <script>
-    // Delete with SweetAlert2
-    jQuery(function($){
-        var csrfToken = $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}';
-        $(document).on('click', '.btn-delete', function(e){
-            e.preventDefault();
-            var id = $(this).data('id');
-            var name = $(this).data('name');
-            if (!id) return;
+jQuery(function($){
+    const csrfToken = $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}';
 
-            Swal.fire({
-                title: 'Hapus User?',
-                html: 'Anda akan menghapus: <b>' + (name || '') + '</b>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Ya, Hapus',
-                cancelButtonText: 'Batal'
-            }).then(function(result){
-                if (!result.isConfirmed) return;
-                var url = "{{ route('users.destroy', ':id') }}".replace(':id', id);
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: { _method: 'DELETE', _token: csrfToken },
-                    success: function(res){
-                        Swal.fire({ icon: res.status ? 'success' : 'error', title: res.status ? 'Berhasil' : 'Gagal', text: res.message || '' }).then(function(){
-                            // Reload Datatable if present; otherwise refresh page
-                            if ($.fn.DataTable) {
-                                try {
-                                    $('.dataTable').DataTable().ajax.reload(null, false);
-                                } catch (e) { location.reload(); }
-                            } else {
-                                location.reload();
-                            }
-                        });
-                    },
-                    error: function(xhr){
-                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Terjadi kesalahan saat menghapus user.';
-                        Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
-                    }
-                });
+    // --- GLOBAL DELETE HANDLER ---
+    $(document).on('click', '.btn-delete', function(e){
+        e.preventDefault();
+
+        const id = $(this).data('id');
+        const name = $(this).data('name') || '';
+        const url = $(this).data('url'); 
+        const title = $(this).data('title') || 'Hapus Data?'; 
+
+        if (!id || !url) return;
+
+        Swal.fire({
+            title: title,
+            html: 'Anda akan menghapus: <b>' + name + '</b>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (!result.isConfirmed) return;
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: { _method: 'DELETE', _token: csrfToken },
+                success: function(res){
+                    Swal.fire({
+                        icon: res.status ? 'success' : 'error',
+                        title: res.status ? 'Berhasil' : 'Gagal',
+                        text: res.message || ''
+                    }).then(() => {
+                        if ($.fn.DataTable) {
+                            try {
+                                $('.dataTable').DataTable().ajax.reload(null, false);
+                            } catch (e) { location.reload(); }
+                        } else {
+                            location.reload();
+                        }
+                    });
+                },
+                error: function(xhr){
+                    const msg = (xhr.responseJSON && xhr.responseJSON.message)
+                        ? xhr.responseJSON.message
+                        : 'Terjadi kesalahan saat menghapus data.';
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
+                }
             });
         });
     });
+});
 </script>
