@@ -19,5 +19,7 @@ class Report extends Model
         'address_detail',
         'category_id',
         'status',
+        'code',
+        'finish_time',
     ];
 }
