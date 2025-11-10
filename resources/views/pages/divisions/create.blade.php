@@ -38,7 +38,7 @@
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-3">
+                        <button type="submit" class="btn btn-success mt-3">
                             {{ isset($division) ? 'Update' : 'Simpan' }}
                         </button>
                         <a href="{{ route('divisions.index') }}" class="btn btn-secondary mt-3">Kembali</a>
