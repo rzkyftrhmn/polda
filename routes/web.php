@@ -9,7 +9,6 @@ use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubDivisionController;
-use App\Http\Controllers\DivisionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,8 +57,10 @@ Route::middleware(['auth'])->group(
         Route::resource('roles', RoleController::class);
         Route::get('datatables/roles', [RoleController::class, 'datatables'])->name('datatables.roles');
 
-        // divisi routes
-        Route::resource('divisions', DivisionController::class);
-        Route::get('datatables/division', [DivisionController::class, 'datatables'])->name('datatables.division');
+        // Ubah resource route
+        Route::resource('sub-bagian', DivisionController::class)->names('divisions');
+        Route::get('datatables/sub-bagian', [DivisionController::class, 'datatables'])
+            ->name('datatables.division');
+
     }
 );

@@ -49,9 +49,10 @@
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-3">
+                        <button type="submit" class="btn btn-success mt-3">
                             {{ $role ? 'Update' : 'Simpan' }}
                         </button>
+                        <a href="{{ route('roles.index') }}" class="btn btn-warning mt-3">Batal</a>
                     </form>
                 </div>
             </div>
