@@ -15,4 +15,9 @@ class ReportEvidence extends Model
         'file_url',
         'file_type',
     ];
+
+    public function journey()
+    {
+        return $this->belongsTo(ReportJourney::class, 'report_journey_id');
+    }
 }

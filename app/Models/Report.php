@@ -22,4 +22,9 @@ class Report extends Model
         'code',
         'finish_time',
     ];
+
+    public function journeys()
+    {
+        return $this->hasMany(ReportJourney::class, 'report_id');
+    }
 }
