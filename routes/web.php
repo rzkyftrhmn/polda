@@ -61,8 +61,10 @@ Route::middleware(['auth'])->group(
         Route::get('datatables/roles', [RoleController::class, 'datatables'])->name('datatables.roles');
 
         // divisi routes
-        Route::resource('divisions', DivisionController::class);
-        Route::get('datatables/division', [DivisionController::class, 'datatables'])->name('datatables.division');
+        Route::resource('sub-bagian', DivisionController::class)->names('divisions');
+
+        Route::get('datatables/sub-bagian', [DivisionController::class, 'datatables'])
+            ->name('datatables.division');
 
         //dummy page for journey feature (cant delete it after merge)
         Route::get('/reports/{id}', [ReportController::class, 'show'])->name('reports.show');
@@ -71,10 +73,8 @@ Route::middleware(['auth'])->group(
             ->name('journeys.store');
 
         }
-        // Ubah resource route
-        Route::resource('sub-bagian', DivisionController::class)->names('divisions');
-        Route::get('datatables/sub-bagian', [DivisionController::class, 'datatables'])
-            ->name('datatables.division');
-
-    }
+        //Ubah resource route
+        
+    
+    
 );
