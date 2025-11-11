@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
@@ -49,9 +50,10 @@ Route::middleware(['auth'])->group(
         Route::resource('institutions',InstitutionController::class);
         
         //division and sub duvision routes
+        Route::resource('unit', SubDivisionController::class)->names('subdivisions');
         Route::get('subdivisions/datatables', [SubDivisionController::class, 'datatables'])
             ->name('subdivisions.datatables');
-        Route::resource('subdivisions', SubDivisionController::class)->except('show');
+        
 
         // role routes
         Route::resource('roles', RoleController::class);

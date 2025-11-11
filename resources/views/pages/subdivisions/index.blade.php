@@ -18,9 +18,9 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-xl-3 col-sm-6">
-                                <label class="form-label">Cari Sub Divisi</label>
+                                <label class="form-label">Cari Unit</label>
                                 <input type="text" class="form-control mb-xl-0 mb-3"
-                                       id="filter_q" placeholder="Cari nama sub divisi">
+                                       id="filter_q" placeholder="Cari nama Unit">
                             </div>
                             <div class="col-xl-3 col-sm-6 align-self-end">
                                 <div>
@@ -37,15 +37,15 @@
                 </div>
             </div>
 
-            <!-- Tambah Sub Divisi -->
+            <!-- Tambah Unit -->
             <div class="mb-3">
-                <a href="{{ route('subdivisions.create') }}" class="btn btn-primary btn-sm">Tambah Sub Divisi</a>
+                <a href="{{ route('subdivisions.create') }}" class="btn btn-primary btn-sm">Tambah Unit</a>
             </div>
 
             <!-- DataTables -->
             <div class="filter cm-content-box box-primary">
                 <div class="content-title SlideToolHeader">
-                    <div class="cpa"><i class="fa-solid fa-file-lines me-1"></i>Daftar Sub Divisi</div>
+                    <div class="cpa"><i class="fa-solid fa-file-lines me-1"></i>Daftar Unit</div>
                 </div>
 
                 <div class="cm-content-body form excerpt">
@@ -55,7 +55,7 @@
                                 <thead>
                                     <tr>
                                         <th>No</th>
-                                        <th>Nama Sub Divisi</th>
+                                        <th>Nama Unit</th>
                                         <th>Divisi Induk</th>
                                         <th>Jenis</th>
                                         <th>Aksi</th>
@@ -65,7 +65,7 @@
                                 <tfoot>
                                     <tr>
                                         <th>No</th>
-                                        <th>Nama Sub Divisi</th>
+                                        <th>Nama Unit</th>
                                         <th>Divisi Induk</th>
                                         <th>Jenis</th>
                                         <th>Aksi</th>
