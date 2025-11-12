@@ -2,19 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\Division;
-use App\Models\Institution;
 use App\Models\Report;
 use App\Models\ReportCategory;
-use App\Models\ReportJourney;
+use App\Models\ReportFollowUp;
 use App\Models\User;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
-class JourneyDataTest extends TestCase
+class FollowUpDataTest extends TestCase
 {
     protected array $loadedMigrations = [];
 
@@ -37,81 +32,47 @@ class JourneyDataTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_user_can_store_journey_with_multiple_evidences(): void
+    public function test_user_can_store_follow_up_notes(): void
     {
-        Storage::fake('public');
-
-        $institution = Institution::create([
-            'name' => 'Polda Metro Jaya',
-            'type' => 'POLDA',
-        ]);
-
-        $division = Division::create([
-            'name' => 'Ditreskrimum',
-            'type' => 'DITRES',
-        ]);
-
-        $user = User::factory()->create([
-            'institution_id' => $institution->id,
-            'division_id' => $division->id,
-        ]);
+        $user = User::factory()->create();
 
         $category = ReportCategory::create([
             'name' => 'Disiplin',
         ]);
 
         $report = Report::create([
-            'title' => 'Pelanggaran Disiplin Anggota',
-            'description' => 'Laporan lengkap mengenai pelanggaran disiplin.',
+            'title' => 'Laporan Pelanggaran',
+            'description' => 'Detail laporan pelanggaran.',
             'incident_datetime' => now(),
             'category_id' => $category->id,
             'status' => 'PEMERIKSAAN',
         ]);
 
-        $files = [
-            UploadedFile::fake()->create('evidence-1.pdf', 100),
-            UploadedFile::fake()->image('evidence-2.jpg'),
-            UploadedFile::fake()->create('evidence-3.docx', 50),
-        ];
-
         $this->actingAs($user);
 
-        $response = $this->post(route('reports.journeys.store', $report->id), [
-            'type' => 'PEMERIKSAAN',
-            'description' => 'Melakukan pemeriksaan awal terhadap laporan.',
-            'files' => $files,
+        $response = $this->post(route('reports.followups.store', $report->id), [
+            'notes' => 'Catatan internal untuk tindak lanjut laporan.',
         ]);
 
         $response->assertRedirect(route('reports.show', $report->id));
-        $response->assertSessionHas('success', 'Tahapan penanganan berhasil ditambahkan.');
+        $response->assertSessionHas('success', 'Catatan tindak lanjut berhasil ditambahkan.');
 
-        $this->assertDatabaseCount('report_journeys', 1);
-        $this->assertDatabaseHas('report_journeys', [
+        $this->assertDatabaseCount('report_follow_ups', 1);
+        $this->assertDatabaseHas('report_follow_ups', [
             'report_id' => $report->id,
-            'institution_id' => $user->institution_id,
-            'division_id' => $user->division_id,
-            'type' => 'PEMERIKSAAN',
+            'user_id' => $user->id,
         ]);
 
-        $this->assertDatabaseCount('report_evidences', 3);
-
-        $journey = ReportJourney::with('evidences')->first();
-        $this->assertNotNull($journey);
-        $this->assertEquals(3, $journey->evidences->count());
-
-        foreach ($journey->evidences as $evidence) {
-            $relativePath = Str::after($evidence->file_url, '/storage/');
-            Storage::disk('public')->assertExists($relativePath);
-        }
+        $followUp = ReportFollowUp::first();
+        $this->assertNotNull($followUp);
+        $this->assertEquals('Catatan internal untuk tindak lanjut laporan.', $followUp->notes);
 
         $detailResponse = $this->get(route('reports.show', $report->id));
         $detailResponse->assertOk();
-        $detailResponse->assertSee($journey->type, false);
-        $detailResponse->assertSee($journey->description, false);
-
-        foreach ($journey->evidences as $evidence) {
-            $detailResponse->assertSee(basename($evidence->file_url), false);
-        }
+        $detailResponse->assertSee('Swal.fire', false);
+        $detailResponse->assertSee('Catatan tindak lanjut berhasil ditambahkan.', false);
+        $detailResponse->assertSee($followUp->notes, false);
+        $detailResponse->assertSee($user->name, false);
     }
 
     protected function runRequiredMigrations(): void
@@ -126,8 +87,8 @@ class JourneyDataTest extends TestCase
             Schema::rename('report_evidence', 'report_evidences');
         }
 
-        if (! Schema::hasTable('report_evidences')) {
-            throw new \RuntimeException('Failed to create report_evidences table');
+        if (! Schema::hasTable('report_follow_ups')) {
+            throw new \RuntimeException('Failed to create report_follow_ups table');
         }
     }
 

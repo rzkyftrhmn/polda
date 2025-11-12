@@ -6,6 +6,7 @@ use App\Services\ReportJourneyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 
 class ReportJourneyController extends Controller
 {
@@ -16,11 +17,18 @@ class ReportJourneyController extends Controller
 
     public function store(Request $request, $reportId): RedirectResponse
     {
-        $validated = $request->validate([
-            'type' => 'required|in:PEMERIKSAAN,LIMPAH,SIDANG,SELESAI',
-            'description' => 'required|string',
-            'files.*' => 'nullable|file|max:4096',
-        ]);
+        try {
+            $validated = $request->validate([
+                'type' => 'required|in:PEMERIKSAAN,LIMPAH,SIDANG,SELESAI',
+                'description' => 'required|string',
+                'files.*' => 'nullable|file|max:4096',
+            ]);
+        } catch (ValidationException $exception) {
+            return back()
+                ->withErrors($exception->errors())
+                ->withInput()
+                ->with('open_modal', 'journey');
+        }
 
         $payload = [
             'report_id' => $reportId,
@@ -48,6 +56,7 @@ class ReportJourneyController extends Controller
 
         return back()
             ->with('error', $result['message'] ?? 'Gagal menambahkan tahapan penanganan.')
-            ->withInput();
+            ->withInput()
+            ->with('open_modal', 'journey');
     }
 }

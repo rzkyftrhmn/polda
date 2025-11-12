@@ -65,6 +65,37 @@
               {{ $journeys->links('pagination::bootstrap-5') }}
             </div>
           @endif
+
+          <hr class="my-5">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="fa fa-sticky-note me-2"></i>Catatan Tindak Lanjut</h5>
+            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpModal">
+              <i class="fa fa-plus me-1"></i> Tambah Catatan
+            </button>
+          </div>
+
+          @forelse($followUps as $followUp)
+            <div class="card border mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                  <span class="fw-semibold">{{ optional($followUp->user)->name ?? 'Petugas' }}</span>
+                  <small class="text-muted">{{ optional($followUp->created_at)->format('d M Y H:i') }}</small>
+                </div>
+                <p class="mt-3 mb-0">{{ $followUp->notes }}</p>
+              </div>
+            </div>
+          @empty
+            <div class="alert alert-info p-2 mb-0">
+              Belum ada catatan tindak lanjut untuk laporan ini.
+            </div>
+          @endforelse
+
+          @if($followUps instanceof \Illuminate\Contracts\Pagination\Paginator && $followUps->hasPages())
+            <div class="d-flex justify-content-center mt-4">
+              {{ $followUps->links('pagination::bootstrap-5') }}
+            </div>
+          @endif
         </div>
       </div>
     </div>
@@ -126,18 +157,57 @@
     </div>
   </div>
 </div>
+
+{{-- FOLLOW UP MODAL --}}
+<div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="followUpModalLabel">Tambah Catatan Tindak Lanjut</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form action="{{ route('reports.followups.store', $report->id) }}" method="POST">
+        @csrf
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Catatan</label>
+            <textarea name="notes" rows="4" class="form-control" placeholder="Tuliskan tindak lanjut internal..." required>{{ old('notes') }}</textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save me-1"></i> Simpan Catatan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        if (@json($errors->any())) {
-            var modalEl = document.getElementById('journeyModal');
+        var openModal = @json(session('open_modal'));
 
-            if (modalEl && typeof bootstrap !== 'undefined') {
-                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            }
+        if (!openModal && @json($errors->any())) {
+            openModal = 'journey';
+        }
+
+        if (!openModal) {
+            return;
+        }
+
+        var modalId = openModal === 'followup' ? 'followUpModal' : 'journeyModal';
+        var modalEl = document.getElementById(modalId);
+
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         }
     });
 </script>
+@include('components.sweetalert')
 @endsection
 @endsection

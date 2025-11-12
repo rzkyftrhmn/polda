@@ -15,6 +15,11 @@ class ReportController extends Controller
             ->orderByDesc('created_at')
             ->paginate(5);
 
-        return view('pages.reports.detail', compact('report', 'journeys'));
+        $followUps = $report->followUps()
+            ->with('user')
+            ->latest()
+            ->paginate(5);
+
+        return view('pages.reports.detail', compact('report', 'journeys', 'followUps'));
     }
 }

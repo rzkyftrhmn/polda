@@ -10,6 +10,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubDivisionController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ReportFollowUpController;
 use App\Http\Controllers\ReportJourneyController;
 use App\Http\Controllers\ReportController;
 
@@ -70,5 +71,8 @@ Route::middleware(['auth'])->group(
 
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
+
+        Route::post('/reports/{report}/follow-ups', [ReportFollowUpController::class, 'store'])
+            ->name('reports.followups.store');
     }
 );
