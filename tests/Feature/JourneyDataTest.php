@@ -82,7 +82,11 @@ class JourneyDataTest extends TestCase
             'files' => $files,
         ]);
 
+<<<<<<< HEAD
         $response->assertRedirect();
+=======
+        $response->assertRedirect(route('reports.show', $report->id));
+>>>>>>> 02a3e64 (test: verify journey multi-upload success)
         $response->assertSessionHas('success', 'Tahapan penanganan berhasil ditambahkan.');
 
         $this->assertDatabaseCount('report_journeys', 1);

@@ -29,7 +29,11 @@
           <hr>
           <h5 class="mt-4 mb-3"><i class="fa fa-route me-2"></i>Tahapan Penanganan</h5>
 
+<<<<<<< HEAD
           @forelse ($report->journeys as $journey)
+=======
+          @forelse ($journeys as $journey)
+>>>>>>> 02a3e64 (test: verify journey multi-upload success)
             <div class="card border mb-3">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -59,6 +63,15 @@
               Belum ada tahapan penanganan yang tercatat untuk laporan ini.
             </div>
           @endforelse
+<<<<<<< HEAD
+=======
+
+          @if($journeys instanceof \Illuminate\Contracts\Pagination\Paginator && $journeys->hasPages())
+            <div class="d-flex justify-content-center mt-4">
+              {{ $journeys->links('pagination::bootstrap-5') }}
+            </div>
+          @endif
+>>>>>>> 02a3e64 (test: verify journey multi-upload success)
         </div>
       </div>
     </div>
@@ -120,4 +133,18 @@
     </div>
   </div>
 </div>
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (@json($errors->any())) {
+            var modalEl = document.getElementById('journeyModal');
+
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+            }
+        }
+    });
+</script>
+@endsection
 @endsection

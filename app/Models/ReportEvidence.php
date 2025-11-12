@@ -22,4 +22,9 @@ class ReportEvidence extends Model
     {
         return $this->belongsTo(ReportJourney::class, 'report_journey_id');
     }
+
+    public function report()
+    {
+        return $this->belongsTo(Report::class, 'report_id');
+    }
 }
