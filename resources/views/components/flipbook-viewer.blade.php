@@ -46,10 +46,11 @@
             const downloadButton = modalEl.querySelector('[data-flipbook-download]');
             const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-            const PDF_JS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
-            const PDF_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-            const TURN_JS_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js';
-            const JQUERY_SRC = 'https://code.jquery.com/jquery-3.6.0.min.js';
+            const assetBase = "{{ asset('vendor/flipbook') }}";
+            const PDF_JS_SRC = assetBase + '/pdf.min.js';
+            const PDF_WORKER_SRC = assetBase + '/pdf.worker.min.js';
+            const TURN_JS_SRC = assetBase + '/turn.min.js';
+            const JQUERY_SRC = assetBase + '/jquery.min.js';
 
             let currentUrl = null;
             let libraryPromise = null;
@@ -71,7 +72,7 @@
 
                     script = document.createElement('script');
                     script.src = src;
-                    script.async = true;
+                    script.defer = true;
                     script.setAttribute('data-dynamic-src', src);
                     script.addEventListener('load', function () {
                         script.setAttribute('data-loaded', 'true');
@@ -86,24 +87,14 @@
                 });
             }
 
-            function ensureJquery() {
-                if (window.jQuery && typeof window.jQuery === 'function') {
-                    return Promise.resolve(window.jQuery);
-                }
-
-                return loadScriptOnce(JQUERY_SRC).then(function () {
-                    if (!window.jQuery) {
-                        throw new Error('jQuery tidak tersedia');
-                    }
-
-                    return window.jQuery;
-                });
-            }
-
             function ensureLibraries() {
                 if (!libraryPromise) {
-                    libraryPromise = ensureJquery()
+                    libraryPromise = loadScriptOnce(JQUERY_SRC)
                         .then(function () {
+                            if (!window.jQuery) {
+                                throw new Error('jQuery tidak tersedia');
+                            }
+
                             return loadScriptOnce(PDF_JS_SRC);
                         })
                         .then(function () {
@@ -112,7 +103,6 @@
                             }
 
                             window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
-
                             return loadScriptOnce(TURN_JS_SRC);
                         })
                         .then(function () {
@@ -210,7 +200,6 @@
 
             function renderFlipbook(url) {
                 if (!container || !window.pdfjsLib) {
-                    showMessage('Pratinjau flipbook tidak tersedia.');
                     return Promise.reject(new Error('Container atau pdf.js tidak siap'));
                 }
 
@@ -270,17 +259,7 @@
                                     notice.textContent = 'Library Turn.js tidak tersedia. Menampilkan halaman PDF secara berurutan.';
                                     container.prepend(notice);
                                 }
-                            })
-                            .catch(function (error) {
-                                console.error('Gagal merender halaman PDF:', error);
-                                showMessage('Gagal merender halaman PDF.');
-                                throw error;
                             });
-                    })
-                    .catch(function (error) {
-                        console.error('Gagal memuat file PDF:', error);
-                        showMessage('Gagal memuat file PDF.');
-                        throw error;
                     });
             }
 
@@ -294,6 +273,7 @@
                 if (!resolvedUrl) {
                     showMessage('File PDF tidak ditemukan.');
                     modalInstance.show();
+                    window.dispatchEvent(new CustomEvent('report-flipbook:failed', { detail: { url: resolvedUrl } }));
                     return;
                 }
 
@@ -305,8 +285,14 @@
                     .then(function () {
                         return renderFlipbook(resolvedUrl);
                     })
-                    .catch(function () {
+                    .then(function () {
+                        window.dispatchEvent(new CustomEvent('report-flipbook:opened', { detail: { url: resolvedUrl } }));
+                    })
+                    .catch(function (error) {
+                        console.error('Flipbook gagal dimuat:', error);
                         showMessage('Mode flipbook tidak dapat dimuat. Silakan gunakan tombol unduh.');
+                        window.dispatchEvent(new CustomEvent('report-flipbook:failed', { detail: { url: resolvedUrl } }));
+                        modalInstance.hide();
                     });
             };
 
