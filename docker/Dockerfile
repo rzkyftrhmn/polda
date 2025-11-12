@@ -30,6 +30,10 @@ COPY . .
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs
 
+# Nginx
+FROM nginx:alpine
+COPY --from=app /var/www/html/public /var/www/html/public
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Set permission Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
