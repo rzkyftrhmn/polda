@@ -19,7 +19,12 @@ class ReportJourneyController extends Controller
 
     public function store(Request $request, int $reportId): RedirectResponse
     {
-        $limpahValues = [ReportJourneyType::TRANSFER->value, 'TRANSFER'];
+        $limpahValues = [
+            ReportJourneyType::TRANSFER->value,
+            ReportJourneyType::TRANSFER->name,
+            ReportJourneyType::TRANSFER->label(),
+            'TRANSFER',
+        ];
 
         try {
             $validated = $request->validate([
@@ -36,10 +41,12 @@ class ReportJourneyController extends Controller
                     'exists:institutions,id',
                     Rule::requiredIf(fn () => in_array($request->input('type'), $limpahValues, true)),
                 ],
-                'division_target_id' => [
+                'subdivision_target_id' => [
                     'nullable',
                     'integer',
-                    'exists:divisions,id',
+                    Rule::exists('divisions', 'id')->where(static function ($query) {
+                        $query->whereNotNull('parent_id');
+                    }),
                     Rule::requiredIf(fn () => in_array($request->input('type'), $limpahValues, true)),
                 ],
             ]);
@@ -52,7 +59,7 @@ class ReportJourneyController extends Controller
 
         if (! in_array($validated['type'], $limpahValues, true)) {
             $validated['institution_target_id'] = null;
-            $validated['division_target_id'] = null;
+            $validated['subdivision_target_id'] = null;
         }
 
         $payload = [
@@ -62,7 +69,7 @@ class ReportJourneyController extends Controller
             'type' => $validated['type'],
             'description' => $validated['description'],
             'institution_target_id' => $validated['institution_target_id'] ?? null,
-            'division_target_id' => $validated['division_target_id'] ?? null,
+            'division_target_id' => $validated['subdivision_target_id'] ?? null,
         ];
 
         $files = $request->file('files', []);

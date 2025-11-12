@@ -107,16 +107,22 @@
                         </div>
 
                         <div class="col-md-6" id="limpah-division-field" hidden>
-                            <label class="form-label fw-semibold" for="division-target">Divisi Tujuan</label>
-                            <select name="division_target_id" id="division-target" class="form-select">
-                                <option value="">-- Pilih Divisi --</option>
+                            <label class="form-label fw-semibold" for="subdivision-target">Unit/Sub-bagian Tujuan</label>
+                            <select name="subdivision_target_id" id="subdivision-target" class="form-select">
+                                <option value="">-- Pilih Unit/Sub-bagian --</option>
                                 @foreach($divisions as $division)
+                                    @php
+                                        $institutionKey = $division->institution_id
+                                            ?? $division->parent?->institution_id
+                                            ?? $division->parent_id;
+                                    @endphp
                                     <option
                                         value="{{ $division->id }}"
-                                        data-institution="{{ $division->institution_id }}"
-                                        @selected((int) old('division_target_id') === $division->id)
+                                        data-institution="{{ $institutionKey }}"
+                                        data-parent="{{ $division->parent_id }}"
+                                        @selected((int) old('subdivision_target_id') === $division->id)
                                     >
-                                        {{ $division->name }}
+                                        {{ $division->parent ? $division->parent->name . ' - ' : '' }}{{ $division->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -227,9 +233,14 @@
         const typeSelect = document.getElementById('journey-type');
         const institutionField = document.getElementById('limpah-institution-field');
         const divisionField = document.getElementById('limpah-division-field');
-        const divisionSelect = document.getElementById('division-target');
+        const divisionSelect = document.getElementById('subdivision-target');
         const institutionSelect = document.getElementById('institution-target');
-        const limpahValues = ['{{ \App\Enums\ReportJourneyType::TRANSFER->value }}', 'TRANSFER'];
+        const limpahValues = [
+            '{{ \App\Enums\ReportJourneyType::TRANSFER->value }}',
+            '{{ \App\Enums\ReportJourneyType::TRANSFER->name }}',
+            '{{ \App\Enums\ReportJourneyType::TRANSFER->label() }}',
+            'TRANSFER'
+        ];
 
         const toggleLimpahFields = function () {
             const selectedType = typeSelect ? typeSelect.value : '';
