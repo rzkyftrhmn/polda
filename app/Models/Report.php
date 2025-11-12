@@ -27,4 +27,14 @@ class Report extends Model
     {
         return $this->hasMany(ReportJourney::class, 'report_id');
     }
+
+    public function category()
+    {
+        return $this->belongsTo(ReportCategory::class, 'category_id');
+    }
+
+    public function followUps()
+    {
+        return $this->hasMany(ReportFollowUp::class, 'report_id');
+    }
 }
