@@ -25,7 +25,7 @@ class ReportController extends Controller
         $divisions = Division::with('parent')
             ->whereNotNull('parent_id')
             ->orderBy('name')
-            ->get(['id', 'name', 'institution_id', 'parent_id']);
+            ->get(['id', 'name', 'type', 'parent_id']);
 
         $journeyTypes = ReportJourneyType::manualOptions();
 
@@ -38,4 +38,5 @@ class ReportController extends Controller
             'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
         ]);
     }
+
 }
