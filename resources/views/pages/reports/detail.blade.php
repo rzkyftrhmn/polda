@@ -2,249 +2,288 @@
 
 @section('content')
 <div class="container-fluid py-4">
-  <div class="row justify-content-center">
-    <div class="col-xl-8 col-lg-10">
-      <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Detail Laporan Pelanggaran</h5>
-          <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#journeyModal">
-            <i class="fa fa-plus me-1"></i> Tambah Tahapan Penanganan
-          </button>
-        </div>
-
-        <div class="card-body">
-          <h4 class="mb-3">{{ $report->title }}</h4>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <p class="mb-1"><b>Status Laporan:</b> {{ $report->status }}</p>
-              <p class="mb-1"><b>Waktu Kejadian:</b> {{ optional($report->incident_datetime)->format('d M Y H:i') }}</p>
-            </div>
-            <div class="col-md-6">
-              <p class="mb-1"><b>Kategori:</b> {{ optional($report->category)->name ?? '-' }}</p>
-              <p class="mb-1"><b>Lokasi:</b> {{ $report->address_detail ?? '-' }}</p>
-            </div>
-          </div>
-          <p class="mt-3">{{ $report->description }}</p>
-
-          <hr>
-          <h5 class="mt-4 mb-3"><i class="fa fa-route me-2"></i>Tahapan Penanganan</h5>
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-          @forelse ($report->journeys as $journey)
-=======
-          @forelse ($journeys as $journey)
->>>>>>> 02a3e64 (test: verify journey multi-upload success)
-=======
-          @forelse ($journeys as $journey)
->>>>>>> 3d57bc4bd70e3aac3b06ee5b357fcda2414ab552
-            <div class="card border mb-3">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <span class="badge bg-primary">{{ $journey->type }}</span>
-                  <small class="text-muted">{{ optional($journey->created_at)->format('d M Y H:i') }}</small>
+    <div class="row justify-content-center">
+        <div class="col-xl-8 col-lg-10">
+            <div class="card shadow-sm border-0 report-detail-card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Detail Laporan Pelanggaran</h5>
+                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#journeyModal">
+                        <i class="fa fa-plus me-1"></i> Tambah Tahapan Penanganan
+                    </button>
                 </div>
 
-                <p class="mb-3">{{ $journey->description }}</p>
+                <div class="card-body report-detail-body">
+                    @php
+                        $incidentAt = $report->incident_datetime?->format('d M Y H:i');
+                        $finishedAt = $report->finish_time?->format('d M Y H:i');
+                        $categoryName = $report->category?->name;
+                        $provinceName = $report->province?->name;
+                        $cityName = $report->city?->name;
+                        $districtName = $report->district?->name;
+                    @endphp
 
-                @if ($journey->evidences->isNotEmpty())
-                  <div>
-                    <h6 class="fw-semibold mb-2">Bukti Pendukung</h6>
-                    <ul class="list-unstyled small">
-                      @foreach ($journey->evidences as $evidence)
-                        <li>
-                          <a href="{{ $evidence->file_url }}" class="text-decoration-none" target="_blank" rel="noopener">
-                            <i class="fa fa-paperclip me-2"></i>{{ basename($evidence->file_url) }}
-                          </a>
-                        </li>
-                      @endforeach
-                    </ul>
-                  </div>
-                @endif
-              </div>
-            </div>
-          @endforeach
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+                        <div>
+                            <h4 class="mb-2">{{ $report->title }}</h4>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge bg-light text-dark">Kode: {{ $report->code ?? '-' }}</span>
+                                <span class="badge bg-secondary text-uppercase">Status: {{ $statusLabel ?? '-' }}</span>
+                            </div>
+                        </div>
+                        <div class="text-md-end">
+                            <p class="mb-1"><strong>Kategori:</strong> {{ $categoryName ?? '-' }}</p>
+                            <p class="mb-0"><strong>Lokasi:</strong> {{ $report->address_detail ?? '-' }}</p>
+                        </div>
+                    </div>
 
-          <!-- pagination -->
-          @if ($journeys->hasPages())
-            <div class="d-flex justify-content-center mt-4">
-              {{ $journeys->links('pagination::bootstrap-5') }}
-            </div>
-          @endforelse
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 3d57bc4bd70e3aac3b06ee5b357fcda2414ab552
+                    @php
+                        $metadata = [
+                            ['label' => 'Status (Database)', 'value' => $report->status ?? '-'],
+                            ['label' => 'Provinsi', 'value' => $provinceName ?? '-'],
+                            ['label' => 'Waktu Kejadian', 'value' => $incidentAt ?? '-'],
+                            ['label' => 'Kota/Kabupaten', 'value' => $cityName ?? '-'],
+                            ['label' => 'Waktu Selesai', 'value' => $finishedAt ?? '-'],
+                            ['label' => 'Kecamatan', 'value' => $districtName ?? '-'],
+                        ];
+                    @endphp
 
-          @if($journeys instanceof \Illuminate\Contracts\Pagination\Paginator && $journeys->hasPages())
-            <div class="d-flex justify-content-center mt-4">
-              {{ $journeys->links('pagination::bootstrap-5') }}
-            </div>
-          @endif
-<<<<<<< HEAD
->>>>>>> 02a3e64 (test: verify journey multi-upload success)
-=======
+                    <div class="row g-3">
+                        @foreach($metadata as $item)
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>{{ $item['label'] }}:</strong> {{ $item['value'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
 
-          <hr class="my-5">
+                    <div class="mt-3">
+                        <h6 class="fw-semibold mb-2">Deskripsi Laporan</h6>
+                        <p class="mb-0">{!! nl2br(e($report->description)) !!}</p>
+                    </div>
 
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="fa fa-sticky-note me-2"></i>Catatan Tindak Lanjut</h5>
-            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpModal">
-              <i class="fa fa-plus me-1"></i> Tambah Catatan
-            </button>
-          </div>
+                    <hr>
+                    <h5 class="mt-4 mb-3"><i class="fa fa-route me-2"></i>Timeline Penanganan</h5>
 
-          @forelse($followUps as $followUp)
-            <div class="card border mb-3">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
-                  <span class="fw-semibold">{{ optional($followUp->user)->name ?? 'Petugas' }}</span>
-                  <small class="text-muted">{{ optional($followUp->created_at)->format('d M Y H:i') }}</small>
+                    @include('components.timeline', ['items' => $journeys])
+
                 </div>
-                <p class="mt-3 mb-0">{{ $followUp->notes }}</p>
-              </div>
             </div>
-          @empty
-            <div class="alert alert-info p-2 mb-0">
-              Belum ada catatan tindak lanjut untuk laporan ini.
-            </div>
-          @endforelse
-
-          @if($followUps instanceof \Illuminate\Contracts\Pagination\Paginator && $followUps->hasPages())
-            <div class="d-flex justify-content-center mt-4">
-              {{ $followUps->links('pagination::bootstrap-5') }}
-            </div>
-          @endif
->>>>>>> 3d57bc4bd70e3aac3b06ee5b357fcda2414ab552
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
-{{-- MODAL FORM --}}
+{{-- Journey Modal --}}
 <div class="modal fade" id="journeyModal" tabindex="-1" aria-labelledby="journeyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="journeyModalLabel">Tambah Tahapan Penanganan</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <form action="{{ route('reports.journeys.store', $report->id) }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Jenis Tahapan</label>
-              <select name="type" class="form-control" required>
-                <option value="">-- Pilih Tahapan --</option>
-                <option value="PEMERIKSAAN" @selected(old('type') === 'PEMERIKSAAN')>Pemeriksaan Awal</option>
-                <option value="LIMPAH" @selected(old('type') === 'LIMPAH')>Pelimpahan Berkas</option>
-                <option value="SIDANG" @selected(old('type') === 'SIDANG')>Sidang Kode Etik</option>
-                <option value="SELESAI" @selected(old('type') === 'SELESAI')>Penyelesaian</option>
-              </select>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="journeyModalLabel">Tambah Tahapan Penanganan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <div class="col-md-12 mb-3">
-              <label class="form-label fw-semibold">Deskripsi Proses</label>
-              <textarea name="description" rows="3" class="form-control" placeholder="Tuliskan ringkasan tahapan penanganan..." required>{{ old('description') }}</textarea>
-            </div>
+            <form action="{{ route('reports.journeys.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="journey-type">Jenis Tahapan</label>
+                            <select name="type" id="journey-type" class="form-select" required>
+                                <option value="">-- Pilih Tahapan --</option>
+                                @foreach($journeyTypes as $type)
+                                    <option value="{{ $type->value }}" @selected(old('type') === $type->value)>{{ $type->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-            <div class="col-md-12 mb-3">
-              <label class="form-label fw-semibold">Upload Bukti Pendukung</label>
-              <input 
-                type="file" 
-                name="files[]" 
-                class="form-control" 
-                multiple 
-                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-              >
-              <small class="text-muted">
-                *Bisa upload lebih dari satu file (foto, dokumen, atau bukti lainnya).
-              </small>
-            </div>
-          </div>
+                        <div class="col-md-6" id="limpah-institution-field" hidden>
+                            <label class="form-label fw-semibold" for="institution-target">Institusi Tujuan</label>
+                            <select name="institution_target_id" id="institution-target" class="form-select">
+                                <option value="">-- Pilih Institusi --</option>
+                                @foreach($institutions as $institution)
+                                    <option value="{{ $institution->id }}" @selected((int) old('institution_target_id') === $institution->id)>
+                                        {{ $institution->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6" id="limpah-division-field" hidden>
+                            <label class="form-label fw-semibold" for="division-target">Divisi Tujuan</label>
+                            <select name="division_target_id" id="division-target" class="form-select">
+                                <option value="">-- Pilih Divisi --</option>
+                                @foreach($divisions as $division)
+                                    <option
+                                        value="{{ $division->id }}"
+                                        data-institution="{{ $division->institution_id }}"
+                                        @selected((int) old('division_target_id') === $division->id)
+                                    >
+                                        {{ $division->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="journey-description">Deskripsi Proses</label>
+                            <textarea
+                                name="description"
+                                id="journey-description"
+                                rows="3"
+                                class="form-control"
+                                placeholder="Tuliskan ringkasan tahapan penanganan..."
+                                required
+                            >{{ old('description') }}</textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="journey-files">Upload Bukti Pendukung</label>
+                            <input
+                                type="file"
+                                name="files[]"
+                                id="journey-files"
+                                class="form-control"
+                                multiple
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                            >
+                            <small class="text-muted">*Bisa unggah lebih dari satu file (foto, dokumen, atau bukti lainnya).</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save me-1"></i> Simpan Tahapan
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="fa fa-save me-1"></i> Simpan Tahapan
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
 </div>
-<<<<<<< HEAD
+
+@include('components.file-viewer')
+@endsection
+
+@push('styles')
+<style>
+    .report-detail-card .card-header h5 {
+        color: #ffffff;
+    }
+
+    .report-detail-body {
+        color: var(--bs-body-color);
+        background-color: transparent;
+    }
+
+    .report-detail-body h4,
+    .report-detail-body p,
+    .report-detail-body .badge,
+    .report-detail-body .list-group-item,
+    .report-detail-body .list-group-item .small,
+    .report-detail-body .list-group-item span,
+    .report-detail-body .list-group-item button,
+    .report-detail-body .text-muted,
+    .report-detail-body .text-body {
+        color: inherit;
+    }
+
+    .report-detail-body .list-group-item {
+        background-color: transparent;
+    }
+
+    [data-theme-version="dark"] .report-detail-body {
+        color: #f1f5f9;
+    }
+
+    [data-theme-version="dark"] .report-detail-body .text-muted {
+        color: rgba(241, 245, 249, 0.7) !important;
+    }
+
+    [data-theme-version="dark"] .report-detail-body .list-group-item {
+        background-color: rgba(15, 23, 42, 0.35);
+    }
+
+    [data-theme-version="dark"] .report-detail-body .badge.bg-light {
+        color: #0f172a;
+    }
+</style>
+@endpush
+
 @section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        if (@json($errors->any())) {
-            var modalEl = document.getElementById('journeyModal');
+        let openModal = @json(session('open_modal'));
+        const hasErrors = @json($errors->any());
+        const journeyModalEl = document.getElementById('journeyModal');
 
-            if (modalEl && typeof bootstrap !== 'undefined') {
-                var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            }
-        }
-    });
-</script>
-=======
-
-{{-- FOLLOW UP MODAL --}}
-<div class="modal fade" id="followUpModal" tabindex="-1" aria-labelledby="followUpModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title" id="followUpModalLabel">Tambah Catatan Tindak Lanjut</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-
-      <form action="{{ route('reports.followups.store', $report->id) }}" method="POST">
-        @csrf
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Catatan</label>
-            <textarea name="notes" rows="4" class="form-control" placeholder="Tuliskan tindak lanjut internal..." required>{{ old('notes') }}</textarea>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary">
-            <i class="fa fa-save me-1"></i> Simpan Catatan
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-@section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var openModal = @json(session('open_modal'));
-
-        if (!openModal && @json($errors->any())) {
+        if (!openModal && hasErrors) {
             openModal = 'journey';
         }
 
-        if (!openModal) {
-            return;
+        if (openModal === 'journey' && journeyModalEl) {
+            bootstrap.Modal.getOrCreateInstance(journeyModalEl).show();
         }
 
-        var modalId = openModal === 'followup' ? 'followUpModal' : 'journeyModal';
-        var modalEl = document.getElementById(modalId);
+        const typeSelect = document.getElementById('journey-type');
+        const institutionField = document.getElementById('limpah-institution-field');
+        const divisionField = document.getElementById('limpah-division-field');
+        const divisionSelect = document.getElementById('division-target');
+        const institutionSelect = document.getElementById('institution-target');
+        const limpahValues = ['{{ \App\Enums\ReportJourneyType::TRANSFER->value }}', 'TRANSFER'];
 
-        if (modalEl && typeof bootstrap !== 'undefined') {
-            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-            modal.show();
+        const toggleLimpahFields = function () {
+            const selectedType = typeSelect ? typeSelect.value : '';
+            const isLimpah = limpahValues.includes(selectedType);
+            [institutionField, divisionField].forEach(function (field) {
+                if (!field) { return; }
+                field.hidden = !isLimpah;
+                Array.prototype.forEach.call(field.querySelectorAll('select'), function (select) {
+                    select.required = isLimpah;
+                });
+            });
+            if (!isLimpah) {
+                if (institutionSelect) {
+                    institutionSelect.value = '';
+                }
+                if (divisionSelect) {
+                    divisionSelect.value = '';
+                }
+            }
+        };
+
+        const filterDivisions = function () {
+            if (!divisionSelect || !institutionSelect) {
+                return;
+            }
+
+            const selectedInstitution = institutionSelect.value;
+            Array.prototype.forEach.call(divisionSelect.options, function (option) {
+                if (!option.dataset.institution) {
+                    option.hidden = false;
+                    return;
+                }
+
+                option.hidden = selectedInstitution && option.dataset.institution !== selectedInstitution;
+            });
+
+            if (divisionSelect.selectedOptions.length && divisionSelect.selectedOptions[0].hidden) {
+                divisionSelect.value = '';
+            }
+        };
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function () {
+                toggleLimpahFields();
+                filterDivisions();
+            });
         }
+
+        if (institutionSelect) {
+            institutionSelect.addEventListener('change', filterDivisions);
+        }
+
+        toggleLimpahFields();
+        filterDivisions();
+
     });
 </script>
-@include('components.sweetalert')
->>>>>>> 3d57bc4bd70e3aac3b06ee5b357fcda2414ab552
-@endsection
 @endsection

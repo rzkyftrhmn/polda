@@ -82,18 +82,10 @@ class JourneyDataTest extends TestCase
             'files' => $files,
         ]);
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        $response->assertRedirect();
-=======
         $response->assertRedirect(route('reports.show', $report->id));
->>>>>>> 02a3e64 (test: verify journey multi-upload success)
-=======
-        $response->assertRedirect(route('reports.show', $report->id));
->>>>>>> 3d57bc4bd70e3aac3b06ee5b357fcda2414ab552
         $response->assertSessionHas('success', 'Tahapan penanganan berhasil ditambahkan.');
 
-        $this->assertDatabaseCount('report_journeys', 1);
+        $this->assertDatabaseCount('report_journeys', 2);
         $this->assertDatabaseHas('report_journeys', [
             'report_id' => $report->id,
             'institution_id' => $user->institution_id,
@@ -101,11 +93,17 @@ class JourneyDataTest extends TestCase
             'type' => 'PEMERIKSAAN',
         ]);
 
+        $this->assertDatabaseHas('report_journeys', [
+            'report_id' => $report->id,
+            'type' => 'SUBMITTED',
+        ]);
+
         $this->assertDatabaseCount('report_evidences', 3);
 
-        $journey = ReportJourney::with('evidences')->first();
+        $journey = ReportJourney::with('evidences')->where('type', 'PEMERIKSAAN')->first();
         $this->assertNotNull($journey);
         $this->assertEquals(3, $journey->evidences->count());
+        $this->assertEquals('Melakukan pemeriksaan awal terhadap laporan.', $journey->description);
 
         foreach ($journey->evidences as $evidence) {
             $relativePath = Str::after($evidence->file_url, '/storage/');
@@ -114,7 +112,7 @@ class JourneyDataTest extends TestCase
 
         $detailResponse = $this->get(route('reports.show', $report->id));
         $detailResponse->assertOk();
-        $detailResponse->assertSee($journey->type, false);
+        $detailResponse->assertSee('PENYELIDIKAN', false);
         $detailResponse->assertSee($journey->description, false);
 
         foreach ($journey->evidences as $evidence) {
@@ -162,7 +160,6 @@ class JourneyDataTest extends TestCase
             database_path('migrations/2025_11_10_142745_create_report_journeys_table.php'),
             database_path('migrations/2025_11_10_142756_create_report_evidence_table.php'),
             database_path('migrations/2025_11_11_000001_rename_report_evidence_table.php'),
-            database_path('migrations/2025_11_12_000000_create_report_follow_ups_table.php'),
         ];
     }
 }
