@@ -35,4 +35,5 @@ class ReportController extends Controller
             'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
         ]);
     }
+
 }
