@@ -2,22 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Enums\ReportJourneyType;
+use App\Models\Division;
+use App\Models\Institution;
 use App\Models\Report;
-use Illuminate\Http\Request;
+use App\Services\ReportJourneyService;
 
 class ReportController extends Controller
 {
+    public function __construct(
+        protected ReportJourneyService $journeyService
+    ) {
+    }
+
     public function show($id)
     {
         $report = Report::with('category')->findOrFail($id);
 
-        // ambil journeys pakai pagination
-        $journeys = $report->journeys()
-            ->with('evidences')
-            ->orderByDesc('created_at')
-            ->paginate(5); // tampilkan 5 per halaman
+        $journeys = $this->journeyService->paginateByReport($report->id, 5);
 
-        return view('pages.reports.detail', compact('report', 'journeys'));
+        $followUps = $report->followUps()
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->paginate(5);
+
+        $institutions = Institution::orderBy('name')->get(['id', 'name']);
+        $divisions = Division::orderBy('name')->get(['id', 'name', 'institution_id']);
+
+        $journeyTypes = ReportJourneyType::manualOptions();
+
+        return view('pages.reports.detail', [
+            'report' => $report,
+            'journeys' => $journeys,
+            'followUps' => $followUps,
+            'journeyTypes' => $journeyTypes,
+            'institutions' => $institutions,
+            'divisions' => $divisions,
+        ]);
     }
 }
