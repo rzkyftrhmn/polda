@@ -62,10 +62,15 @@ class ReportJourneyService
         DB::beginTransaction();
 
         try {
-            $type = ReportJourneyType::from($data['type']);
+            $type = $this->normalizeType($data['type'] ?? null);
+            $reportId = (int) ($data['report_id'] ?? 0);
+
+            if (! $type || $reportId <= 0) {
+                throw new \InvalidArgumentException('Data tahapan tidak lengkap.');
+            }
 
             $journeyData = [
-                'report_id' => $data['report_id'],
+                'report_id' => $reportId,
                 'institution_id' => $data['institution_id'] ?? null,
                 'division_id' => $data['division_id'] ?? null,
                 'type' => $type->value,
@@ -96,7 +101,7 @@ class ReportJourneyService
 
             $reportUpdate = ['status' => $type->value];
 
-            if ($type === ReportJourneyType::SELESAI) {
+            if ($type === ReportJourneyType::COMPLETED) {
                 $reportUpdate['finish_time'] = now();
             }
 
@@ -119,5 +124,37 @@ class ReportJourneyService
                 'message' => 'Gagal menambahkan tahapan penanganan.',
             ];
         }
+    }
+
+    private function normalizeType(null|ReportJourneyType|string $type): ?ReportJourneyType
+    {
+        if ($type instanceof ReportJourneyType) {
+            return $type;
+        }
+
+        if (! is_string($type) || $type === '') {
+            return null;
+        }
+
+        $enum = ReportJourneyType::tryFrom($type);
+
+        if ($enum) {
+            return $enum;
+        }
+
+        $upper = strtoupper($type);
+        $enum = ReportJourneyType::tryFrom($upper);
+
+        if ($enum) {
+            return $enum;
+        }
+
+        foreach (ReportJourneyType::cases() as $case) {
+            if (strcasecmp($case->label(), $type) === 0) {
+                return $case;
+            }
+        }
+
+        return null;
     }
 }

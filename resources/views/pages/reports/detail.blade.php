@@ -4,7 +4,7 @@
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-xl-8 col-lg-10">
-            <div class="card shadow-sm border-0">
+            <div class="card shadow-sm border-0 report-detail-card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Detail Laporan Pelanggaran</h5>
                     <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#journeyModal">
@@ -12,7 +12,7 @@
                     </button>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body report-detail-body">
                     @php
                         $incidentAt = $report->incident_datetime?->format('d M Y H:i');
                         $finishedAt = $report->finish_time?->format('d M Y H:i');
@@ -163,6 +163,51 @@
 @include('components.file-viewer')
 @include('components.flipbook-viewer')
 @endsection
+
+@push('styles')
+<style>
+    .report-detail-card .card-header h5 {
+        color: #ffffff;
+    }
+
+    .report-detail-body {
+        color: var(--bs-body-color);
+        background-color: transparent;
+    }
+
+    .report-detail-body h4,
+    .report-detail-body p,
+    .report-detail-body .badge,
+    .report-detail-body .list-group-item,
+    .report-detail-body .list-group-item .small,
+    .report-detail-body .list-group-item span,
+    .report-detail-body .list-group-item button,
+    .report-detail-body .text-muted,
+    .report-detail-body .text-body {
+        color: inherit;
+    }
+
+    .report-detail-body .list-group-item {
+        background-color: transparent;
+    }
+
+    [data-theme-version="dark"] .report-detail-body {
+        color: #f1f5f9;
+    }
+
+    [data-theme-version="dark"] .report-detail-body .text-muted {
+        color: rgba(241, 245, 249, 0.7) !important;
+    }
+
+    [data-theme-version="dark"] .report-detail-body .list-group-item {
+        background-color: rgba(15, 23, 42, 0.35);
+    }
+
+    [data-theme-version="dark"] .report-detail-body .badge.bg-light {
+        color: #0f172a;
+    }
+</style>
+@endpush
 
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/pdfobject@2.2.8/pdfobject.min.js"></script>

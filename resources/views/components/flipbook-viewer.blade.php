@@ -86,7 +86,7 @@
                 const alertMessage = message || 'Pratinjau belum didukung untuk tipe file ini.';
                 fallbackWrapper.innerHTML = '' +
                     '<div class="alert alert-info">' + alertMessage + '</div>' +
-                    '<a href="' + source + '" target="_blank" rel="noopener" class="btn btn-primary">Unduh File</a>';
+                    '<a href="' + source + '" target="_blank" rel="noopener" download class="btn btn-primary">Unduh File</a>';
                 fallbackWrapper.classList.remove('d-none');
 
                 bootstrap.Modal.getOrCreateInstance(fileViewerModalEl).show();
