@@ -22,7 +22,7 @@ class ReportController extends Controller
         $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
 
         $institutions = Institution::orderBy('name')->get(['id', 'name']);
-        $divisions = Division::orderBy('name')->get(['id', 'name', 'institution_id']);
+        $divisions = Division::orderBy('name')->get(['id', 'name', 'type']);
 
         $journeyTypes = ReportJourneyType::manualOptions();
 
