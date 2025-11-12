@@ -157,8 +157,8 @@ $(document).ready(function() {
     var oldCityId = '{{ old('city_id', $pelaporan->city_id ?? '') }}';
     var oldDistrictId = '{{ old('district_id', $pelaporan->district_id ?? '') }}';
 
-    function loadCities(provinceId, selectedCityId = null) {
-        if(!provinceId) {
+    function loadCities(provinceId, selectedCityId = null){
+        if(!provinceId){
             $('#city_id').html('<option value="">Pilih Provinsi terlebih dahulu</option>');
             $('#district_id').html('<option value="">Pilih Kota terlebih dahulu</option>');
             return;

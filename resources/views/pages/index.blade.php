@@ -295,6 +295,7 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
     // Dummy data initializer for Dashboard KPIs, Charts, and Tables
     (function() {
@@ -368,14 +369,18 @@
             });
 
             // 2) Distribusi Status Laporan
-            var baru = 35, diproses = 52, selesai = 41;
-            render('chart_status_laporan', {
+            var baru = {{ $baru }};
+            var diproses = {{ $diproses }};
+            var selesai = {{ $selesai }};
+            var options = {
                 chart: { type: 'donut', height: 280 },
                 series: [baru, diproses, selesai],
                 labels: ['Baru', 'Diproses', 'Selesai'],
                 colors: ['#60a5fa', '#f59e0b', '#10b981'],
-                legend: { position: 'bottom' }
-            });
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: true }
+            };
+            render('chart_status_laporan', options);
 
             // 3) Top 5 Kategori Laporan
             var kategoriLabels = ['Penipuan Online', 'Pencurian', 'Kekerasan', 'Korupsi', 'Narkoba'];
