@@ -6,8 +6,9 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="ratio ratio-16x9 mb-3 d-none" data-viewer-target></div>
+                <div class="ratio ratio-16x9 mb-3 d-none" data-viewer-doc></div>
                 <div class="text-center d-none" data-viewer-image></div>
+                <div class="text-center d-none" data-viewer-fallback></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>

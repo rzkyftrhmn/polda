@@ -63,13 +63,14 @@ class ReportJourneyController extends Controller
         $result = $this->service->store($payload, array_filter($files));
 
         if ($result['status'] ?? false) {
-            return redirect()
-                ->route('reports.show', ['id' => $reportId])
-                ->with('success', $result['message']);
+            alert()->success($result['message']);
+
+            return redirect()->route('reports.show', ['id' => $reportId]);
         }
 
+        alert()->error($result['message'] ?? 'Gagal menambahkan tahapan penanganan.');
+
         return back()
-            ->with('error', $result['message'] ?? 'Gagal menambahkan tahapan penanganan.')
             ->withInput()
             ->with('open_modal', 'journey');
     }

@@ -1,7 +1,8 @@
 @props(['items'])
 
 @php
-    $collection = $items instanceof \Illuminate\Contracts\Pagination\Paginator ? $items->getCollection() : collect($items);
+    $isPaginator = $items instanceof \Illuminate\Pagination\AbstractPaginator;
+    $collection = $isPaginator ? $items->getCollection() : collect($items);
 @endphp
 
 <div class="position-relative">
@@ -15,7 +16,7 @@
                 <div class="position-relative">
                     <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-primary border border-white p-2"></span>
                     <div class="ms-4">
-                        <p class="mb-2">{{ $item->description }}</p>
+                        <p class="mb-2">{!! nl2br(e($item->description)) !!}</p>
                         @if(!empty($item->target_institution) || !empty($item->target_division))
                             <div class="mb-2">
                                 <span class="badge bg-light text-dark text-uppercase">Limpah</span>
@@ -57,3 +58,9 @@
         <div class="alert alert-info mb-0">Belum ada tahapan penanganan untuk laporan ini.</div>
     @endforelse
 </div>
+
+@if($isPaginator && $items->hasPages())
+    <div class="d-flex justify-content-center mt-4">
+        {{ $items->links('pagination::bootstrap-5') }}
+    </div>
+@endif

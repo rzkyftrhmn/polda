@@ -24,6 +24,11 @@ class Report extends Model
         'finish_time',
     ];
 
+    protected $casts = [
+        'incident_datetime' => 'datetime',
+        'finish_time' => 'datetime',
+    ];
+
     public function journeys()
     {
         return $this->hasMany(ReportJourney::class, 'report_id');

@@ -36,13 +36,14 @@ class ReportFollowUpController extends Controller
         $result = $this->service->store($payload);
 
         if ($result['status'] ?? false) {
-            return redirect()
-                ->route('reports.show', ['id' => $reportId])
-                ->with('success', $result['message'] ?? 'Catatan tindak lanjut berhasil ditambahkan.');
+            alert()->success($result['message'] ?? 'Catatan tindak lanjut berhasil ditambahkan.');
+
+            return redirect()->route('reports.show', ['id' => $reportId]);
         }
 
+        alert()->error($result['message'] ?? 'Gagal menambahkan catatan tindak lanjut.');
+
         return back()
-            ->with('error', $result['message'] ?? 'Gagal menambahkan catatan tindak lanjut.')
             ->withInput()
             ->with('open_modal', 'followup');
     }

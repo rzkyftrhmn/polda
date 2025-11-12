@@ -86,7 +86,7 @@ class ReportJourneyService
                     'report_journey_id' => $journey->id,
                     'report_id' => $journey->report_id,
                     'file_url' => Storage::url($storedPath),
-                    'file_type' => $file->getClientOriginalExtension(),
+                    'file_type' => strtolower((string) $file->getClientOriginalExtension()),
                 ]);
             }
 
