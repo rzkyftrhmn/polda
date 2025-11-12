@@ -28,7 +28,7 @@ COPY . .
 
 # Pastikan folder storage dan bootstrap/cache ada
 RUN mkdir -p storage bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && chmod -R 777 storage bootstrap/cache
 
 # Copy composer files first to cache dependency layer
 COPY composer.json composer.lock ./
