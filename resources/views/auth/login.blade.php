@@ -41,8 +41,8 @@
 					<img src="{{ asset('dashboard/images/propam-bg.png') }}" alt="" style="width: 100px;">
 					<img src="{{ asset('dashboard/images/poldajabar-bg.png') }}" alt="" style="width: 100px;">
 				</div>
-				<h2 class="mb-2 text-white">POLDA JAWA BARAT</h2>
 				<h4 class="mb-4 text-white">SELAMAT DATANG DI APLIKASI <br>ARSIP BERKAS PROPAM</h4>
+				<h2 class="mb-2 text-white">POLDA JAWA BARAT</h2>
 			</div>
 		</div>
 		<div class="container flex-row-fluid d-flex flex-column justify-content-center position-relative overflow-hidden p-7 mx-auto">
