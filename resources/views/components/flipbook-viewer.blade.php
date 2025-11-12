@@ -50,7 +50,9 @@
             const PDF_JS_SRC = assetBase + '/pdf.min.js';
             const PDF_WORKER_SRC = assetBase + '/pdf.worker.min.js';
             const TURN_JS_SRC = assetBase + '/turn.min.js';
+            const TURN_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js';
             const JQUERY_SRC = assetBase + '/jquery.min.js';
+            const JQUERY_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js';
 
             let currentUrl = null;
             let libraryPromise = null;
@@ -88,10 +90,26 @@
 
             function ensureLibraries() {
                 if (!libraryPromise) {
-                    libraryPromise = loadScriptOnce(JQUERY_SRC)
+                    libraryPromise = Promise.resolve()
                         .then(function () {
-                            if (!window.jQuery) {
-                                throw new Error('jQuery tidak tersedia');
+                            if (window.jQuery) {
+                                window.$ = window.jQuery;
+                                return;
+                            }
+
+                            return loadScriptOnce(JQUERY_SRC).catch(function () {
+                                return loadScriptOnce(JQUERY_CDN);
+                            }).then(function () {
+                                if (!window.jQuery) {
+                                    throw new Error('jQuery tidak tersedia');
+                                }
+
+                                window.$ = window.jQuery;
+                            });
+                        })
+                        .then(function () {
+                            if (window.pdfjsLib) {
+                                return;
                             }
 
                             return loadScriptOnce(PDF_JS_SRC);
@@ -102,10 +120,25 @@
                             }
 
                             window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
-                            return loadScriptOnce(TURN_JS_SRC);
                         })
                         .then(function () {
-                            if (!window.jQuery || !window.jQuery.fn.turn) {
+                            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.turn === 'function') {
+                                return;
+                            }
+
+                            return loadScriptOnce(TURN_JS_SRC).catch(function () {
+                                return loadScriptOnce(TURN_JS_CDN);
+                            });
+                        })
+                        .then(function () {
+                            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.turn === 'function') {
+                                return;
+                            }
+
+                            return loadScriptOnce(TURN_JS_CDN);
+                        })
+                        .then(function () {
+                            if (!window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.turn !== 'function') {
                                 throw new Error('Turn.js tidak tersedia');
                             }
                         })
@@ -247,10 +280,13 @@
                                         height: height,
                                         autoCenter: true,
                                         gradients: true,
-                                        elevation: 50,
+                                        elevation: 100,
+                                        duration: 1200,
+                                        display: 'double',
                                     });
 
                                     $container.addClass('shadow');
+                                    container.classList.add('flipbook-ready');
                                 } else {
                                     container.classList.add('d-flex', 'flex-column', 'gap-3', 'p-3');
                                     const notice = document.createElement('div');
