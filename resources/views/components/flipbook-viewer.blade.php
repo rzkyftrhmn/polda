@@ -1,31 +1,31 @@
 @once
     <div class="modal fade" id="flipbookModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
-            <div class="modal-content" data-flipbook-modal>
-                <div class="modal-header border-0">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Pratinjau Dokumen (Flipbook)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-0 position-relative">
+                <div class="modal-body p-0">
                     <div class="d-flex justify-content-center align-items-center py-5" data-flipbook-loading>
-                        <div class="spinner-border text-primary" role="status">
+                        <div class="spinner-border text-light" role="status">
                             <span class="visually-hidden">Memuat...</span>
                         </div>
                     </div>
-                    <div class="flipbook-container-wrapper position-relative w-100" data-flipbook-stage>
+                    <div class="position-relative w-100" style="height: 80vh;">
                         <div id="flipbookContainer" class="w-100 h-100" data-flipbook-container></div>
                     </div>
                     <div class="p-4 d-none" data-flipbook-message></div>
                 </div>
-                <div class="modal-footer border-0 d-flex flex-wrap gap-2 justify-content-between">
+                <div class="modal-footer d-flex flex-wrap gap-2 justify-content-between">
                     <div class="btn-group" role="group" aria-label="Kontrol zoom">
-                        <button type="button" class="btn btn-outline-primary" data-flipbook-zoom-out title="Perkecil">
+                        <button type="button" class="btn btn-outline-light" data-flipbook-zoom-out title="Perkecil">
                             <i class="fa fa-search-minus"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" data-flipbook-zoom-reset title="Reset">
+                        <button type="button" class="btn btn-outline-light" data-flipbook-zoom-reset title="Reset">
                             <i class="fa fa-compress"></i>
                         </button>
-                        <button type="button" class="btn btn-outline-primary" data-flipbook-zoom-in title="Perbesar">
+                        <button type="button" class="btn btn-outline-light" data-flipbook-zoom-in title="Perbesar">
                             <i class="fa fa-search-plus"></i>
                         </button>
                     </div>
@@ -48,84 +48,22 @@
     </div>
 
     <style>
-        #flipbookModal .modal-content {
-            background-color: var(--bs-body-bg);
-            color: var(--bs-body-color);
-            transition: background-color 0.2s ease, color 0.2s ease;
-        }
-
         #flipbookModal .modal-body {
-            background-color: var(--bs-body-bg);
-            min-height: 320px;
+            background: var(--bs-body-bg);
         }
 
-        #flipbookModal [data-flipbook-stage] {
-            height: 80vh;
-            max-height: 860px;
-            overflow: hidden;
+        body.dark-version #flipbookModal .modal-body,
+        body[data-bs-theme="dark"] #flipbookModal .modal-body {
+            background: #111;
+            color: #f1f5f9;
         }
 
         #flipbookModal [data-flipbook-container] {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            margin: 0 auto;
-        }
-
-        #flipbookModal [data-flipbook-container].flipbook-ready {
-            box-shadow: 0 1rem 3rem rgba(15, 23, 42, 0.35);
             background: transparent;
         }
 
-        #flipbookModal .flipbook-page {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #ffffff;
-        }
-
-        #flipbookModal .flipbook-page canvas {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        #flipbookModal [data-flipbook-message] .alert {
-            border: 0;
-            border-radius: 0.75rem;
-            background-color: rgba(15, 23, 42, 0.08);
-            color: #0f172a;
-        }
-
-        body.dark-version #flipbookModal .modal-content,
-        body[data-bs-theme="dark"] #flipbookModal .modal-content,
-        body.dark-version #flipbookModal .modal-body,
-        body[data-bs-theme="dark"] #flipbookModal .modal-body {
-            background-color: #0d1117;
-            color: #f1f5f9;
-        }
-
-        body.dark-version #flipbookModal .btn-close,
-        body[data-bs-theme="dark"] #flipbookModal .btn-close {
-            filter: invert(1) grayscale(100%);
-        }
-
-        body.dark-version #flipbookModal [data-flipbook-message] .alert,
-        body[data-bs-theme="dark"] #flipbookModal [data-flipbook-message] .alert {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #f1f5f9;
-        }
-
-        body.dark-version #flipbookModal .flipbook-page {
-            background-color: #ffffff;
-        }
-
-        @media (max-width: 768px) {
-            #flipbookModal [data-flipbook-stage] {
-                height: 70vh;
-            }
+        #flipbookModal [data-flipbook-container].flipbook-ready {
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
         }
     </style>
 @endonce
@@ -146,41 +84,15 @@
             const zoomOutBtn = modalEl.querySelector('[data-flipbook-zoom-out]');
             const zoomResetBtn = modalEl.querySelector('[data-flipbook-zoom-reset]');
             const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-            const modalContent = modalEl.querySelector('[data-flipbook-modal]');
 
-            const PDF_JS_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js';
-            const PDF_WORKER_CDN = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js';
-            const TURN_JS_CDN = 'https://cdn.jsdelivr.net/npm/turn.js@4/turn.min.js';
+            const JQUERY_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js';
+            const PDF_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js';
+            const PDF_WORKER_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
+            const TURN_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/turn.js/4.1.0/turn.min.js';
 
             let currentUrl = null;
             let currentScale = 1;
             let libraryPromise = null;
-            let currentTask = null;
-            let loadTimeout = null;
-            let lastProgressAt = null;
-
-            function isDarkMode() {
-                return (
-                    document.body.classList.contains('dark-version') ||
-                    document.body.getAttribute('data-bs-theme') === 'dark'
-                );
-            }
-
-            function applyTheme() {
-                if (!modalContent) {
-                    return;
-                }
-
-                modalContent.classList.toggle('theme-dark', isDarkMode());
-            }
-
-            applyTheme();
-
-            const themeObserver = new MutationObserver(applyTheme);
-            themeObserver.observe(document.body, {
-                attributes: true,
-                attributeFilter: ['class', 'data-bs-theme'],
-            });
 
             function loadScriptOnce(src) {
                 return new Promise(function (resolve, reject) {
@@ -192,18 +104,8 @@
                             return;
                         }
 
-                        script.addEventListener('load', function () {
-                            resolve();
-                        }, { once: true });
-
-                        script.addEventListener(
-                            'error',
-                            function () {
-                                reject(new Error('Gagal memuat skrip: ' + src));
-                            },
-                            { once: true }
-                        );
-
+                        script.addEventListener('load', function () { resolve(); }, { once: true });
+                        script.addEventListener('error', function () { reject(new Error('Gagal memuat skrip: ' + src)); }, { once: true });
                         return;
                     }
 
@@ -215,40 +117,52 @@
                         script.setAttribute('data-loaded', 'true');
                         resolve();
                     }, { once: true });
-                    script.addEventListener(
-                        'error',
-                        function () {
-                            script.remove();
-                            reject(new Error('Gagal memuat skrip: ' + src));
-                        },
-                        { once: true }
-                    );
+                    script.addEventListener('error', function () {
+                        script.remove();
+                        reject(new Error('Gagal memuat skrip: ' + src));
+                    }, { once: true });
 
                     document.head.appendChild(script);
                 });
             }
 
             function ensureLibraries() {
-                if (!window.jQuery) {
-                    return Promise.reject(new Error('jQuery tidak ditemukan. Pastikan sudah dimuat dari layout.'));
-                }
-
                 if (!libraryPromise) {
-                    libraryPromise = loadScriptOnce(PDF_JS_CDN)
+                    libraryPromise = Promise.resolve()
                         .then(function () {
-                            if (!window.pdfjsLib) {
-                                throw new Error('pdf.js tidak tersedia setelah dimuat.');
+                            if (window.jQuery) {
+                                return;
                             }
 
-                            window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_CDN;
+                            return loadScriptOnce(JQUERY_CDN).then(function () {
+                                if (!window.jQuery) {
+                                    throw new Error('jQuery tidak tersedia');
+                                }
+                            });
                         })
                         .then(function () {
-                            return loadScriptOnce(TURN_JS_CDN);
-                        })
-                        .then(function () {
-                            if (!window.jQuery.fn || typeof window.jQuery.fn.turn !== 'function') {
-                                throw new Error('Turn.js tidak tersedia.');
+                            if (window.pdfjsLib) {
+                                return;
                             }
+
+                            return loadScriptOnce(PDF_JS_CDN).then(function () {
+                                if (!window.pdfjsLib) {
+                                    throw new Error('pdf.js tidak tersedia');
+                                }
+
+                                window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_CDN;
+                            });
+                        })
+                        .then(function () {
+                            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.turn === 'function') {
+                                return;
+                            }
+
+                            return loadScriptOnce(TURN_JS_CDN).then(function () {
+                                if (!window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.turn !== 'function') {
+                                    throw new Error('Turn.js tidak tersedia');
+                                }
+                            });
                         })
                         .catch(function (error) {
                             console.error('Gagal memuat library flipbook:', error);
@@ -272,37 +186,12 @@
                 }
             }
 
-            function resetLoadTimeout() {
-                if (loadTimeout) {
-                    window.clearTimeout(loadTimeout);
-                }
-
-                loadTimeout = window.setTimeout(function () {
-                    const tooLong = !lastProgressAt || Date.now() - lastProgressAt > 12000;
-                    if (tooLong) {
-                        if (currentTask && typeof currentTask.destroy === 'function') {
-                            currentTask.destroy().catch(function () {
-                                // Ignore destroy errors
-                            });
-                        }
-
-                        showMessage('Mode flipbook memerlukan waktu terlalu lama. Gunakan tombol unduh untuk membuka file.', 'warning');
-                        window.dispatchEvent(new CustomEvent('report-flipbook:failed', { detail: { url: currentUrl } }));
-                    } else {
-                        resetLoadTimeout();
-                    }
-                }, 15000);
-            }
-
-            function clearLoadTimeout() {
-                if (loadTimeout) {
-                    window.clearTimeout(loadTimeout);
-                    loadTimeout = null;
-                }
-            }
-
             function resetView() {
-                clearLoadTimeout();
+                currentScale = 1;
+
+                if (loadingWrapper) {
+                    loadingWrapper.classList.remove('d-none');
+                }
 
                 if (messageWrapper) {
                     messageWrapper.classList.add('d-none');
@@ -323,20 +212,6 @@
                     container.style.transform = 'scale(1)';
                     container.style.transformOrigin = 'center center';
                 }
-
-                if (currentTask && typeof currentTask.destroy === 'function') {
-                    currentTask.destroy().catch(function () {
-                        // ignore
-                    });
-                }
-
-                currentTask = null;
-                currentScale = 1;
-                lastProgressAt = null;
-
-                if (loadingWrapper) {
-                    loadingWrapper.classList.remove('d-none');
-                }
             }
 
             function showLoading() {
@@ -351,28 +226,22 @@
                 }
             }
 
-            function showMessage(message, type) {
+            function showMessage(message) {
                 hideLoading();
 
                 if (!messageWrapper) {
                     return;
                 }
 
-                const isDark = isDarkMode();
-                const typeClass =
-                    type === 'danger'
-                        ? 'alert-danger'
-                        : type === 'warning'
-                        ? 'alert-warning'
-                        : 'alert-info';
-
+                const isDark = document.body.classList.contains('dark-version') || document.body.getAttribute('data-bs-theme') === 'dark';
+                const alertClass = isDark ? 'alert-info' : 'alert-warning';
                 const manualLink = currentUrl
-                    ? `<a href="${currentUrl}" target="_blank" rel="noopener" class="btn btn-link btn-sm px-0">Gunakan tombol unduh</a>`
+                    ? `<a href="${currentUrl}" target="_blank" rel="noopener" class="btn btn-link p-0">Gunakan tombol unduh di bawah</a>`
                     : '';
 
                 messageWrapper.innerHTML = `
-                    <div class="alert ${typeClass} mb-2" role="alert">${message}</div>
-                    <div class="small text-center ${isDark ? 'text-light' : 'text-muted'}">${manualLink}</div>
+                    <div class="alert ${alertClass} mb-3">${message}</div>
+                    <p class="mb-0">${manualLink}</p>
                 `;
 
                 messageWrapper.classList.remove('d-none');
@@ -386,107 +255,71 @@
                 downloadButton.href = url;
             }
 
-            function scheduleProgressUpdate() {
-                lastProgressAt = Date.now();
-                resetLoadTimeout();
-            }
-
-            function computeScale(viewport) {
-                const stage = modalEl.querySelector('[data-flipbook-stage]');
-                if (!stage) {
-                    return 1.2;
+            function renderFlipbook(url) {
+                if (!container || !window.pdfjsLib) {
+                    return Promise.reject(new Error('Container atau pdf.js tidak siap'));
                 }
 
-                const stageWidth = stage.clientWidth || 960;
-                const stageHeight = stage.clientHeight || 640;
-                const widthScale = stageWidth / viewport.width;
-                const heightScale = stageHeight / viewport.height;
-                const baseScale = Math.min(widthScale, heightScale) * 0.95;
-                return Math.max(baseScale, 0.7);
-            }
+                return window.pdfjsLib
+                    .getDocument({ url: url, withCredentials: true })
+                    .promise.then(function (pdf) {
+                        container.innerHTML = '';
+                        const renderTasks = [];
 
-            function buildFlipbook(pdf) {
-                return new Promise(function (resolve, reject) {
-                    const totalPages = pdf.numPages;
-                    const fragment = document.createDocumentFragment();
+                        for (let page = 1; page <= pdf.numPages; page++) {
+                            renderTasks.push(
+                                pdf.getPage(page).then(function (pdfPage) {
+                                    const viewport = pdfPage.getViewport({ scale: 1.2 });
+                                    const canvas = document.createElement('canvas');
+                                    const context = canvas.getContext('2d');
+                                    canvas.width = viewport.width;
+                                    canvas.height = viewport.height;
 
-                    (async function renderSequential(index) {
-                        if (index > totalPages) {
-                            container.innerHTML = '';
-                            container.appendChild(fragment);
-                            resolve();
-                            return;
+                                    return pdfPage.render({ canvasContext: context, viewport: viewport }).promise.then(function () {
+                                        const wrapper = document.createElement('div');
+                                        wrapper.className = 'page bg-white d-flex justify-content-center align-items-center';
+                                        wrapper.appendChild(canvas);
+                                        container.appendChild(wrapper);
+                                    });
+                                })
+                            );
                         }
 
-                        try {
-                            const page = await pdf.getPage(index);
-                            const base = page.getViewport({ scale: 1 });
-                            const viewport = page.getViewport({ scale: computeScale(base) });
-                            const canvas = document.createElement('canvas');
-                            const context = canvas.getContext('2d', { alpha: false });
-                            canvas.width = viewport.width;
-                            canvas.height = viewport.height;
+                        return Promise.all(renderTasks)
+                            .then(function () {
+                                hideLoading();
 
-                            await page.render({ canvasContext: context, viewport: viewport }).promise;
-                            page.cleanup();
+                                const $container = window.jQuery(container);
 
-                            const wrapper = document.createElement('div');
-                            wrapper.className = 'flipbook-page';
-                            wrapper.appendChild(canvas);
-                            fragment.appendChild(wrapper);
+                                if ($container.data('turn')) {
+                                    $container.turn('destroy');
+                                }
 
-                            scheduleProgressUpdate();
-                            renderSequential(index + 1);
-                        } catch (error) {
-                            reject(error);
-                            return;
-                        }
-                    })(1);
-                });
-            }
+                                const modalBody = modalEl.querySelector('.modal-body');
+                                const width = (modalBody ? modalBody.clientWidth : container.clientWidth) || 960;
+                                const height = (modalBody ? modalBody.clientHeight : container.clientHeight) || 600;
 
-            function initializeTurn(viewport) {
-                const $container = window.jQuery(container);
+                                $container.turn({
+                                    width: width,
+                                    height: height,
+                                    autoCenter: true,
+                                    gradients: true,
+                                    duration: 900,
+                                    elevation: 70,
+                                    display: 'double',
+                                    when: {
+                                        turning: function () {
+                                            container.classList.add('turning');
+                                        },
+                                        turned: function () {
+                                            container.classList.remove('turning');
+                                        },
+                                    },
+                                });
 
-                if ($container.data('turn')) {
-                    $container.turn('destroy');
-                }
-
-                const isSmall = window.matchMedia('(max-width: 992px)').matches;
-                const pageWidth = viewport.width;
-                const pageHeight = viewport.height;
-
-                $container.turn({
-                    width: isSmall ? pageWidth : pageWidth * 2,
-                    height: pageHeight,
-                    autoCenter: true,
-                    display: isSmall ? 'single' : 'double',
-                    gradients: true,
-                    elevation: 70,
-                    duration: 900,
-                    when: {
-                        turning: function () {
-                            container.classList.add('turning');
-                        },
-                        turned: function () {
-                            container.classList.remove('turning');
-                        },
-                    },
-                });
-
-                container.classList.add('flipbook-ready');
-            }
-
-            function updateTurnSize(viewport) {
-                const $container = window.jQuery(container);
-                if (!$container.data('turn')) {
-                    return;
-                }
-
-                const isSmall = window.matchMedia('(max-width: 992px)').matches;
-                const width = isSmall ? viewport.width : viewport.width * 2;
-                $container.turn('size', width, viewport.height);
-                $container.turn('display', isSmall ? 'single' : 'double');
+                                container.classList.add('flipbook-ready');
+                            });
+                    });
             }
 
             function setScale(scale) {
@@ -495,64 +328,15 @@
             }
 
             function zoomIn() {
-                setScale(currentScale + 0.2);
+                setScale(currentScale + 0.25);
             }
 
             function zoomOut() {
-                setScale(currentScale - 0.2);
+                setScale(currentScale - 0.25);
             }
 
             function zoomReset() {
                 setScale(1);
-            }
-
-            async function renderFlipbook(url) {
-                if (!window.pdfjsLib) {
-                    throw new Error('pdf.js belum siap.');
-                }
-
-                currentTask = window.pdfjsLib.getDocument({
-                    url: url,
-                    withCredentials: false,
-                    disableAutoFetch: false,
-                    disableStream: false,
-                });
-
-                currentTask.onProgress = function () {
-                    scheduleProgressUpdate();
-                };
-
-                const pdf = await currentTask.promise;
-                const firstPage = await pdf.getPage(1);
-                const baseViewport = firstPage.getViewport({ scale: 1 });
-                firstPage.cleanup();
-
-                await buildFlipbook(pdf);
-
-                hideLoading();
-
-                if (!container.firstElementChild) {
-                    throw new Error('Tidak ada halaman yang dirender.');
-                }
-
-                const sampleCanvas = container.querySelector('.flipbook-page canvas');
-                const viewport = {
-                    width: sampleCanvas ? sampleCanvas.width : baseViewport.width,
-                    height: sampleCanvas ? sampleCanvas.height : baseViewport.height,
-                };
-
-                initializeTurn(viewport);
-                updateTurnSize(viewport);
-                clearLoadTimeout();
-                window.dispatchEvent(new CustomEvent('report-flipbook:opened', { detail: { url: url } }));
-
-                if (currentTask && typeof currentTask.destroy === 'function') {
-                    currentTask.destroy().catch(function () {
-                        // ignore cleanup errors
-                    });
-                }
-
-                currentTask = null;
             }
 
             window.ReportFlipbook = window.ReportFlipbook || {};
@@ -563,59 +347,36 @@
                 resetView();
 
                 if (!resolvedUrl) {
-                    showMessage('File PDF tidak ditemukan.', 'warning');
+                    showMessage('File PDF tidak ditemukan.');
+                    modalInstance.show();
                     window.dispatchEvent(new CustomEvent('report-flipbook:failed', { detail: { url: resolvedUrl } }));
                     return;
                 }
 
                 ensureDownload(resolvedUrl);
                 showLoading();
-                applyTheme();
                 modalInstance.show();
 
                 ensureLibraries()
                     .then(function () {
-                        scheduleProgressUpdate();
                         return renderFlipbook(resolvedUrl);
+                    })
+                    .then(function () {
+                        setScale(1.1);
+                        window.dispatchEvent(new CustomEvent('report-flipbook:opened', { detail: { url: resolvedUrl } }));
                     })
                     .catch(function (error) {
                         console.error('Flipbook gagal dimuat:', error);
-                        showMessage('Mode flipbook tidak dapat dimuat. Gunakan tombol unduh untuk membuka file.', 'danger');
-                        clearLoadTimeout();
-                        if (currentTask && typeof currentTask.destroy === 'function') {
-                            currentTask.destroy().catch(function () {
-                                // ignore cleanup errors
-                            });
-                        }
-                        currentTask = null;
+                        showMessage('Mode flipbook tidak dapat dimuat. Gunakan tombol unduh untuk membuka file.');
                         window.dispatchEvent(new CustomEvent('report-flipbook:failed', { detail: { url: resolvedUrl } }));
                     });
-
-                resetLoadTimeout();
             };
 
-            modalEl.addEventListener('shown.bs.modal', function () {
-                if (container && container.classList.contains('flipbook-ready')) {
-                    const sampleCanvas = container.querySelector('.flipbook-page canvas');
-                    if (sampleCanvas) {
-                        updateTurnSize({ width: sampleCanvas.width, height: sampleCanvas.height });
-                    }
-                }
-            });
-
             modalEl.addEventListener('hidden.bs.modal', function () {
-                if (window.jQuery && window.jQuery(container).data('turn')) {
+                if (window.jQuery && container && window.jQuery(container).data('turn')) {
                     window.jQuery(container).turn('destroy');
                 }
 
-                if (currentTask && typeof currentTask.destroy === 'function') {
-                    currentTask.destroy().catch(function () {
-                        // ignore
-                    });
-                }
-
-                currentTask = null;
-                clearLoadTimeout();
                 currentUrl = null;
                 resetView();
             });
@@ -637,19 +398,6 @@
                     zoomReset();
                 });
             }
-
-            window.addEventListener('resize', function () {
-                if (!container || !container.classList.contains('flipbook-ready')) {
-                    return;
-                }
-
-                const sampleCanvas = container.querySelector('.flipbook-page canvas');
-                if (!sampleCanvas) {
-                    return;
-                }
-
-                updateTurnSize({ width: sampleCanvas.width, height: sampleCanvas.height });
-            });
         });
     </script>
 @endonce

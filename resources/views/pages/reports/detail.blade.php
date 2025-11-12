@@ -161,7 +161,6 @@
 </div>
 
 @include('components.file-viewer')
-@include('components.flipbook-viewer')
 @endsection
 
 @push('styles')
