@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ReportJourneyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -36,5 +37,21 @@ class Report extends Model
     public function followUps()
     {
         return $this->hasMany(ReportFollowUp::class, 'report_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (Report $report): void {
+            if ($report->journeys()->exists()) {
+                return;
+            }
+
+            $report->journeys()->create([
+                'type' => ReportJourneyType::SUBMITTED->value,
+                'description' => [
+                    'text' => 'Laporan diterima oleh sistem.',
+                ],
+            ]);
+        });
     }
 }
