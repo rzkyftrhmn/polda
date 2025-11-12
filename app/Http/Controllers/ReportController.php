@@ -2,22 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Report;
 
 class ReportController extends Controller
 {
-     public function show($id)
+    public function show($id)
     {
-        $report = [
-            'id' => $id,
-            'title' => 'Laporan Pencurian Motor',
-            'status' => 'PEMERIKSAAN',
-            'category' => 'Kriminal',
-            'address' => 'Jl. Merdeka No.45',
-            'description' => 'Laporan dugaan pencurian kendaraan bermotor pada 10 November 2025.'
-        ];
+        $report = Report::with('category')->findOrFail($id);
 
-        return view('pages.reports.detail', compact('report'));
+        $journeys = $report->journeys()
+            ->with('evidences')
+            ->orderByDesc('created_at')
+            ->paginate(5);
+
+        return view('pages.reports.detail', compact('report', 'journeys'));
     }
 }
