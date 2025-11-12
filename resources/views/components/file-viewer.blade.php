@@ -24,6 +24,7 @@
                 <div class="text-center d-none" data-viewer-image>
                     <img src="" alt="Pratinjau file" class="img-fluid rounded shadow" data-viewer-image-el>
                 </div>
+                <div class="docx-preview-wrapper d-none" data-viewer-docx></div>
                 <div class="d-none" data-viewer-message></div>
             </div>
             <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
@@ -62,6 +63,7 @@
             const iframeEl = modalEl.querySelector('[data-viewer-iframe]');
             const imageWrapper = modalEl.querySelector('[data-viewer-image]');
             const imageEl = modalEl.querySelector('[data-viewer-image-el]');
+            const docxWrapper = modalEl.querySelector('[data-viewer-docx]');
             const messageWrapper = modalEl.querySelector('[data-viewer-message]');
             const downloadButton = modalEl.querySelector('[data-download-button]');
             const flipbookButton = modalEl.querySelector('[data-open-flipbook]');
@@ -73,6 +75,78 @@
             let currentUrl = null;
             let frameTimeout = null;
             let pendingFlipbookUrl = null;
+            let docxLibraryPromise = null;
+            let docxAbortController = null;
+
+            const docxAssetBase = "{{ asset('vendor/docx-preview') }}";
+            const DOCX_JSZIP_SRC = docxAssetBase + '/jszip.min.js';
+            const DOCX_PREVIEW_SRC = docxAssetBase + '/docx-preview.min.js';
+            const DOCX_STYLE_SRC = docxAssetBase + '/docx-preview.min.css';
+
+            function loadScriptOnce(src) {
+                return new Promise(function (resolve, reject) {
+                    let script = document.querySelector('script[data-dynamic-src="' + src + '"]');
+
+                    if (script) {
+                        if (script.getAttribute('data-loaded') === 'true') {
+                            resolve();
+                            return;
+                        }
+
+                        script.addEventListener('load', function () { resolve(); }, { once: true });
+                        script.addEventListener('error', function () { reject(new Error('Gagal memuat script: ' + src)); }, { once: true });
+                        return;
+                    }
+
+                    script = document.createElement('script');
+                    script.src = src;
+                    script.setAttribute('data-dynamic-src', src);
+                    script.addEventListener('load', function () {
+                        script.setAttribute('data-loaded', 'true');
+                        resolve();
+                    }, { once: true });
+                    script.addEventListener('error', function () {
+                        script.remove();
+                        reject(new Error('Gagal memuat script: ' + src));
+                    }, { once: true });
+
+                    document.head.appendChild(script);
+                });
+            }
+
+            function ensureDocxStyles() {
+                if (document.querySelector('link[data-docx-preview-style="true"]')) {
+                    return;
+                }
+
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = DOCX_STYLE_SRC;
+                link.setAttribute('data-docx-preview-style', 'true');
+                document.head.appendChild(link);
+            }
+
+            function ensureDocxLibraries() {
+                if (!docxLibraryPromise) {
+                    docxLibraryPromise = loadScriptOnce(DOCX_JSZIP_SRC)
+                        .then(function () {
+                            return loadScriptOnce(DOCX_PREVIEW_SRC);
+                        })
+                        .then(function () {
+                            if (!window.JSZip || !window.docx || typeof window.docx.renderAsync !== 'function') {
+                                throw new Error('Library pratinjau DOCX tidak tersedia');
+                            }
+
+                            ensureDocxStyles();
+                        })
+                        .catch(function (error) {
+                            docxLibraryPromise = null;
+                            throw error;
+                        });
+                }
+
+                return docxLibraryPromise;
+            }
 
             function resolveUrl(url) {
                 if (!url) {
@@ -87,7 +161,7 @@
             }
 
             function resetState() {
-                [loadingWrapper, frameWrapper, imageWrapper, messageWrapper].forEach(function (element) {
+                [loadingWrapper, frameWrapper, imageWrapper, messageWrapper, docxWrapper].forEach(function (element) {
                     if (!element) {
                         return;
                     }
@@ -120,6 +194,15 @@
                 if (frameTimeout) {
                     clearTimeout(frameTimeout);
                     frameTimeout = null;
+                }
+
+                if (docxAbortController) {
+                    docxAbortController.abort();
+                    docxAbortController = null;
+                }
+
+                if (docxWrapper) {
+                    docxWrapper.innerHTML = '';
                 }
             }
 
@@ -185,13 +268,12 @@
                 imageWrapper.classList.remove('d-none');
             }
 
-            function showFrame(src, fallbackMessage) {
+            function showFrame(src, fallbackMessage, options = {}) {
                 if (!iframeEl || !frameWrapper) {
                     showMessage(fallbackMessage);
                     return;
                 }
 
-                hideLoading();
                 showLoading();
 
                 const handleLoad = function () {
@@ -203,9 +285,14 @@
                 iframeEl.removeAttribute('data-loaded');
                 iframeEl.addEventListener('load', handleLoad, { once: true });
 
-                frameTimeout = window.setTimeout(function () {
-                    showMessage(fallbackMessage);
-                }, 12000);
+                const timeout = typeof options.timeout === 'number' ? options.timeout : 12000;
+
+                if (timeout > 0) {
+                    frameTimeout = window.setTimeout(function () {
+                        frameTimeout = null;
+                        showMessage(fallbackMessage);
+                    }, timeout);
+                }
 
                 iframeEl.src = src;
                 frameWrapper.classList.remove('d-none');
@@ -221,19 +308,68 @@
             }
 
             function openOfficePreview(url) {
-                const officeUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url);
-                showFrame(officeUrl, 'Pratinjau dokumen tidak dapat dimuat. Silakan unduh file.');
+                const officeUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(url) + '&ui=en-US&rs=EN-US';
+                showFrame(officeUrl, 'Pratinjau dokumen tidak dapat dimuat. Silakan unduh file.', { timeout: 20000 });
                 modalInstance.show();
             }
 
             function openPdfFallback(url) {
-                const viewerUrl = 'https://mozilla.github.io/pdf.js/web/viewer.html?file=' + encodeURIComponent(url);
-                showFrame(viewerUrl, 'Pratinjau PDF tidak tersedia. Silakan gunakan tombol unduh.');
+                showFrame(url, 'Pratinjau PDF tidak tersedia. Silakan gunakan tombol unduh.', { timeout: 15000 });
 
                 if (flipbookButton) {
                     flipbookButton.classList.remove('d-none');
                     flipbookButton.setAttribute('data-file-url', url);
                 }
+
+                modalInstance.show();
+            }
+
+            function openDocxPreview(url) {
+                if (!docxWrapper) {
+                    showMessage('Pratinjau dokumen tidak dapat dimuat. Silakan unduh file.');
+                    modalInstance.show();
+                    return;
+                }
+
+                docxWrapper.classList.add('d-none');
+                docxWrapper.innerHTML = '';
+
+                docxAbortController && docxAbortController.abort();
+                docxAbortController = new AbortController();
+
+                ensureDocxLibraries()
+                    .then(function () {
+                        return fetch(url, { credentials: 'include', signal: docxAbortController.signal });
+                    })
+                    .then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Gagal mengambil file DOCX');
+                        }
+
+                        return response.blob();
+                    })
+                    .then(function (blob) {
+                        docxWrapper.classList.remove('d-none');
+                        docxWrapper.innerHTML = '';
+
+                        return window.docx.renderAsync(blob, docxWrapper, null, {
+                            inWrapper: false,
+                            ignoreWidth: true,
+                            breakPages: true,
+                            className: 'docx-page',
+                        });
+                    })
+                    .then(function () {
+                        hideLoading();
+                    })
+                    .catch(function (error) {
+                        if (error && error.name === 'AbortError') {
+                            return;
+                        }
+
+                        console.error('Pratinjau DOCX gagal dimuat:', error);
+                        showMessage('Pratinjau dokumen tidak dapat dimuat. Silakan unduh file.');
+                    });
 
                 modalInstance.show();
             }
@@ -268,7 +404,7 @@
                 }
 
                 if (officeExtensions.includes(normalizedExtension)) {
-                    openOfficePreview(resolvedUrl);
+                    openDocxPreview(resolvedUrl);
                     return;
                 }
 

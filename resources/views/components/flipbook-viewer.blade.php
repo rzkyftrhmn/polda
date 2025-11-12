@@ -72,7 +72,6 @@
 
                     script = document.createElement('script');
                     script.src = src;
-                    script.defer = true;
                     script.setAttribute('data-dynamic-src', src);
                     script.addEventListener('load', function () {
                         script.setAttribute('data-loaded', 'true');
