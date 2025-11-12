@@ -25,9 +25,6 @@ use App\Http\Controllers\ReportController;
 */
 
 Auth::routes();
-
-Route::middleware(['auth'])->group(function () {
-
 Route::middleware(['auth'])->group(function () {
         // dashboard routes
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
@@ -74,5 +71,5 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
 
-    }
-);
+
+    });
