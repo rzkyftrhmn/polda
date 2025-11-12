@@ -26,6 +26,10 @@ WORKDIR /var/www/html
 # Copy entire application code first
 COPY . .
 
+# Pastikan folder storage dan bootstrap/cache ada
+RUN mkdir -p storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
+
 # Copy composer files first to cache dependency layer
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --ignore-platform-reqs
