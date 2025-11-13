@@ -1,23 +1,24 @@
 <?php
 namespace App\Providers;
 
-use App\Interfaces\DivisionRepositoryInterface;
-use App\Repositories\UserRepository;
-use App\Repositories\InstitutionRepository;
+use Illuminate\Support\Facades\URL;
 use App\Repositories\RoleRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\ProfileRepository;
 use Illuminate\Support\ServiceProvider;
+use App\Repositories\DivisionRepository;
+use App\Repositories\PelaporanRepository;
 use App\Repositories\PermissionRepository;
-use App\Interfaces\UserRepositoryInterface;
 use App\Interfaces\RoleRepositoryInterface;
+use App\Interfaces\UserRepositoryInterface;
+use App\Repositories\InstitutionRepository;
+use App\Repositories\SubDivisionRepository;
+use App\Interfaces\ProfileRepositoryInterface;
+use App\Interfaces\DivisionRepositoryInterface;
+use App\Interfaces\PelaporanRepositoryInterface;
 use App\Interfaces\PermissionRepositoryInterface;
 use App\Interfaces\InstitutionRepositoryInterface;
-use App\Interfaces\ProfileRepositoryInterface;
 use App\Interfaces\SubDivisionRepositoryInterface;
-use App\Interfaces\PelaporanRepositoryInterface;
-use App\Repositories\DivisionRepository;
-use App\Repositories\ProfileRepository;
-use App\Repositories\SubDivisionRepository;
-use App\Repositories\PelaporanRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +42,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $appUrl = config('app.url');
+
+        if (is_string($appUrl) && parse_url($appUrl, PHP_URL_SCHEME) === 'https') {
+            URL::forceScheme('https');
+        }
     }
 }
