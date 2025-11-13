@@ -9,9 +9,6 @@
 <script src="{{ asset('dashboard/vendor/global/global.min.js') }}"></script>
 <script src="{{ asset('dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
 
-<!-- Apex Chart -->
-<script src="{{ asset('dashboard/vendor/apexchart/apexchart.js') }}"></script>
-<script src="{{ asset('dashboard/vendor/chart-js/chart.bundle.min.js') }}"></script>
 
 <!-- counter -->
 <script src="{{ asset('dashboard/vendor/counter/counter.min.js') }}"></script>
@@ -28,7 +25,6 @@
 <script src="{{ asset('dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
 
 <!-- Dashboard 1 -->
-<script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script>
 <script src="{{ asset('dashboard/js/custom.min.js') }}"></script>
 <script src="{{ asset('dashboard/js/dlabnav-init.js') }}"></script>
 <!-- SweetAlert2 -->
