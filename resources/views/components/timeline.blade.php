@@ -1,193 +1,182 @@
-@props(['items'])
-
-@php
-    $isPaginator = $items instanceof \Illuminate\Pagination\AbstractPaginator;
-    $collection = $isPaginator ? $items->getCollection() : collect($items);
-@endphp
-
 @once
-    @push('styles')
-        <style>
-            .journey-timeline {
-                position: relative;
-                padding-left: 1.5rem;
-            }
+<style>
+/* ======== Timeline Container ======== */
+.timeline {
+  position: relative;
+  padding: 2rem 0;
+}
 
-            .journey-timeline::before {
-                content: '';
-                position: absolute;
-                inset: 0 auto 0 0.65rem;
-                width: 3px;
-                background: linear-gradient(180deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0));
-            }
+/* Vertical line */
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3px;
+  background-color: var(--bs-border-color);
+  transform: translateX(-50%);
+  transition: background-color .3s ease;
+}
 
-            .journey-timeline-item {
-                position: relative;
-                display: flex;
-                gap: 1.25rem;
-                padding-bottom: 1.5rem;
-            }
+/* Timeline block */
+.timeline-item {
+  position: relative;
+  margin-bottom: 3rem;
+}
 
-            .journey-timeline-item:last-child {
-                padding-bottom: 0;
-            }
+/* Dots */
+.timeline-dot {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background-color: var(--bs-primary);
+  border: 3px solid var(--bs-body-bg);
+  border-radius: 50%;
+  z-index: 2;
+  box-shadow: 0 0 0 2px var(--bs-border-color);
+}
 
-            .journey-timeline-marker {
-                position: relative;
-                flex: 0 0 auto;
-                width: 6rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
+/* Card styling */
+.timeline-card {
+  position: relative;
+  width: 46%;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border: none;
+  border-radius: .5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: all .3s ease;
+  padding: 1.25rem;
+}
 
-            .journey-timeline-marker::after {
-                content: '';
-                position: absolute;
-                top: 12px;
-                right: -1.4rem;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background-color: #2563eb;
-                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-            }
+.timeline-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
 
-            .journey-timeline-card {
-                position: relative;
-                flex: 1 1 auto;
-                background-color: rgba(255, 255, 255, 0.95);
-                border-radius: 1rem;
-                border: 1px solid rgba(15, 23, 42, 0.06);
-                box-shadow: 0 18px 30px rgba(15, 23, 42, 0.08);
-                padding: 1.35rem 1.75rem;
-            }
+/* Odd-even positioning (alternate sides) */
+.timeline-item:nth-child(odd) .timeline-card {
+  float: left;
+  clear: both;
+  transform-origin: right center;
+}
+.timeline-item:nth-child(even) .timeline-card {
+  float: right;
+  clear: both;
+  transform-origin: left center;
+}
 
-            body.dark-version .journey-timeline-card,
-            body[data-bs-theme="dark"] .journey-timeline-card {
-                background-color: rgba(15, 23, 42, 0.75);
-                border-color: rgba(148, 163, 184, 0.12);
-                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
-            }
+/* Connector arrows */
+.timeline-item:nth-child(odd) .timeline-card::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  right: -10px;
+  border-width: 8px 0 8px 10px;
+  border-style: solid;
+  border-color: transparent transparent transparent var(--bs-body-bg);
+}
+.timeline-item:nth-child(even) .timeline-card::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: -10px;
+  border-width: 8px 10px 8px 0;
+  border-style: solid;
+  border-color: transparent var(--bs-body-bg) transparent transparent;
+}
 
-            .journey-timeline-card h6 {
-                font-size: 0.95rem;
-                letter-spacing: 0.03em;
-                text-transform: uppercase;
-                color: var(--bs-primary);
-            }
+/* Animations (appear on scroll) */
+.timeline-item.visible .timeline-card {
+  opacity: 1;
+  transform: none;
+}
+.timeline-item .timeline-card {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity .5s ease, transform .5s ease;
+}
 
-            .journey-evidence-list .list-group-item {
-                background: transparent;
-                border-color: rgba(148, 163, 184, 0.2);
-            }
+/* Responsive: line left + all boxes right */
+@media (max-width: 768px) {
+  .timeline::before {
+    left: 12px;
+    transform: none;
+  }
+  .timeline-dot {
+    left: 12px;
+    transform: none;
+  }
+  .timeline-card {
+    width: calc(100% - 40px);
+    margin-left: 32px;
+    float: none !important;
+  }
+  .timeline-item .timeline-card::before {
+    left: -10px;
+    right: auto;
+    border-width: 8px 10px 8px 0;
+    border-color: transparent var(--bs-body-bg) transparent transparent;
+  }
+}
 
-            .journey-evidence-list .btn {
-                white-space: nowrap;
-            }
-
-            .journey-limpah-pill {
-                background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(37, 99, 235, 0.05));
-                border-radius: 0.85rem;
-                padding: 0.85rem 1rem;
-            }
-
-            body.dark-version .journey-limpah-pill,
-            body[data-bs-theme="dark"] .journey-limpah-pill {
-                background: rgba(37, 99, 235, 0.25);
-            }
-
-            @media (max-width: 767.98px) {
-                .journey-timeline {
-                    padding-left: 1rem;
-                }
-
-                .journey-timeline::before {
-                    left: 0.5rem;
-                }
-
-                .journey-timeline-marker {
-                    width: 4.5rem;
-                }
-
-                .journey-timeline-card {
-                    padding: 1.1rem 1.25rem;
-                }
-            }
-        </style>
-    @endpush
+/* Dark theme fix */
+body[data-bs-theme="dark"] .timeline::before {
+  background-color: rgba(255,255,255,0.2);
+}
+body[data-bs-theme="dark"] .timeline-dot {
+  border-color: #0d1117;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.1);
+}
+</style>
 @endonce
 
-<div class="journey-timeline">
-    @forelse($collection as $item)
-        @php
-            $targetInstitution = $item->target_institution ?? null;
-            $targetDivision = $item->target_division ?? null;
-        @endphp
-        <article class="journey-timeline-item">
-            <div class="journey-timeline-marker">
-                <span class="badge {{ $item->badge_class ?? 'bg-secondary' }} text-uppercase small fw-semibold">
-                    {{ $item->type_label ?? $item->type }}
-                </span>
-                <small class="text-muted mt-2">
-                    {{ optional($item->created_at)->format('d M Y H:i') }}
-                </small>
-            </div>
-            <div class="journey-timeline-card">
-                <p class="mb-3">{!! nl2br(e($item->description)) !!}</p>
+@once
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.2 });
 
-                @if($targetInstitution || $targetDivision)
-                    <div class="journey-limpah-pill mb-3">
-                        <div class="d-flex align-items-start gap-2">
-                            <i class="fa fa-share-square text-primary mt-1"></i>
-                            <div>
-                                <div class="fw-semibold text-primary text-uppercase small">Limpah</div>
-                                @if($targetInstitution)
-                                    <div class="text-body-secondary">{{ $targetInstitution->name }}</div>
-                                @endif
-                                @if($targetDivision)
-                                    <div class="text-body-secondary">Unit/Sub-bagian: {{ $targetDivision->name }}</div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endif
+  document.querySelectorAll('.timeline-item').forEach(item => observer.observe(item));
+});
+</script>
+@endonce
 
-                @if($item->evidences->isNotEmpty())
-                    <div>
-                        <h6 class="fw-semibold mb-2">Bukti Pendukung</h6>
-                        <ul class="list-group list-group-flush journey-evidence-list">
-                            @foreach($item->evidences as $evidence)
-                                <li class="list-group-item px-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                                    <span class="small text-break">
-                                        <i class="fa fa-paperclip me-2 text-primary"></i>{{ basename($evidence->file_url) }}
-                                    </span>
-                                    <div class="d-flex gap-2">
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-primary btn-preview-file"
-                                            data-file-url="{{ $evidence->file_url }}"
-                                            data-file-type="{{ strtolower($evidence->file_type ?? '') }}"
-                                            data-file-name="{{ basename($evidence->file_url) }}"
-                                        >
-                                            <i class="fa fa-eye me-1"></i> Lihat File
-                                        </button>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-            </div>
-        </article>
-    @empty
-        <div class="alert alert-info mb-0">Belum ada tahapan penanganan untuk laporan ini.</div>
-    @endforelse
-</div>
+<!-- ======== Timeline Markup ======== -->
+<div class="timeline">
+  @forelse($journeys as $j)
+  <div class="timeline-item">
+    <div class="timeline-dot"></div>
+    <div class="timeline-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0 fw-semibold text-primary">{{ $j->type_label }}</h6>
+        <small class="text-muted">{{ $j->created_at->format('d M Y H:i') }}</small>
+      </div>
+      <p class="mb-2">{{ $j->description }}</p>
 
-@if($isPaginator && $items->hasPages())
-    <div class="d-flex justify-content-center mt-4">
-        {{ $items->links('pagination::bootstrap-5') }}
+      @if(!empty($j->files))
+        <div class="d-flex flex-wrap gap-2">
+          @foreach($j->files as $f)
+          <button class="btn btn-sm btn-outline-primary btn-preview-file"
+                  data-file-url="{{ $f->url }}" data-file-type="{{ $f->ext }}">
+            <i class="fa fa-file me-1"></i> {{ $f->name }}
+          </button>
+          @endforeach
+        </div>
+      @endif
     </div>
-@endif
+  </div>
+  @empty
+  <div class="text-center text-muted py-5">
+    <i class="fa fa-inbox fa-2x mb-2"></i><br>
+    Belum ada tahapan laporan.
+  </div>
+  @endforelse
+</div>
