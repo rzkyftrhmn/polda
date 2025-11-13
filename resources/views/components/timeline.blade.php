@@ -10,72 +10,107 @@
         <style>
             .journey-timeline {
                 position: relative;
-                padding-left: 1.5rem;
+                padding: 2.5rem 0;
             }
 
             .journey-timeline::before {
                 content: '';
                 position: absolute;
-                inset: 0 auto 0 0.65rem;
-                width: 3px;
-                background: linear-gradient(180deg, rgba(59, 130, 246, 0.4), rgba(59, 130, 246, 0));
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 4px;
+                margin-left: -2px;
+                background: linear-gradient(180deg, rgba(99, 102, 241, 0.25), rgba(59, 130, 246, 0.08));
+            }
+
+            .journey-timeline::after {
+                content: '';
+                display: block;
+                clear: both;
             }
 
             .journey-timeline-item {
                 position: relative;
-                display: flex;
-                gap: 1.25rem;
-                padding-bottom: 1.5rem;
+                margin-bottom: 3rem;
+                min-height: 140px;
             }
 
             .journey-timeline-item:last-child {
-                padding-bottom: 0;
+                margin-bottom: 0;
             }
 
             .journey-timeline-marker {
-                position: relative;
-                flex: 0 0 auto;
-                width: 6rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
+                position: absolute;
+                top: 1.85rem;
+                left: 50%;
+                width: 20px;
+                height: 20px;
+                margin-left: -10px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #6366f1, #2563eb);
+                box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.2);
+                border: 2px solid #ffffff;
+                z-index: 2;
             }
 
-            .journey-timeline-marker::after {
-                content: '';
-                position: absolute;
-                top: 12px;
-                right: -1.4rem;
-                width: 16px;
-                height: 16px;
-                border-radius: 50%;
-                background-color: #2563eb;
-                box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            body.dark-version .journey-timeline-marker,
+            body[data-bs-theme="dark"] .journey-timeline-marker {
+                border-color: rgba(15, 23, 42, 0.95);
+                box-shadow: 0 0 0 6px rgba(165, 180, 252, 0.28);
             }
 
             .journey-timeline-card {
                 position: relative;
-                flex: 1 1 auto;
-                background-color: rgba(255, 255, 255, 0.95);
+                width: 46%;
+                float: left;
+                background: rgba(255, 255, 255, 0.92);
                 border-radius: 1rem;
-                border: 1px solid rgba(15, 23, 42, 0.06);
-                box-shadow: 0 18px 30px rgba(15, 23, 42, 0.08);
-                padding: 1.35rem 1.75rem;
+                border: 1px solid rgba(15, 23, 42, 0.08);
+                box-shadow: 0 25px 45px rgba(15, 23, 42, 0.12);
+                padding: 1.5rem 1.75rem;
             }
 
             body.dark-version .journey-timeline-card,
             body[data-bs-theme="dark"] .journey-timeline-card {
-                background-color: rgba(15, 23, 42, 0.75);
-                border-color: rgba(148, 163, 184, 0.12);
-                box-shadow: 0 18px 40px rgba(15, 23, 42, 0.55);
+                background: rgba(15, 23, 42, 0.78);
+                border-color: rgba(148, 163, 184, 0.18);
+                box-shadow: 0 25px 55px rgba(15, 23, 42, 0.65);
             }
 
-            .journey-timeline-card h6 {
-                font-size: 0.95rem;
-                letter-spacing: 0.03em;
-                text-transform: uppercase;
-                color: var(--bs-primary);
+            .journey-timeline-card::before {
+                content: '';
+                position: absolute;
+                top: 2rem;
+                right: -18px;
+                border-width: 10px 0 10px 18px;
+                border-style: solid;
+                border-color: transparent transparent transparent rgba(255, 255, 255, 0.92);
+            }
+
+            body.dark-version .journey-timeline-card::before,
+            body[data-bs-theme="dark"] .journey-timeline-card::before {
+                border-left-color: rgba(15, 23, 42, 0.78);
+            }
+
+            .journey-timeline-item.is-right .journey-timeline-card {
+                float: right;
+            }
+
+            .journey-timeline-item.is-right .journey-timeline-card::before {
+                left: -18px;
+                right: auto;
+                border-width: 10px 18px 10px 0;
+                border-color: transparent rgba(255, 255, 255, 0.92) transparent transparent;
+            }
+
+            body.dark-version .journey-timeline-item.is-right .journey-timeline-card::before,
+            body[data-bs-theme="dark"] .journey-timeline-item.is-right .journey-timeline-card::before {
+                border-right-color: rgba(15, 23, 42, 0.78);
+            }
+
+            .journey-timeline-meta .badge {
+                letter-spacing: 0.08em;
             }
 
             .journey-evidence-list .list-group-item {
@@ -98,21 +133,43 @@
                 background: rgba(37, 99, 235, 0.25);
             }
 
-            @media (max-width: 767.98px) {
-                .journey-timeline {
-                    padding-left: 1rem;
+            @media (max-width: 991.98px) {
+                .journey-timeline::before {
+                    left: 1.25rem;
+                    margin-left: -2px;
                 }
 
-                .journey-timeline::before {
-                    left: 0.5rem;
+                .journey-timeline-item {
+                    margin-bottom: 2.5rem;
+                }
+
+                .journey-timeline-card,
+                .journey-timeline-item.is-right .journey-timeline-card {
+                    width: calc(100% - 3rem);
+                    float: none;
+                    margin-left: 3rem;
+                }
+
+                .journey-timeline-card::before,
+                .journey-timeline-item.is-right .journey-timeline-card::before {
+                    top: 1.9rem;
+                    left: -18px;
+                    right: auto;
+                    border-width: 10px 18px 10px 0;
+                    border-color: transparent rgba(255, 255, 255, 0.92) transparent transparent;
+                }
+
+                body.dark-version .journey-timeline-card::before,
+                body[data-bs-theme="dark"] .journey-timeline-card::before,
+                body.dark-version .journey-timeline-item.is-right .journey-timeline-card::before,
+                body[data-bs-theme="dark"] .journey-timeline-item.is-right .journey-timeline-card::before {
+                    border-right-color: rgba(15, 23, 42, 0.78);
+                    border-left-color: transparent;
                 }
 
                 .journey-timeline-marker {
-                    width: 4.5rem;
-                }
-
-                .journey-timeline-card {
-                    padding: 1.1rem 1.25rem;
+                    left: 1.25rem;
+                    margin-left: -10px;
                 }
             }
         </style>
@@ -124,17 +181,22 @@
         @php
             $targetInstitution = $item->target_institution ?? null;
             $targetDivision = $item->target_division ?? null;
+            $isLeft = $loop->iteration % 2 === 1;
         @endphp
-        <article class="journey-timeline-item">
-            <div class="journey-timeline-marker">
-                <span class="badge {{ $item->badge_class ?? 'bg-secondary' }} text-uppercase small fw-semibold">
-                    {{ $item->type_label ?? $item->type }}
-                </span>
-                <small class="text-muted mt-2">
-                    {{ optional($item->created_at)->format('d M Y H:i') }}
-                </small>
-            </div>
+        <article class="journey-timeline-item {{ $isLeft ? 'is-left' : 'is-right' }}">
+            <div class="journey-timeline-marker" aria-hidden="true"></div>
+
             <div class="journey-timeline-card">
+                <div class="journey-timeline-meta d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <span class="badge {{ $item->badge_class ?? 'bg-secondary' }} text-uppercase small fw-semibold">
+                        {{ $item->type_label ?? $item->type }}
+                    </span>
+                    <span class="text-muted small d-inline-flex align-items-center gap-2">
+                        <i class="fa fa-clock text-primary"></i>
+                        {{ optional($item->created_at)->format('d M Y H:i') }}
+                    </span>
+                </div>
+
                 <p class="mb-3">{!! nl2br(e($item->description)) !!}</p>
 
                 @if($targetInstitution || $targetDivision)
