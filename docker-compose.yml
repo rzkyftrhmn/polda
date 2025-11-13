@@ -1,0 +1,37 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: polda-php:latest
+    container_name: polda-app
+    volumes:
+      # Jangan mount seluruh project, hanya folder yang perlu write access:
+      - /home/propam/apps/polda/storage:/var/www/html/storage
+      - /home/propam/apps/polda/bootstrap/cache:/var/www/html/bootstrap/cache
+      - /home/propam/apps/polda/.env:/var/www/html/.env
+    networks:
+      - polda_net
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: polda-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - /home/propam/apps/polda:/var/www/html
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - polda_net
+    restart: unless-stopped
+
+networks:
+  polda_net:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local

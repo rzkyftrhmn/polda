@@ -40,10 +40,10 @@
                             >
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-3">
+                        <button type="submit" class="btn btn-success mt-3">
                             {{ isset($editPermission) ? 'Update' : 'Simpan' }}
                         </button>
-                        <a href="{{ route('permissions.index') }}" class="btn btn-secondary mt-3">Kembali</a>
+                        <a href="{{ route('permissions.index') }}" class="btn btn-warning mt-3">Kembali</a>
                     </form>
                 </div>
             </div>

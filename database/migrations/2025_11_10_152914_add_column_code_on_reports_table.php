@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('photo')->nullable()->after('password');
+        Schema::table('reports', function (Blueprint $table) {
+            $table->string('code')->after('id')->unique(); // #RPT-1125001
+            $table->integer('finish_time')->after('description')->nullable();
         });
     }
 
@@ -21,8 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('photo');
-        });
+        //
     }
 };

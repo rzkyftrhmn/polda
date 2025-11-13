@@ -5,12 +5,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubDivisionController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ReportJourneyController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,8 +25,8 @@ use App\Http\Controllers\DivisionController;
 */
 
 Auth::routes();
-Route::middleware(['auth'])->group(
-    function () {
+
+Route::middleware(['auth'])->group(function () {
         // dashboard routes
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
 
@@ -48,19 +49,27 @@ Route::middleware(['auth'])->group(
 
         //intitution routes
         Route::get('institutions/datatables', [InstitutionController::class, 'datatables'])->name('institutions.datatables');
-        Route::resource('institutions',InstitutionController::class);
+        Route::resource('institutions', InstitutionController::class);
         
         //division and sub duvision routes
+        Route::resource('unit', SubDivisionController::class)->names('subdivisions');
         Route::get('subdivisions/datatables', [SubDivisionController::class, 'datatables'])
             ->name('subdivisions.datatables');
-        Route::resource('subdivisions', SubDivisionController::class)->except('show');
 
         // role routes
         Route::resource('roles', RoleController::class);
         Route::get('datatables/roles', [RoleController::class, 'datatables'])->name('datatables.roles');
 
         // divisi routes
-        Route::resource('divisions', DivisionController::class);
-        Route::get('datatables/division', [DivisionController::class, 'datatables'])->name('datatables.division');
+        Route::resource('sub-bagian', DivisionController::class)->names('divisions');
+
+        Route::get('datatables/sub-bagian', [DivisionController::class, 'datatables'])
+            ->name('datatables.division');
+
+        Route::get('/reports/{id}', [ReportController::class, 'show'])->name('reports.show');
+
+        Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
+            ->name('reports.journeys.store');
+
     }
 );
