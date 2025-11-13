@@ -93,9 +93,9 @@
         background-color: var(--bs-body-bg);
         border: 1px solid var(--bs-border-color);
         border-radius: 0.75rem;
-        box-shadow: 0 18px 40px rgba(var(--bs-body-color-rgb, 33, 37, 41), 0.08);
+        box-shadow: 0 18px 40px rgba(var(--bs-body-color-rgb, 15, 23, 42), 0.08);
         color: var(--bs-body-color);
-        width: calc(50% - 18px);
+        width: 45%;
         float: left;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
@@ -174,36 +174,30 @@
         letter-spacing: 0.05em;
     }
 
-    body[data-bs-theme="dark"] .cd-timeline-content,
-    [data-theme-version="dark"] .cd-timeline-content {
+    body[data-bs-theme="dark"] .cd-timeline-content {
         background-color: rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92);
         border-color: rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.16);
         box-shadow: 0 18px 40px rgba(0, 0, 0, 0.75);
     }
 
-    body[data-bs-theme="dark"] .cd-timeline-content::before,
-    [data-theme-version="dark"] .cd-timeline-content::before {
+    body[data-bs-theme="dark"] .cd-timeline-content::before {
         border-color: transparent transparent transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92);
     }
 
-    body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before,
-    [data-theme-version="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
+    body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
         border-color: transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92) transparent transparent;
     }
 
-    body[data-bs-theme="dark"] .cd-timeline-img,
-    [data-theme-version="dark"] .cd-timeline-img {
+    body[data-bs-theme="dark"] .cd-timeline-img {
         border-color: rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.95);
         box-shadow: 0 0 0 5px rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.1);
     }
 
-    body[data-bs-theme="dark"] .cd-timeline::before,
-    [data-theme-version="dark"] .cd-timeline::before {
+    body[data-bs-theme="dark"] .cd-timeline::before {
         background-color: rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.25);
     }
 
-    body[data-bs-theme="dark"] .cd-timeline-content .journey-limpah-pill,
-    [data-theme-version="dark"] .cd-timeline-content .journey-limpah-pill {
+    body[data-bs-theme="dark"] .cd-timeline-content .journey-limpah-pill {
         background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.35), rgba(var(--bs-primary-rgb), 0.18));
     }
 
@@ -271,7 +265,7 @@
         }
 
         .cd-timeline-content {
-            width: calc(50% - 18px);
+            width: 48%;
         }
     }
 
@@ -286,7 +280,7 @@
         }
 
         .cd-timeline::before {
-            left: 52px;
+            left: 22px;
             transform: none;
         }
 
@@ -295,7 +289,7 @@
         }
 
         .cd-timeline-img {
-            left: 52px;
+            left: 22px;
             transform: translate(-50%, 0);
             width: 36px;
             height: 36px;
@@ -318,20 +312,20 @@
         }
 
         body[data-bs-theme="dark"] .cd-timeline-content::before,
-        body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before,
-        [data-theme-version="dark"] .cd-timeline-content::before,
-        [data-theme-version="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
+        body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
             border-color: transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92) transparent transparent;
         }
     }
 
     @media (max-width: 575.98px) {
         .cd-timeline-content {
+            width: calc(100% - 60px);
+            margin-left: 60px;
             padding: 1.25rem 1.15rem;
         }
 
         .cd-timeline-img {
-            left: 52px;
+            left: 20px;
         }
     }
 </style>
@@ -351,7 +345,7 @@
             }
 
             const $blocks = $timeline.find('.cd-timeline-block');
-            const offset = 0.75;
+            const offset = 0.8;
 
             const hideBlocks = function(blocks, offsetValue) {
                 blocks.each(function() {
@@ -364,7 +358,6 @@
             };
 
             const showBlocks = function(blocks, offsetValue) {
-                let hasUpdated = false;
                 blocks.each(function() {
                     const $block = $(this);
                     if (
@@ -374,12 +367,8 @@
                         $block.find('.cd-timeline-img, .cd-timeline-content')
                             .removeClass('is-hidden')
                             .addClass('bounce-in');
-                        hasUpdated = true;
                     }
                 });
-                if (hasUpdated) {
-                    adjustTimelineHeight();
-                }
             };
 
             const adjustTimelineHeight = function() {
@@ -401,6 +390,7 @@
             };
 
             hideBlocks($blocks, offset);
+            showBlocks($blocks, offset);
             adjustTimelineHeight();
 
             $(window).on('scroll', function() {
@@ -412,8 +402,6 @@
             $(window).on('load resize orientationchange', function() {
                 adjustTimelineHeight();
             });
-
-            $(window).trigger('scroll');
         });
     })();
 </script>
