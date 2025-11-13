@@ -295,7 +295,14 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+@endsection
+
+@section('scripts')
+<!-- Apex Chart -->
+<script src="{{ asset('dashboard/vendor/apexchart/apexchart.js') }}"></script>
+<script src="{{ asset('dashboard/vendor/chart-js/chart.bundle.min.js') }}"></script>
+<!-- Dashboard 1 -->
+<script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script>
 <script>
     // Dummy data initializer for Dashboard KPIs, Charts, and Tables
     (function() {

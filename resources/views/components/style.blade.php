@@ -77,4 +77,21 @@
         top: 0;
     }
 
+    .brand-logo .logo-img {
+        height: 68px;
+        width: auto;
+    }
+
+    @media (max-width: 1023px) {
+        .brand-logo .logo-img {
+            height: 60px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .brand-logo .logo-img {
+            height: 50px;
+        }
+    }
+
 </style>
