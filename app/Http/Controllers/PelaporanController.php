@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReportJourneyType;
+use App\Models\Division;
+use App\Models\Institution;
 use App\Services\PelaporanService;
 use App\Repositories\PelaporanRepository;
 use Laravolt\Indonesia\Models\Province;
@@ -9,6 +12,7 @@ use Laravolt\Indonesia\Models\City;
 use Laravolt\Indonesia\Models\District;
 use App\Models\ReportCategory;
 use App\Models\Report;
+use App\Services\ReportJourneyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,7 +24,6 @@ class PelaporanController extends Controller
     {
         $this->repository = $repository;
         $this->service = $service;
-
         $this->feature_title = 'Pelaporan';
         $this->feature_name = 'Pelaporan';
         $this->feature_path = 'pelaporan';
@@ -229,6 +232,7 @@ class PelaporanController extends Controller
 
 
     /** Tampilkan detail laporan */
+   /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
         $report = $this->service->getById($id);
@@ -237,12 +241,14 @@ class PelaporanController extends Controller
         }
 
         return view('pages.pelaporan.show', [
-            'title' => 'Detail Laporan',
-            'report' => $report,
+            'report'       => $report,
+            'journeys'     => $journeys,
+            'journeyTypes' => $journeyTypes,
+            'institutions' => $institutions,
+            'divisions'    => $divisions,
+            'statusLabel'  => $statusLabel,
         ]);
     }
-
-
 
     /** Hapus laporan */
     public function destroy($id)

@@ -35,4 +35,9 @@ class Division extends Model
         return $this->hasMany(User::class);
     }
 
+    public function journeys()
+    {
+        return $this->hasMany(ReportJourney::class, 'institution_id');
+    }
+
 }

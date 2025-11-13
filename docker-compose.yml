@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: app
+    image: polda-php:latest
+    container_name: polda-app
+    volumes:
+      - laravel_storage:/var/www/html/storage
+    env_file:
+      - .env
+    networks:
+      - polda_net
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: nginx
+    container_name: polda-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - laravel_storage:/var/www/html/storage
+    depends_on:
+      - app
+    networks:
+      - polda_net
+    restart: unless-stopped
+
+networks:
+  polda_net:
+    driver: bridge
+
+volumes:
+  laravel_storage:
