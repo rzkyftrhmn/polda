@@ -376,29 +376,66 @@
             });
 
             // 2) Distribusi Status Laporan
-            var baru = {{ $baru }};
-            var diproses = {{ $diproses }};
-            var selesai = {{ $selesai }};
-            var options = {
-                chart: { type: 'donut', height: 280 },
-                series: [baru, diproses, selesai],
-                labels: ['Baru', 'Diproses', 'Selesai'],
-                colors: ['#60a5fa', '#f59e0b', '#10b981'],
-                legend: { position: 'bottom' },
-                dataLabels: { enabled: true }
-            };
-            render('chart_status_laporan', options);
+            $(document).ready(function() {
+                $.ajax({
+                    url: "{{ route('dashboard.statusSummary') }}", 
+                    method: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        var baru = data.baru;
+                        var diproses = data.diproses;
+                        var selesai = data.selesai;
+
+                        var options = {
+                            chart: { type: 'donut', height: 280 },
+                            series: [baru, diproses, selesai],
+                            labels: ['Baru', 'Diproses', 'Selesai'],
+                            colors: ['#60a5fa', '#f59e0b', '#10b981'],
+                            legend: { position: 'bottom' },
+                            dataLabels: { enabled: true }
+                        };
+
+                        if(window.ApexCharts) {
+                            var chart = new ApexCharts(document.querySelector("#chart_status_laporan"), options);
+                            chart.render();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Gagal mengambil data status:", err);
+                    }
+                });
+            });
+
 
             // 3) Top 5 Kategori Laporan
-            var kategoriLabels = ['Penipuan Online', 'Pencurian', 'Kekerasan', 'Korupsi', 'Narkoba'];
-            var kategoriCounts = [58, 36, 22, 18, 14];
-            render('chart_top_kategori', {
-                chart: { type: 'bar', height: 280, toolbar: { show: false } },
-                series: [{ name: 'Jumlah', data: kategoriCounts }],
-                xaxis: { categories: kategoriLabels },
-                plotOptions: { bar: { columnWidth: '45%', distributed: true } },
-                dataLabels: { enabled: false },
-                colors: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
+            $(document).ready(function() {
+                $.ajax({
+                    url: "{{ route('dashboard.topCategories') }}",
+                    method: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        // Ambil label dan data dari response JSON
+                        var kategoriLabels = data.map(item => item.category);
+                        var kategoriCounts = data.map(item => item.total);
+
+                        var options = {
+                            chart: { type: 'bar', height: 280, toolbar: { show: false } },
+                            series: [{ name: 'Jumlah', data: kategoriCounts }],
+                            xaxis: { categories: kategoriLabels },
+                            plotOptions: { bar: { columnWidth: '45%', distributed: true } },
+                            dataLabels: { enabled: false },
+                            colors: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
+                        };
+
+                        if(window.ApexCharts) {
+                            var chart = new ApexCharts(document.querySelector("#chart_top_kategori"), options);
+                            chart.render();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Gagal mengambil data top category:", err);
+                    }
+                });
             });
 
             // 4) Top Institusi berdasarkan jumlah laporan

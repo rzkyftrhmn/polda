@@ -231,15 +231,7 @@ class PelaporanController extends Controller
     /** Tampilkan detail laporan */
     public function show($id)
     {
-        $report = Report::with([
-            'province',
-            'city',
-            'district',
-            'reportCategory', 
-            'suspects',
-            'reportJourneys'
-        ])->find($id);
-
+        $report = $this->service->getById($id);
         if (!$report) {
             return redirect()->route('pelaporan.index')->with('error', 'Laporan tidak ditemukan.');
         }
