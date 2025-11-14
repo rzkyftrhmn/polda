@@ -18,12 +18,13 @@ use Illuminate\Support\Facades\Auth;
 
 class PelaporanController extends Controller
 {
-    protected $service, $repository, $feature_title, $feature_name, $feature_path, $user;
+    protected $service, $repository, $journeyService,$feature_title, $feature_name, $feature_path, $user;
 
-    public function __construct(PelaporanRepository $repository, PelaporanService $service)
+    public function __construct(PelaporanRepository $repository, PelaporanService $service,ReportJourneyService $journeyService)
     {
         $this->repository = $repository;
         $this->service = $service;
+        $this->journeyService = $journeyService;
         $this->feature_title = 'Pelaporan';
         $this->feature_name = 'Pelaporan';
         $this->feature_path = 'pelaporan';
@@ -235,18 +236,25 @@ class PelaporanController extends Controller
    /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
-        $report = $this->service->getById($id);
-        if (!$report) {
-            return redirect()->route('pelaporan.index')->with('error', 'Laporan tidak ditemukan.');
-        }
+        $report = Report::with(['category', 'province', 'city', 'district'])->findOrFail($id);
 
-        return view('pages.pelaporan.show', [
-            'report'       => $report,
-            'journeys'     => $journeys,
+        $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
+
+        $institutions = Institution::orderBy('name')->get(['id', 'name']);
+        $divisions = Division::with('parent')
+            ->whereNotNull('parent_id')
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'parent_id']);
+
+        $journeyTypes = ReportJourneyType::manualOptions();
+
+        return view('pages.reports.detail', [
+            'report' => $report,
+            'journeys' => $journeys,
             'journeyTypes' => $journeyTypes,
             'institutions' => $institutions,
-            'divisions'    => $divisions,
-            'statusLabel'  => $statusLabel,
+            'divisions' => $divisions,
+            'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
         ]);
     }
 
