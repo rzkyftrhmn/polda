@@ -40,4 +40,5 @@ class Division extends Model
         return $this->hasMany(ReportJourney::class, 'institution_id');
     }
 
+
 }

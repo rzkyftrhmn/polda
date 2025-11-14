@@ -29,7 +29,7 @@ class ReportController extends Controller
 
         $journeyTypes = ReportJourneyType::manualOptions();
 
-        return view('pages.reports.detail', [
+        return view('pages.laporan.show', [
             'report' => $report,
             'journeys' => $journeys,
             'journeyTypes' => $journeyTypes,

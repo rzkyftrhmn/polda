@@ -77,22 +77,60 @@ class ReportJourneyController extends Controller
                 ],
             ]);
 
-            // VALIDASI EXTRA: kalau LIMPAH, pastikan subdivision itu memang child
-            if (
-                in_array($validated['type'], $limpahValues, true)
-                && ($validated['subdivision_target_id'] ?? null)
-            ) {
-                $isValidSubdivision = Division::query()
-                    ->whereKey($validated['subdivision_target_id'])
-                    ->whereNotNull('parent_id')
-                    ->exists();
+            // Ambil journey terakhir untuk report ini
+            $lastJourney = $this->repository
+                ->paginateByReport($reportId, 1, 'desc')
+                ->first();
 
-                if (! $isValidSubdivision) {
-                    throw ValidationException::withMessages([
-                        'subdivision_target_id' => 'Unit/Sub-bagian tidak valid.',
-                    ]);
-                }
+            $currentType = ReportJourneyType::from($validated['type']);
+            $lastType    = $lastJourney ? ReportJourneyType::from($lastJourney->type) : null;
+
+            // Tentukan alurnya
+            $validFlow = match ($currentType) {
+
+                // PENYELIDIKAN boleh selama terakhir belum SELESAI
+                ReportJourneyType::INVESTIGATION =>
+                    $lastType !== ReportJourneyType::COMPLETED,
+
+                // LIMPAH cuma boleh kalau terakhir PENYELIDIKAN
+                ReportJourneyType::TRANSFER =>
+                    $lastType === ReportJourneyType::INVESTIGATION,
+
+                // SIDANG cuma boleh kalau terakhir LIMPAH
+                ReportJourneyType::TRIAL =>
+                    $lastType === ReportJourneyType::TRANSFER,
+
+                // SELESAI boleh dari mana saja asal belum SELESAI juga
+                ReportJourneyType::COMPLETED =>
+                    $lastType !== ReportJourneyType::COMPLETED,
+
+                default => false,
+            };
+
+            // Kalau flow tidak valid
+           if (! $validFlow) {
+
+                $msg = match ($currentType) {
+
+                    ReportJourneyType::TRANSFER =>
+                        'Tidak bisa LIMPAH karena status terakhir belum PENYELIDIKAN.',
+
+                    ReportJourneyType::TRIAL =>
+                        'Tidak bisa SIDANG karena status terakhir belum LIMPAH.',
+
+                    ReportJourneyType::INVESTIGATION =>
+                        'Tidak bisa PENYELIDIKAN jika laporan sudah SELESAI.',
+
+                    ReportJourneyType::COMPLETED =>
+                        'Laporan sudah SELESAI sebelumnya.',
+
+                    default =>
+                        'Urutan tahapan tidak valid.',
+                };
+
+                throw ValidationException::withMessages(['type' => $msg]);
             }
+
         } catch (ValidationException $exception) {
             return back()
                 ->withErrors($exception->errors())
@@ -132,6 +170,6 @@ class ReportJourneyController extends Controller
         return back()
             ->withInput()
             ->with('open_modal', 'journey')
-            ->with('error', $result['message'] ?? 'Gagal menambahkan tahapan penanganan.');
+            ->with('error', $result['message'] ?? 'Gagal menambahkan tahapan penanganan.....');
     }
 }

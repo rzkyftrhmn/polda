@@ -119,20 +119,28 @@ class ReportJourneyService
                     continue;
                 }
 
-                $storedPath = $file->store('evidences', 'public');
+                // Ambil nama asli, tapi bersihin
+                $original = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $file->getClientOriginalName());
+
+                // Biar unik
+                $filename = time() . '-' . $original;
+
+                // Simpan pake nama baru
+                $storedPath = $file->storeAs('evidences', $filename, 'public');
 
                 ReportEvidence::create([
                     'report_journey_id' => $journey->id,
                     'report_id' => $journey->report_id,
                     'file_url' => Storage::url($storedPath),
-                    'file_type' => strtolower((string) $file->getClientOriginalExtension()),
+                    'file_type' => strtolower($file->getClientOriginalExtension()),
                 ]);
             }
+
 
             $reportUpdate = ['status' => $type->value];
 
             if ($type === ReportJourneyType::COMPLETED) {
-                $reportUpdate['finish_time'] = now();
+                $reportUpdate['finish_time'] = now()->getTimestamp();
             }
 
             Report::whereKey($journey->report_id)->update($reportUpdate);
@@ -151,7 +159,7 @@ class ReportJourneyService
 
             return [
                 'status' => false,
-                'message' => 'Gagal menambahkan tahapan penanganan.',
+                'message' => 'Gagal menambahkan tahapan penanganan....',
             ];
         }
     }

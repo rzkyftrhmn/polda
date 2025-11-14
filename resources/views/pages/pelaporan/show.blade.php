@@ -14,12 +14,15 @@
 
                 <div class="card-body report-detail-body">
                     @php
+                        // dd($report);
                         $incidentAt   = $report->incident_datetime?->format('d M Y H:i');
                         $finishedAt   = $report->finish_time?->format('d M Y H:i');
                         $categoryName = $report->category?->name;
                         $provinceName = $report->province?->name;
                         $cityName     = $report->city?->name;
                         $districtName = $report->district?->name;
+                        $suspectName  = $report->suspects?->pluck('name')->join(', ');
+                        $description   = $report->suspects?->pluck('description')->join(', ');
                     @endphp
 
                     <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
@@ -38,7 +41,9 @@
 
                     @php
                         $metadata = [
-                            ['label' => 'Status (Database)', 'value' => $report->status ?? '-'],
+                            ['label' => 'Nama Terlapor', 'value' => $suspectName ?? '-'],
+                            ['label' => 'Deskripsi Terlapor', 'value' => $description ?? '-'],
+                            ['label' => 'Status', 'value' => $report->status ?? '-'],
                             ['label' => 'Provinsi', 'value' => $provinceName ?? '-'],
                             ['label' => 'Waktu Kejadian', 'value' => $incidentAt ?? '-'],
                             ['label' => 'Kota/Kabupaten', 'value' => $cityName ?? '-'],
@@ -117,11 +122,12 @@
                             <select name="subdivision_target_id" id="subdivision-target" class="form-select">
                                 <option value="">-- Pilih Unit/Sub-bagian --</option>
                                 @foreach($divisions as $division)
-                                    <option value="{{ $division->id }}" @selected((int) old('subdivision_target_id') === $division->id)>
+                                    <option value="{{ $division->id }}">
                                         {{ $division->parent ? $division->parent->name . ' - ' : '' }}{{ $division->name }}
                                     </option>
                                 @endforeach
                             </select>
+
                         </div>
 
                         <div class="col-12">
@@ -213,52 +219,36 @@
 @endpush
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/pdfobject@2.2.8/pdfobject.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        let openModal = @json(session('open_modal'));
-        const hasErrors = @json($errors->any());
-        const journeyModalEl = document.getElementById('journeyModal');
+document.addEventListener('DOMContentLoaded', () => {
 
-        if (!openModal && hasErrors) {
-            openModal = 'journey';
-        }
+    const modalEl = document.getElementById('journeyModal');
+    const openModal = @json(session('open_modal') ?? ($errors->any() ? 'journey' : null));
 
-        if (openModal === 'journey' && journeyModalEl) {
-            bootstrap.Modal.getOrCreateInstance(journeyModalEl).show();
-        }
+    if (openModal === 'journey' && modalEl) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
 
-        const typeSelect        = document.getElementById('journey-type');
-        const institutionField  = document.getElementById('limpah-institution-field');
-        const divisionField     = document.getElementById('limpah-division-field');
-        const limpahValues = [
-            '{{ \App\Enums\ReportJourneyType::TRANSFER->value }}',
-            '{{ \App\Enums\ReportJourneyType::TRANSFER->name }}',
-            '{{ \App\Enums\ReportJourneyType::TRANSFER->label() }}',
-            'TRANSFER'
-        ];
+    const typeSelect       = document.getElementById('journey-type');
+    const institutionField = document.getElementById('limpah-institution-field');
+    const divisionField    = document.getElementById('limpah-division-field');
 
-        const toggleLimpahFields = function () {
-            if (!typeSelect || !institutionField || !divisionField) return;
+    // NILAI LIMPAH BENAR SESUAI ENUM
+    const limpahValue = '{{ \App\Enums\ReportJourneyType::TRANSFER->value }}';
 
-            const selectedType = typeSelect.value;
-            const isLimpah     = limpahValues.includes(selectedType);
+    const toggle = () => {
+        const isLimpah = typeSelect.value === limpahValue;
 
-            institutionField.hidden = !isLimpah;
-            divisionField.hidden    = !isLimpah;
+        institutionField.hidden = !isLimpah;
+        divisionField.hidden    = !isLimpah;
 
-            const institutionSelect = institutionField.querySelector('select');
-            const divisionSelect    = divisionField.querySelector('select');
+        institutionField.querySelector('select').required = isLimpah;
+        divisionField.querySelector('select').required    = isLimpah;
+    };
 
-            if (institutionSelect) institutionSelect.required = isLimpah;
-            if (divisionSelect)    divisionSelect.required    = isLimpah;
-        };
-
-        if (typeSelect) {
-            typeSelect.addEventListener('change', toggleLimpahFields);
-        }
-
-        toggleLimpahFields();
-    });
+    typeSelect.addEventListener('change', toggle);
+    toggle();
+});
 </script>
+
 @endsection
