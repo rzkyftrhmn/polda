@@ -27,6 +27,11 @@ class ProfileService
         return $this->divisionRepo->getAllOrderedByName();
     }
 
+    public function getProfile(int $id)
+    {
+        return $this->repo->findById($id);
+    }
+
     public function updateProfile($id, array $data, ?UploadedFile $photo = null)
     {
         $user = $this->repo->findById($id);

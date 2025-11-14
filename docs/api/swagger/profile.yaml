@@ -1,0 +1,66 @@
+openapi: 3.0.3
+info:
+  title: Profile API
+  version: 1.0.0
+paths:
+  /api/v1/profile:
+    post:
+      summary: Get authenticated user's profile
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: Bearer JWT token (e.g., "Bearer eyJ...")
+          schema:
+            type: string
+            example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Profile retrieved successfully
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      roles:
+                        type: string
+                      username:
+                        type: string
+                      institution:
+                        type: string
+                      division:
+                        type: string
+                      url_image:
+                        type: string
+        '401':
+          description: Unauthorized or invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Token invalid
+                  errors:
+                    type: array
+                    items:
+                      type: string
