@@ -74,5 +74,39 @@ class DashboardController extends Controller
         return response()->json(['rate' => $rate]);
     }
 
-   
+    public function getAverage()
+    {
+        $avgFinish = $this->dashboardRepo->getAverage();
+
+        return view('dashboard.index', [
+            'avgFinish' => $avgFinish
+        ]);
+    }
+
+    public function getAvgResolution()
+    {
+        $avg = $this->dashboardRepo->getAverageResolutionTime();
+
+        return response()->json([
+            'avg_resolution_time' => $avg
+        ]);
+    }
+
+    public function recentReports()
+    {
+        return response()->json(
+            $this->dashboardRepo->getRecentReports()
+        );
+    }
+
+    public function kpiWithEvidence()
+    {
+        $percent = $this->dashboardRepo->getPercentWithEvidenceSimple();
+
+        return response()->json([
+            'rate' => $percent
+        ]);
+    }
+
+
 }

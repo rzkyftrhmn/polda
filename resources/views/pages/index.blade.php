@@ -18,13 +18,6 @@
                                     <input type="date" class="form-control" id="filter_end_date" name="end_date">
                                 </div>
                                 <div class="col-sm-12 col-md-3">
-                                    <label class="form-label mb-0 d-block">Rentang Cepat</label>
-                                    <div class="btn-group" role="group" aria-label="Quick ranges">
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-range="today">Hari ini</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-range="7">7 hari</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-range="30">30 hari</button>
-                                        <button type="button" class="btn btn-outline-primary btn-sm" data-range="this_month">Bulan ini</button>
-                                    </div>
                                 </div>
                                 <div class="col-sm-12 col-md-3 text-md-end">
                                     <div class="d-flex gap-2 justify-content-md-end">
@@ -379,14 +372,24 @@
             }
         });
 
+        //Rata Rata waktu selesai
+        $.get('/dashboard/avg-resolution', function(data){
+            var txt = data.avg_resolution_time + ' hari';
+            setText('kpi_avg_resolution_time', txt);
+        });
+
+        //persentase dengan bukti
+        $.ajax({
+            url: "/dashboard/kpi-with-evidence",
+            method: "GET",
+            success: function(res) {
+                setText('kpi_with_evidence', res.rate);
+            }
+        });
+
+
         function renderKPIs() {
-            // Static dummy numbers (feel free to adjust)
             
-            var avgResolution = '3.8 hari';
-            var percentWithEvidence = 72; // percent
-            
-            setText('kpi_avg_resolution_time', avgResolution);
-            setText('kpi_with_evidence', numberFormat(percentWithEvidence));
         }
 
         function renderCharts() {
@@ -559,54 +562,61 @@
             initDummy();
         }
     })();
-</script>
-<script>
-// Dummy data untuk tabel Recent Report berbasis Model Report
-(function(){
-  const statuses = ['Baru','Diproses','Butuh Perbaikan','Selesai','Ditolak'];
-  const institutions = ['Polda A','Polda B','Polres X','Polsek Y','Kejati Z'];
-  const categories = ['Penipuan Online','Perjudian','Pencurian Data','Peretasan','Pemerasan'];
-  const reporters = ['Budi Santoso','Siti Aminah','Andi Wijaya','Rina Kurnia','Dedi Saputra'];
-  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function pad(n){ return String(n).padStart(2,'0'); }
-  function makeDate(offset){
-    const d = new Date(); d.setDate(d.getDate()-offset);
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  }
-  function makeReports(n){
-    const list = [];
-    for(let i=0;i<n;i++){
-      const codeNum = 1200 + i + 1;
-      list.push({
-        id: `#RPT-${codeNum}`,
-        tanggal: makeDate(i*2),
-        pelapor: rand(reporters),
-        institusi: rand(institutions),
-        kategori: rand(categories),
-        status: rand(statuses)
-      });
-    }
-    return list;
-  }
-  function statusBadgeClass(status){
-    switch(status){
-      case 'Baru': return 'badge-primary';
-      case 'Diproses': return 'badge-warning';
-      case 'Butuh Perbaikan': return 'badge-info';
-      case 'Selesai': return 'badge-success';
-      case 'Ditolak': return 'badge-danger';
-      default: return 'badge-light';
-    }
-  }
-  function fillTable(tableId, reports){
-    const tbody = document.querySelector(`#${tableId} tbody`);
-    if(!tbody) return;
-    tbody.innerHTML = reports.map((r,i)=>`\n      <tr>\n        <td>${i+1}</td>\n        <td>${r.id}</td>\n        <td>${new Date(r.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})}</td>\n        <td>${r.pelapor}</td>\n        <td>${r.institusi}</td>\n        <td>${r.kategori}</td>\n        <td class=\"text-end\"><div class=\"badge badge-sm ${statusBadgeClass(r.status)}\">${r.status.toUpperCase()}</div></td>\n      </tr>\n    `).join('');
-  }
-  const all = makeReports(12);
-  fillTable('table_recent_week', all.slice(0,6));
-  fillTable('table_recent_month', all.slice(0,10));
-  fillTable('table_recent_year', all);
-})();
+    $(document).ready(function () {
+        function statusBadgeClass(status){
+            switch(status){
+                case 'SUBMITTED': return 'badge-primary';
+                case 'PEMERIKSAAN': return 'badge-warning';
+                case 'LIMPAH': return 'badge-info';
+                case 'SIDANG': return 'badge-info';
+                case 'SELESAI': return 'badge-success';
+                case 'DITOLAK': return 'badge-danger';
+                default: return 'badge-light';
+            }
+        }
+
+        // Isi tabel
+        function fillTable(tableId, data){
+            let tbody = $(`#${tableId} tbody`);
+            tbody.empty();
+
+            data.forEach((item, index) => {
+                tbody.append(`
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.code}</td>
+                        <td>${new Date(item.tanggal).toLocaleDateString('id-ID', {
+                            day: '2-digit', month: 'short', year: 'numeric'
+                        })}</td>
+                        <td>${item.pelapor}</td>
+                        <td>${item.institusi}</td>
+                        <td>${item.kategori}</td>
+                        <td class="text-end">
+                            <span class="badge badge-sm ${statusBadgeClass(item.status)}">
+                                ${item.status.toUpperCase()}
+                            </span>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        $.ajax({
+            url: "/dashboard/recent-reports",
+            type: "GET",
+            dataType: "json",
+
+            success: function(response){
+                fillTable("table_recent_week", response.slice(0, 6));
+                fillTable("table_recent_month", response.slice(0, 10));
+                fillTable("table_recent_year", response);
+            },
+
+            error: function(xhr){
+                console.error("Gagal load recent report:", xhr.responseText);
+            }
+        });
+
+    });
 </script>
 @endsection

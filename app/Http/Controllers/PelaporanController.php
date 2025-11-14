@@ -183,7 +183,9 @@ class PelaporanController extends Controller
             return back()->with('error', 'Gagal membuat laporan')->withInput();
         }
 
-        return redirect()->route('pelaporan.index')->with('success', 'Laporan berhasil dibuat.');
+        return redirect()->route('pelaporan.show', $report->id)
+                 ->with('success', 'Laporan berhasil dibuat.');
+
     }
 
 
@@ -228,7 +230,8 @@ class PelaporanController extends Controller
             return back()->with('error', 'Gagal memperbarui laporan')->withInput();
         }
 
-        return redirect()->route('pelaporan.index')->with('success', 'Laporan berhasil diperbarui.');
+        return redirect()->route('pelaporan.show', $report->id)
+                 ->with('success', 'Laporan Berhasil Diupdate.');
     }
 
 
@@ -274,4 +277,6 @@ class PelaporanController extends Controller
             ? redirect()->route('pelaporan.index')->with('success', 'Laporan berhasil dihapus')
             : back()->with('error', 'Gagal menghapus laporan');
     }
+
+    
 }
