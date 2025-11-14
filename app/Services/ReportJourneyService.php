@@ -26,7 +26,7 @@ class ReportJourneyService
     {
         $paginator = $this->repository->paginateByReport($reportId, $perPage, $order);
 
-        $journeys = $paginator->getCollection();
+        $journeys = collect($paginator->items());
 
         $institutionIds = $journeys
             ->pluck('target_institution_id')
