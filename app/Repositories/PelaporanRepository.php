@@ -95,7 +95,7 @@ class PelaporanRepository
 
         return DB::transaction(function() use ($report) {
             $report->suspects()->delete();
-            $report->reportJourneys()->delete();
+            $report->journeys()->delete();
             return $report->delete();
         });
     }
