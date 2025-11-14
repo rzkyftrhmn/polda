@@ -8,6 +8,7 @@ use App\Repositories\ProfileRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\DivisionRepository;
 use App\Repositories\PelaporanRepository;
+use App\Repositories\AuthRepository;
 use App\Repositories\PermissionRepository;
 use App\Interfaces\RoleRepositoryInterface;
 use App\Interfaces\UserRepositoryInterface;
@@ -16,6 +17,7 @@ use App\Repositories\SubDivisionRepository;
 use App\Interfaces\ProfileRepositoryInterface;
 use App\Interfaces\DivisionRepositoryInterface;
 use App\Interfaces\PelaporanRepositoryInterface;
+use App\Interfaces\AuthRepositoryInterface;
 use App\Interfaces\PermissionRepositoryInterface;
 use App\Interfaces\InstitutionRepositoryInterface;
 use App\Interfaces\SubDivisionRepositoryInterface;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(DivisionRepositoryInterface::class, DivisionRepository::class);
         $this->app->bind(SubDivisionRepositoryInterface::class, SubDivisionRepository::class);
         $this->app->bind(PelaporanRepositoryInterface::class, PelaporanRepository::class);
+        $this->app->bind(AuthRepositoryInterface::class, AuthRepository::class);
     }
 
     /**

@@ -8,8 +8,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
@@ -78,4 +79,33 @@ class User extends Authenticatable
         return $this->belongsTo(Division::class);
     }
 
+    /**
+     * Map user data for login response.
+     */
+    public function toLoginPayload(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => optional($this->getRoleNames())->first(),
+            'url_image' => $this->photo_url,
+        ];
+    }
+
+    // JWTSubject implementation
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims(): array
+    {
+        return [
+            'name' => $this->name,
+            'email' => $this->email,
+            'role' => optional($this->getRoleNames())->first(),
+            'url_image' => $this->photo_url,
+        ];
+    }
 }

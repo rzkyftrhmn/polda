@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Logout API
+  version: 1.0.0
+paths:
+  /api/v1/logout:
+    post:
+      summary: Logout by invalidating JWT token
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          description: Bearer JWT token (e.g., "Bearer eyJ...")
+          schema:
+            type: string
+            example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Logout successful
+                  data:
+                    nullable: true
+                    type: object
+                    example: null
+        '400':
+          description: Invalid token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Invalid token
+                  errors:
+                    type: array
+                    items:
+                      type: string

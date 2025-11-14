@@ -12,7 +12,9 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    // Trust all proxies (containerized / behind reverse proxy)
+    // Use with caution; for production set specific IPs if desired.
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.
