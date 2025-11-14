@@ -24,38 +24,68 @@ class ReportJourneyService
 
     public function paginateByReport(int $reportId, int $perPage = 5, string $order = 'desc'): LengthAwarePaginator
     {
-        $paginator = $this->repository->paginateByReport($reportId, $perPage, $order);
+        $raw = $this->repository->paginateByReport($reportId, $perPage, $order);
 
-        $journeys = $paginator->getCollection();
+        // FIX 1: Normalisasi ke paginator
+        if ($raw instanceof \Illuminate\Pagination\LengthAwarePaginator ||
+            $raw instanceof \Illuminate\Pagination\Paginator) {
 
-        $institutionIds = $journeys
-            ->pluck('target_institution_id')
-            ->filter()
-            ->unique()
-            ->values();
+            $paginator = $raw;
+            $journeys = collect($paginator->items());
 
-        $divisionIds = $journeys
-            ->pluck('target_division_id')
-            ->filter()
-            ->unique()
-            ->values();
+        } elseif ($raw instanceof \Illuminate\Support\Collection) {
+
+            // REPOSITORY RETURN COLLECTION (INI YANG TERJADI DI KASUS LU)
+            $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                $raw->forPage(1, $perPage),
+                $raw->count(),
+                $perPage,
+                1,
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
+            $journeys = $paginator->getCollection();
+
+        } else {
+            throw new \RuntimeException("paginateByReport must return paginator or collection");
+        }
+
+        // FIX 2: collect unique ids
+        $institutionIds = $journeys->pluck('target_institution_id')->filter()->unique();
+        $divisionIds    = $journeys->pluck('target_division_id')->filter()->unique();
 
         $institutions = Institution::whereIn('id', $institutionIds)->get()->keyBy('id');
-        $divisions = Division::whereIn('id', $divisionIds)->get()->keyBy('id');
+        $divisions    = Division::whereIn('id', $divisionIds)->get()->keyBy('id');
 
-        $journeys->transform(static function (ReportJourney $journey) use ($institutions, $divisions): ReportJourney {
+        // FIX 3: transform journeys
+        $journeys = $journeys->map(function ($journey) use ($institutions, $divisions) {
             $journey->target_institution = $journey->target_institution_id
-                ? $institutions->get($journey->target_institution_id)
+                ? $institutions[$journey->target_institution_id] ?? null
                 : null;
+
             $journey->target_division = $journey->target_division_id
-                ? $divisions->get($journey->target_division_id)
+                ? $divisions[$journey->target_division_id] ?? null
                 : null;
 
             return $journey;
         });
 
-        return $paginator->setCollection($journeys);
+        // FIX 4: assign back WITHOUT setCollection() kalau tidak ada
+        if (method_exists($paginator, 'setCollection')) {
+            $paginator->setCollection($journeys);
+        } else {
+            // bikin paginator baru (fallback)
+            $paginator = new LengthAwarePaginator(
+                $journeys,
+                $paginator->total(),
+                $paginator->perPage(),
+                $paginator->currentPage(),
+                ['path' => request()->url(), 'query' => request()->query()]
+            );
+        }
+
+        return $paginator;
     }
+
 
     public function store(array $data, array $files = []): array
     {
