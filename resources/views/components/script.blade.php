@@ -9,9 +9,6 @@
 <script src="{{ asset('dashboard/vendor/global/global.min.js') }}"></script>
 <script src="{{ asset('dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
 
-<!-- Apex Chart -->
-<script src="{{ asset('dashboard/vendor/apexchart/apexchart.js') }}"></script>
-<script src="{{ asset('dashboard/vendor/chart-js/chart.bundle.min.js') }}"></script>
 
 <!-- counter -->
 <script src="{{ asset('dashboard/vendor/counter/counter.min.js') }}"></script>
@@ -28,7 +25,6 @@
 <script src="{{ asset('dashboard/vendor/bootstrap-select/dist/js/bootstrap-select.min.js') }}"></script>
 
 <!-- Dashboard 1 -->
-<script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script>
 <script src="{{ asset('dashboard/js/custom.min.js') }}"></script>
 <script src="{{ asset('dashboard/js/dlabnav-init.js') }}"></script>
 <!-- SweetAlert2 -->
@@ -73,34 +69,7 @@
 
 @yield('scripts')
 
-<!-- Global SweetAlert flash message handler -->
-<script>
-    jQuery(function($){
-        @if(session('success'))
-            Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: '{{ session('success') }}'
-            });
-        @endif
-        @if(session('error'))
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: '{{ session('error') }}'
-            });
-        @endif
-        @if($errors->any())
-            Swal.fire({
-                icon: 'error',
-                title: 'Validasi Gagal',
-                text: '{{ $errors->first() }}'
-            });
-        @endif
-    });
-    // Catatan: Flash di atas akan jalan di semua halaman yang meng-include komponen script ini,
-    // termasuk halaman create & edit user.
-</script>
+@include('components.sweetalert')
 
 <script>
 jQuery(function($){

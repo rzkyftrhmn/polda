@@ -18,4 +18,10 @@ class Institution extends Model
         'name',
         'type',
     ];
+
+    public function journeys()
+    {
+        return $this->hasMany(ReportJourney::class, 'institution_id');
+    }
+
 }

@@ -295,7 +295,14 @@
         </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+@endsection
+
+@section('scripts')
+<!-- Apex Chart -->
+<script src="{{ asset('dashboard/vendor/apexchart/apexchart.js') }}"></script>
+<script src="{{ asset('dashboard/vendor/chart-js/chart.bundle.min.js') }}"></script>
+<!-- Dashboard 1 -->
+<script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script>
 <script>
     // Dummy data initializer for Dashboard KPIs, Charts, and Tables
     (function() {
@@ -320,21 +327,66 @@
             });
         }
 
+        //total laporan perbulan ini
+        $(document).ready(function () {
+            $.ajax({
+                url: "/dashboard/total-laporan",
+                method: "GET",
+                success: function (res) {
+                    $("#kpi_total_laporan").text(res.total);
+                },
+                error: function (err) {
+                    console.error("Gagal mengambil total laporan:", err);
+                }
+            });
+        });
+
+        //jumlah kategori berdasarkan status aktif
+        $(document).ready(function () {
+            $.ajax({
+                url: "/dashboard/top-category-active",
+                method: "GET",
+                success: function (res) {
+                    $("#kpi_top_category").text(res.category);
+                },
+                error: function (err) {
+                    console.error("Gagal mengambil kategori terbanyak:", err);
+                }
+            });
+        });
+
+        //jumlah laporan berdasarkan status aktif
+        $(document).ready(function () {
+            $.ajax({
+                url: "/dashboard/laporan-aktif",
+                method: "GET",
+                success: function (res) {
+                    setText('kpi_laporan_aktif', numberFormat(res.aktif));
+                },
+                error: function (err) {
+                    console.error("Gagal mengambil laporan aktif:", err);
+                }
+            });
+        });
+
+
+        //persentase laporan selesai
+        $.ajax({
+            url: "/dashboard/completion-rate",
+            method: "GET",
+            success: function(res) {
+                setText('kpi_completion_rate', res.rate);
+            }
+        });
+
         function renderKPIs() {
             // Static dummy numbers (feel free to adjust)
-            var totalLaporan = 128;
-            var laporanAktif = 47;
-            var completionRate = 63; // percent
+            
             var avgResolution = '3.8 hari';
             var percentWithEvidence = 72; // percent
-            var topCategory = 'Penipuan Online';
-
-            setText('kpi_total_laporan', numberFormat(totalLaporan));
-            setText('kpi_laporan_aktif', numberFormat(laporanAktif));
-            setText('kpi_completion_rate', numberFormat(completionRate));
+            
             setText('kpi_avg_resolution_time', avgResolution);
             setText('kpi_with_evidence', numberFormat(percentWithEvidence));
-            setText('kpi_top_category', topCategory);
         }
 
         function renderCharts() {
@@ -348,50 +400,119 @@
             }
 
             // 1) Tren Laporan (last 14 days)
-            var days = 14;
-            var labels = [];
-            var data = [];
-            for (var i = days - 1; i >= 0; i--) {
-                var d = new Date();
-                d.setDate(d.getDate() - i);
-                var dd = String(d.getDate()).padStart(2, '0');
-                var mm = String(d.getMonth() + 1).padStart(2, '0');
-                labels.push(dd + '-' + mm);
-                data.push(10 + Math.floor(Math.random() * 15)); // 10..24
-            }
-            render('chart_tren_laporan', {
-                chart: { type: 'line', height: 280, toolbar: { show: false } },
-                series: [{ name: 'Laporan', data: data }],
-                xaxis: { categories: labels },
-                stroke: { curve: 'smooth' },
-                dataLabels: { enabled: false },
-                colors: ['#3b82f6']
+            $(document).ready(function() {
+                $.ajax({
+                    url: "{{ route('dashboard.trendReports') }}",
+                    method: "GET",
+                    dataType: "json",
+                    success: function(res) {
+
+                        // Ambil 14 hari mundur dari hari ini
+                        var days = 14;
+                        var labels = [];
+                        var counts = [];
+
+                        for (var i = days - 1; i >= 0; i--) {
+
+                            var d = new Date();
+                            d.setDate(d.getDate() - i);
+
+                            var tanggal = d.toISOString().slice(0, 10); // format YYYY-MM-DD
+                            var tampil = String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0');
+
+                            labels.push(tampil);
+
+                            // cari apakah tanggal ini ada di response
+                            var found = res.find(item => item.date === tanggal);
+
+                            counts.push(found ? found.total : 0);
+                        }
+
+                        var options = {
+                            chart: { type: 'line', height: 280, toolbar: { show: false } },
+                            series: [{ name: 'Laporan', data: counts }],
+                            xaxis: { categories: labels },
+                            stroke: { curve: 'smooth' },
+                            dataLabels: { enabled: false },
+                            colors: ['#3b82f6']
+                        };
+
+                        if(window.ApexCharts){
+                            var chart = new ApexCharts(document.querySelector("#chart_tren_laporan"), options);
+                            chart.render();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Gagal memuat tren laporan:", err);
+                    }
+                });
+
             });
 
+
+
+
             // 2) Distribusi Status Laporan
-            var baru = {{ $baru }};
-            var diproses = {{ $diproses }};
-            var selesai = {{ $selesai }};
-            var options = {
-                chart: { type: 'donut', height: 280 },
-                series: [baru, diproses, selesai],
-                labels: ['Baru', 'Diproses', 'Selesai'],
-                colors: ['#60a5fa', '#f59e0b', '#10b981'],
-                legend: { position: 'bottom' },
-                dataLabels: { enabled: true }
-            };
-            render('chart_status_laporan', options);
+            $(document).ready(function() {
+                $.ajax({
+                    url: "{{ route('dashboard.statusSummary') }}", 
+                    method: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        var baru = data.baru;
+                        var diproses = data.diproses;
+                        var selesai = data.selesai;
+
+                        var options = {
+                            chart: { type: 'donut', height: 280 },
+                            series: [baru, diproses, selesai],
+                            labels: ['Baru', 'Diproses', 'Selesai'],
+                            colors: ['#60a5fa', '#f59e0b', '#10b981'],
+                            legend: { position: 'bottom' },
+                            dataLabels: { enabled: true }
+                        };
+
+                        if(window.ApexCharts) {
+                            var chart = new ApexCharts(document.querySelector("#chart_status_laporan"), options);
+                            chart.render();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Gagal mengambil data status:", err);
+                    }
+                });
+            });
+
 
             // 3) Top 5 Kategori Laporan
-            var kategoriLabels = ['Penipuan Online', 'Pencurian', 'Kekerasan', 'Korupsi', 'Narkoba'];
-            var kategoriCounts = [58, 36, 22, 18, 14];
-            render('chart_top_kategori', {
-                chart: { type: 'bar', height: 280, toolbar: { show: false } },
-                series: [{ name: 'Jumlah', data: kategoriCounts }],
-                xaxis: { categories: kategoriLabels },
-                plotOptions: { bar: { columnWidth: '45%', distributed: true } },
-                dataLabels: { enabled: false },
-                colors: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
+            $(document).ready(function() {
+                $.ajax({
+                    url: "{{ route('dashboard.topCategories') }}",
+                    method: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        // Ambil label dan data dari response JSON
+                        var kategoriLabels = data.map(item => item.category);
+                        var kategoriCounts = data.map(item => item.total);
+
+                        var options = {
+                            chart: { type: 'bar', height: 280, toolbar: { show: false } },
+                            series: [{ name: 'Jumlah', data: kategoriCounts }],
+                            xaxis: { categories: kategoriLabels },
+                            plotOptions: { bar: { columnWidth: '45%', distributed: true } },
+                            dataLabels: { enabled: false },
+                            colors: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
+                        };
+
+                        if(window.ApexCharts) {
+                            var chart = new ApexCharts(document.querySelector("#chart_top_kategori"), options);
+                            chart.render();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Gagal mengambil data top category:", err);
+                    }
+                });
             });
 
             // 4) Top Institusi berdasarkan jumlah laporan

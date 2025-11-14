@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReportJourneyType;
+use App\Models\Division;
+use App\Models\Institution;
 use App\Services\PelaporanService;
 use App\Repositories\PelaporanRepository;
 use Laravolt\Indonesia\Models\Province;
@@ -9,18 +12,19 @@ use Laravolt\Indonesia\Models\City;
 use Laravolt\Indonesia\Models\District;
 use App\Models\ReportCategory;
 use App\Models\Report;
+use App\Services\ReportJourneyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PelaporanController extends Controller
 {
-    protected $service, $repository, $feature_title, $feature_name, $feature_path, $user;
+    protected $service, $repository, $journeyService,$feature_title, $feature_name, $feature_path, $user;
 
-    public function __construct(PelaporanRepository $repository, PelaporanService $service)
+    public function __construct(PelaporanRepository $repository, PelaporanService $service,ReportJourneyService $journeyService)
     {
         $this->repository = $repository;
         $this->service = $service;
-
+        $this->journeyService = $journeyService;
         $this->feature_title = 'Pelaporan';
         $this->feature_name = 'Pelaporan';
         $this->feature_path = 'pelaporan';
@@ -229,28 +233,30 @@ class PelaporanController extends Controller
 
 
     /** Tampilkan detail laporan */
+   /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
-        $report = Report::with([
-            'province',
-            'city',
-            'district',
-            'reportCategory', 
-            'suspects',
-            'reportJourneys'
-        ])->find($id);
+        $report = Report::with(['category', 'province', 'city', 'district'])->findOrFail($id);
 
-        if (!$report) {
-            return redirect()->route('pelaporan.index')->with('error', 'Laporan tidak ditemukan.');
-        }
+        $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
 
-        return view('pages.pelaporan.show', [
-            'title' => 'Detail Laporan',
+        $institutions = Institution::orderBy('name')->get(['id', 'name']);
+        $divisions = Division::with('parent')
+            ->whereNotNull('parent_id')
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'parent_id']);
+
+        $journeyTypes = ReportJourneyType::manualOptions();
+
+        return view('pages.reports.detail', [
             'report' => $report,
+            'journeys' => $journeys,
+            'journeyTypes' => $journeyTypes,
+            'institutions' => $institutions,
+            'divisions' => $divisions,
+            'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
         ]);
     }
-
-
 
     /** Hapus laporan */
     public function destroy($id)

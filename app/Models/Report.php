@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\ReportJourneyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class Report extends Model
 {
     use HasFactory;
@@ -23,14 +25,34 @@ class Report extends Model
         'finish_time',
     ];
 
-    public function suspects()
+    protected $casts = [
+        'incident_datetime' => 'datetime',
+        'finish_time' => 'datetime',
+    ];
+
+    public function journeys(): HasMany
     {
-        return $this->hasMany(Suspect::class);
+        return $this->hasMany(ReportJourney::class, 'report_id');
     }
 
-    public function reportJourneys()
+    public function category(): BelongsTo
     {
-        return $this->hasMany(ReportJourney::class);
+        return $this->belongsTo(ReportCategory::class, 'category_id');
+    }
+
+    public function province(): BelongsTo
+    {
+        return $this->belongsTo(Province::class, 'province_id');
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function district(): BelongsTo
+    {
+        return $this->belongsTo(District::class, 'district_id');
     }
 
     public function reportCategory()
@@ -38,18 +60,24 @@ class Report extends Model
         return $this->belongsTo(ReportCategory::class, 'category_id');
     }
 
-    public function province()
+    public function suspects()
     {
-        return $this->belongsTo(Province::class, 'province_id');
+        return $this->hasMany(Suspect::class, 'report_id');
     }
 
-    public function city()
+    protected static function booted(): void
     {
-        return $this->belongsTo(City::class, 'city_id');
-    }
+        static::created(function (Report $report): void {
+            if ($report->journeys()->exists()) {
+                return;
+            }
 
-    public function district()
-    {
-        return $this->belongsTo(District::class, 'district_id');
+            $report->journeys()->create([
+                'type' => ReportJourneyType::SUBMITTED->value,
+                'description' => [
+                    'text' => 'Laporan diterima oleh sistem.',
+                ],
+            ]);
+        });
     }
 }

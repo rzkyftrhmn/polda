@@ -14,11 +14,11 @@
 
                 <div class="card-body report-detail-body">
                     @php
-                        $incidentAt   = $report->incident_datetime?->format('d M Y H:i');
-                        $finishedAt   = $report->finish_time?->format('d M Y H:i');
+                        $incidentAt = $report->incident_datetime?->format('d M Y H:i');
+                        $finishedAt = $report->finish_time?->format('d M Y H:i');
                         $categoryName = $report->category?->name;
                         $provinceName = $report->province?->name;
-                        $cityName     = $report->city?->name;
+                        $cityName = $report->city?->name;
                         $districtName = $report->district?->name;
                     @endphp
 
@@ -50,9 +50,7 @@
                     <div class="row g-3">
                         @foreach($metadata as $item)
                             <div class="col-md-6">
-                                <p class="mb-1">
-                                    <strong>{{ $item['label'] }}:</strong> {{ $item['value'] }}
-                                </p>
+                                <p class="mb-1"><strong>{{ $item['label'] }}:</strong> {{ $item['value'] }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -63,9 +61,7 @@
                     </div>
 
                     <hr>
-                    <h5 class="mt-4 mb-3">
-                        <i class="fa fa-route me-2"></i>Timeline Penanganan
-                    </h5>
+                    <h5 class="mt-4 mb-3"><i class="fa fa-route me-2"></i>Timeline Penanganan</h5>
 
                     @include('components.timeline', ['items' => $journeys])
 
@@ -93,9 +89,7 @@
                             <select name="type" id="journey-type" class="form-select" required>
                                 <option value="">-- Pilih Tahapan --</option>
                                 @foreach($journeyTypes as $type)
-                                    <option value="{{ $type->value }}" @selected(old('type') === $type->value)>
-                                        {{ $type->label() }}
-                                    </option>
+                                    <option value="{{ $type->value }}" @selected(old('type') === $type->value)>{{ $type->label() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -117,7 +111,17 @@
                             <select name="subdivision_target_id" id="subdivision-target" class="form-select">
                                 <option value="">-- Pilih Unit/Sub-bagian --</option>
                                 @foreach($divisions as $division)
-                                    <option value="{{ $division->id }}" @selected((int) old('subdivision_target_id') === $division->id)>
+                                    @php
+                                        $institutionKey = $division->institution_id
+                                            ?? $division->parent?->institution_id
+                                            ?? $division->parent_id;
+                                    @endphp
+                                    <option
+                                        value="{{ $division->id }}"
+                                        data-institution="{{ $institutionKey ?? '' }}"
+                                        data-parent="{{ $division->parent_id }}"
+                                        @selected((int) old('subdivision_target_id') === $division->id)
+                                    >
                                         {{ $division->parent ? $division->parent->name . ' - ' : '' }}{{ $division->name }}
                                     </option>
                                 @endforeach
@@ -146,9 +150,7 @@
                                 multiple
                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                             >
-                            <small class="text-muted">
-                                *Bisa unggah lebih dari satu file (foto, dokumen, atau bukti lainnya).
-                            </small>
+                            <small class="text-muted">*Bisa unggah lebih dari satu file (foto, dokumen, atau bukti lainnya).</small>
                         </div>
                     </div>
                 </div>
@@ -228,9 +230,11 @@
             bootstrap.Modal.getOrCreateInstance(journeyModalEl).show();
         }
 
-        const typeSelect        = document.getElementById('journey-type');
-        const institutionField  = document.getElementById('limpah-institution-field');
-        const divisionField     = document.getElementById('limpah-division-field');
+        const typeSelect = document.getElementById('journey-type');
+        const institutionField = document.getElementById('limpah-institution-field');
+        const divisionField = document.getElementById('limpah-division-field');
+        const divisionSelect = document.getElementById('subdivision-target');
+        const institutionSelect = document.getElementById('institution-target');
         const limpahValues = [
             '{{ \App\Enums\ReportJourneyType::TRANSFER->value }}',
             '{{ \App\Enums\ReportJourneyType::TRANSFER->name }}',
@@ -239,26 +243,78 @@
         ];
 
         const toggleLimpahFields = function () {
-            if (!typeSelect || !institutionField || !divisionField) return;
+            const selectedType = typeSelect ? typeSelect.value : '';
+            const isLimpah = limpahValues.includes(selectedType);
+            [institutionField, divisionField].forEach(function (field) {
+                if (!field) { return; }
+                field.hidden = !isLimpah;
+                Array.prototype.forEach.call(field.querySelectorAll('select'), function (select) {
+                    select.required = isLimpah;
+                });
+            });
+            if (!isLimpah) {
+                if (institutionSelect) {
+                    institutionSelect.value = '';
+                }
+                if (divisionSelect) {
+                    divisionSelect.value = '';
+                    divisionSelect.disabled = true;
+                }
+            }
+            updateSubdivisionState();
+        };
 
-            const selectedType = typeSelect.value;
-            const isLimpah     = limpahValues.includes(selectedType);
+        const filterDivisions = function () {
+            if (!divisionSelect || !institutionSelect) {
+                return;
+            }
 
-            institutionField.hidden = !isLimpah;
-            divisionField.hidden    = !isLimpah;
+            const selectedInstitution = institutionSelect.value;
+            Array.prototype.forEach.call(divisionSelect.options, function (option) {
+                if (!option.dataset.institution) {
+                    option.hidden = false;
+                    return;
+                }
 
-            const institutionSelect = institutionField.querySelector('select');
-            const divisionSelect    = divisionField.querySelector('select');
+                option.hidden = selectedInstitution && option.dataset.institution !== selectedInstitution;
+            });
 
-            if (institutionSelect) institutionSelect.required = isLimpah;
-            if (divisionSelect)    divisionSelect.required    = isLimpah;
+            if (divisionSelect.selectedOptions.length && divisionSelect.selectedOptions[0].hidden) {
+                divisionSelect.value = '';
+            }
+
+            updateSubdivisionState();
+        };
+
+        const updateSubdivisionState = function () {
+            if (!divisionSelect) {
+                return;
+            }
+
+            const isLimpah = typeSelect && limpahValues.includes(typeSelect.value);
+            const hasInstitution = institutionSelect && institutionSelect.value;
+            const shouldEnable = isLimpah && hasInstitution;
+
+            divisionSelect.disabled = !shouldEnable;
+            divisionSelect.classList.toggle('bg-body-tertiary', !shouldEnable);
         };
 
         if (typeSelect) {
-            typeSelect.addEventListener('change', toggleLimpahFields);
+            typeSelect.addEventListener('change', function () {
+                toggleLimpahFields();
+                filterDivisions();
+            });
+        }
+
+        if (institutionSelect) {
+            institutionSelect.addEventListener('change', filterDivisions);
         }
 
         toggleLimpahFields();
+        filterDivisions();
+        updateSubdivisionState();
+
     });
 </script>
 @endsection
+    

@@ -9,8 +9,10 @@ use App\Http\Controllers\InstitutionController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubDivisionController;
-use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ReportJourneyController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PelaporanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,8 +26,8 @@ use App\Http\Controllers\DivisionController;
 */
 
 Auth::routes();
-Route::middleware(['auth'])->group(
-    function () {
+
+Route::middleware(['auth'])->group(function () {
         // dashboard routes
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard.index');
 
@@ -48,20 +50,21 @@ Route::middleware(['auth'])->group(
 
         //intitution routes
         Route::get('institutions/datatables', [InstitutionController::class, 'datatables'])->name('institutions.datatables');
-        Route::resource('institutions',InstitutionController::class);
+        Route::resource('institutions', InstitutionController::class);
         
         //division and sub duvision routes
         Route::resource('unit', SubDivisionController::class)->names('subdivisions');
         Route::get('subdivisions/datatables', [SubDivisionController::class, 'datatables'])
             ->name('subdivisions.datatables');
-        
+        Route::resource('subdivisions', SubDivisionController::class)->except('show');
 
         // role routes
         Route::resource('roles', RoleController::class);
         Route::get('datatables/roles', [RoleController::class, 'datatables'])->name('datatables.roles');
 
-        // Ubah resource route
+        // divisi routes
         Route::resource('sub-bagian', DivisionController::class)->names('divisions');
+
         Route::get('datatables/sub-bagian', [DivisionController::class, 'datatables'])
             ->name('datatables.division');
 
@@ -70,6 +73,18 @@ Route::middleware(['auth'])->group(
         Route::get('datatables/pelaporan', [PelaporanController::class, 'datatables'])->name('datatables.pelaporan');
         Route::get('get-cities/{provinceId}', [PelaporanController::class, 'getCitiesByProvince']);
         Route::get('get-districts/{cityId}', [PelaporanController::class, 'getDistrictsByCity']);
-    
+        
+        //pemanggilan data dashboard
+        Route::get('/dashboard/status-summary', [DashboardController::class, 'statusSummary'])->name('dashboard.statusSummary');
+        Route::get('/dashboard/top-categories', [DashboardController::class, 'topCategories'])->name('dashboard.topCategories');
+        Route::get('/dashboard/trend-reports', [DashboardController::class, 'getTrendReports'])->name('dashboard.trendReports');
+        Route::get('/dashboard/total-laporan', [DashboardController::class, 'getTotalReports']);
+        Route::get('/dashboard/top-category-active', [DashboardController::class, 'getTopCategoryAktif']);
+        Route::get('/dashboard/laporan-aktif', [DashboardController::class, 'getLaporanAktif']);
+        Route::get('/dashboard/completion-rate', [DashboardController::class, 'getPersentasiLaporanSelesai']);
+
+        Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
+            ->name('reports.journeys.store');
+
     }
 );

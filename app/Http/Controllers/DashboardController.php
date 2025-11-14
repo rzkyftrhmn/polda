@@ -18,55 +18,61 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        return view('pages.index');
+    }
+
+    public function statusSummary()
+    {
         $statusSummary = $this->dashboardRepo->getStatusSummary();
-        return view('pages.index', $statusSummary);
+        return response()->json($statusSummary);
+    }
+    
+    public function topCategories()
+    {
+        $topCategories = $this->dashboardRepo->getTopCategories();
+        return response()->json($topCategories);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function getTrendReports()
     {
-        //
+        $data = $this->dashboardRepo->getTrendReports();
+
+        return response()->json($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function getTotalReports()
     {
-        //
+        $total = $this->dashboardRepo->getTotalReports();
+
+        return response()->json([
+            'total' => $total
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function getTopCategoryAktif()
     {
-        //
+        $top = $this->dashboardRepo->getTopCategoryAktif();
+
+        return response()->json([
+            'category' => $top->category ?? '-',
+            'total' => $top->total ?? 0
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function getLaporanAktif()
     {
-        //
+        $aktif = $this->dashboardRepo->getLaporanAktif();
+
+        return response()->json([
+            'aktif' => $aktif
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
+    public function getPersentasiLaporanSelesai()
     {
-        //
+        $rate = $this->dashboardRepo->getPersentasiLaporanSelesai();
+        return response()->json(['rate' => $rate]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+   
 }
