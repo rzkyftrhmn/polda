@@ -1,5 +1,10 @@
 @extends('layouts.dashboard')
 @section('content')
+<style>
+    .dataTables_empty {
+        text-align: center !important;
+    }
+</style>
 <div class="container-fluid">
     <div class="row">
         <div class="col-xl-12">
@@ -164,7 +169,6 @@
                     <div class="card">
                         <div class="card-header border-0 pb-0">
                             <h4 class="card-title">Backlog per Tahap (ReportJourney)</h4>
-                            <p class="mb-0">Jumlah laporan belum pindah tahap dalam > X hari</p>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -186,12 +190,10 @@
                         </div>
                     </div>
                 </div>
-                </div>
                 <div class="col-xl-6">
                     <div class="card">
                         <div class="card-header border-0 pb-0">
                             <h4 class="card-title">Laporan Tanpa Bukti</h4>
-                            <p class="mb-0">Daftar laporan yang belum memiliki evidence</p>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -201,7 +203,7 @@
                                             <th>#</th>
                                             <th>Laporan</th>
                                             <th>Kategori</th>
-                                            <th>Institusi</th>
+                                            <th class="text-end">Institusi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -218,8 +220,7 @@
                     <div class="card transaction-table">
                         <div class="card-header border-0 flex-wrap pb-0">
                             <div class="mb-2">
-                                <h4 class="card-title">Recent Report</h4>
-                                <p class="mb-sm-3 mb-0">Lorem ipsum dolor sit amet, consectetur</p>
+                                <h4 class="card-title mb-2">Recent Report</h4>
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -299,7 +300,7 @@
 <script src="{{ asset('dashboard/vendor/apexchart/apexchart.js') }}"></script>
 <script src="{{ asset('dashboard/vendor/chart-js/chart.bundle.min.js') }}"></script>
 <!-- Dashboard 1 -->
-{{-- <script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script> --}}
+<script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script> 
 <script>
 
     // ======================================================
@@ -331,7 +332,7 @@
         });
 
         $.get('/dashboard/avg-resolution', f, res => {
-            $("#kpi_avg_resolution_time").text(res.avg_resolution_time + " hari");
+            $("#kpi_avg_resolution_time").text(res.avg_resolution_time + " Jam");
         });
 
         $.get('/dashboard/kpi-with-evidence', f, res => {
@@ -375,12 +376,6 @@
             }
         });
     }
-
-        //Rata Rata waktu selesai
-        $.get('/dashboard/avg-resolution', function(data){
-            var txt = data.avg_resolution_time + ' jam';
-            setText('kpi_avg_resolution_time', txt);
-        });
 
 
     // ======================================================
@@ -504,6 +499,11 @@
                 let tbody = $("#table_backlog_tahap tbody");
                 tbody.empty();
 
+                if (!res.length) {
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted">Tidak ada data tersedia</td></tr>');
+                    return;
+                }
+
                 res.forEach((item, index) => {
                     tbody.append(`
                         <tr>
@@ -523,6 +523,99 @@
         });
     }
 
+    // ======================================================
+    // RECENT REPORTS
+    // ======================================================
+    function statusBadgeClass(status){
+        switch(status){
+            case 'SUBMITTED': return 'badge-primary';
+            case 'PEMERIKSAAN': return 'badge-warning';
+            case 'LIMPAH': return 'badge-info';
+            case 'SIDANG': return 'badge-info';
+            case 'SELESAI': return 'badge-success';
+            case 'DITOLAK': return 'badge-danger';
+            default: return 'badge-light';
+        }
+    }
+
+    function loadRecentReports() {
+        $.ajax({
+            url: "/dashboard/recent-reports",
+            method: "GET",
+            data: getFilterParams(),
+            success: function (res) {
+
+                const tbody = $("#table_recent_week tbody");
+                tbody.empty();
+
+                if (!res || res.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                Tidak ada data tersedia
+                            </td>
+                        </tr>
+                    `);
+                    return;
+                }
+
+                res.forEach((item, index) => {
+                    tbody.append(`
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.code ?? '-'}</td>
+                            <td>${item.tanggal ?? '-'}</td>
+                            <td>${item.pelapor ?? '-'}</td>
+                            <td>${item.institusi ?? '-'}</td>
+                            <td>${item.kategori ?? '-'}</td>
+                            <td><span class="badge ${statusBadgeClass(item.status)}">${item.status}</span></td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function (err) {
+                console.error("AJAX error:", err);
+            }
+        });
+    }
+
+    // =====================================================
+    // LOAD TABLE: TANPA BUKTI
+    // ======================================================
+    function loadReportsWithoutEvidence() {
+        const tbody = $("#table_tanpa_bukti tbody");
+        tbody.html('<tr><td colspan="4" class="text-center">Memuat data...</td></tr>');
+
+        $.ajax({
+            url: '/reports/without-evidence',
+            method: 'GET',
+            data: getFilterParams(),
+            success: function(res) {
+                tbody.empty();
+
+                if (!res.length) {
+                    tbody.html('<tr><td colspan="4" class="text-center text-muted">Tidak ada data tersedia</td></tr>');
+                    return;
+                }
+
+                res.forEach((item, index) => {
+                    tbody.append(`
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.code}</td>
+                            <td>${item.kategori}</td>
+                            <td class="text-center">${item.institusi}</td>
+                        </tr>
+                    `);
+                });
+            },
+            error: function() {
+                tbody.html('<tr><td colspan="4" class="text-center text-danger">Terjadi kesalahan memuat data.</td></tr>');
+            }
+        });
+    }
+
+
 
 
     // ======================================================
@@ -535,6 +628,8 @@
         loadTopKategoriChart();
         loadTopInstitusiChart();
         loadBacklogTable();
+        loadRecentReports();
+        loadReportsWithoutEvidence();
     }
 
 
