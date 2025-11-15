@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\ReportCategory;
 use App\Models\ReportJourney;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class DashboardRepository
@@ -100,12 +101,23 @@ class DashboardRepository
 
         $query = $this->applyFilters($query, $start, $end);
 
-        return $query
+        $result = $query
             ->select('report_categories.name as category', DB::raw('COUNT(reports.id) as total'))
             ->groupBy('report_categories.id','report_categories.name')
             ->orderByDesc('total')
             ->first();
+
+        // Jika data kosong
+        if (!$result) {
+            return [
+                'category' => '-',
+                'total' => 0,
+            ];
+        }
+
+        return $result;
     }
+
 
     // =========================================
     // LAPORAN AKTIF
@@ -146,7 +158,7 @@ class DashboardRepository
             ->where('type','SELESAI')
             ->join('reports','reports.id','=','report_journeys.report_id');
 
-        // apply filter ke *reports*
+        // Apply filter ke reports
         if ($start && $end) {
             $journey->whereBetween('reports.created_at', [
                 $start . ' 00:00:00',
@@ -155,13 +167,14 @@ class DashboardRepository
         }
 
         $results = $journey
-            ->select(DB::raw('TIMESTAMPDIFF(DAY, reports.created_at, report_journeys.created_at) as diff'))
+            ->select(DB::raw('TIMESTAMPDIFF(HOUR, reports.created_at, report_journeys.created_at) as diff')) // per jam
             ->pluck('diff');
 
         if ($results->isEmpty()) return 0;
 
-        return round($results->avg(), 1);
+        return round($results->avg(), 1); // rata-rata dalam jam
     }
+
 
     // =========================================
     // RECENT REPORTS
@@ -176,15 +189,16 @@ class DashboardRepository
 
         return $query->get()->map(function ($report) {
             return [
-                'code'       => $report->code,
-                'tanggal'    => $report->created_at->format('Y-m-d'),
-                'pelapor'    => $report->suspects->first()?->name ?? '-',
-                'institusi'  => $report->journeys->first()?->institution?->type ?? '-',
+                'code'       => $report->code ?? $report->id, 
+                'tanggal'    => $report->created_at?->format('Y-m-d') ?? null,
+                'pelapor'    => optional($report->suspects->first())->name ?? '-',
+                'institusi'  => optional(optional($report->journeys->first())->institution)->type ?? '-',
                 'kategori'   => $report->category?->name ?? '-',
-                'status'     => $report->status,
+                'status'     => $report->status ?? '-',
             ];
         });
     }
+
 
     // =========================================
     // WITH EVIDENCE
@@ -205,21 +219,53 @@ class DashboardRepository
         return round(($withEvidence / $total) * 100);
     }
 
-    public function getReportsWithoutEvidenceQuery()
+    // ========================================
+    // REPORTS WITHOUT EVIDENCE QUERY(tanpa bukti)
+    // ========================================
+    public function getReportsWithoutEvidenceQuery($start = null, $end = null)
     {
-        return Report::with(['category', 'journeys.institution'])
-            ->whereDoesntHave('journeys.evidences', function($q) {
-                $q->whereNotNull('file_url')->where('file_url', '<>', '');
+        $query = Report::query()
+            ->select([
+                'reports.id',
+                'reports.code',
+                'report_categories.name as kategori',
+                DB::raw('(SELECT i.type 
+                    FROM report_journeys rj
+                    JOIN institutions i ON i.id = rj.institution_id
+                    WHERE rj.report_id = reports.id
+                    LIMIT 1
+                ) AS institusi'),
+            ])
+            ->join('report_categories', 'report_categories.id', '=', 'reports.category_id')
+            ->whereNotExists(function ($q) {
+                $q->select(DB::raw(1))
+                  ->from('report_evidences')
+                  ->whereColumn('report_evidences.report_id', 'reports.id')
+                  ->whereNotNull('file_url')
+                  ->where('file_url', '<>', '');
             });
+
+        // filter tanggal
+        if ($start && $end) {
+            $query->whereBetween('reports.created_at', [
+                $start . ' 00:00:00',
+                $end . ' 23:59:59'
+            ]);
+        }
+
+        return $query;
     }
+
 
 
     // ========================================
     // Top Isntitusi by Report Count
     // ========================================
 
-   public function getTopInstitusi($start = null, $end = null)
+    public function getTopInstitusi($start = null, $end = null)
     {
+        $institutionId = Auth::user()->institution_id;
+
         return DB::table('report_journeys')
             ->join('institutions', 'institutions.id', '=', 'report_journeys.institution_id')
             ->join('reports', 'reports.id', '=', 'report_journeys.report_id')
@@ -228,6 +274,9 @@ class DashboardRepository
                     $start . ' 00:00:00',
                     $end . ' 23:59:59'
                 ]);
+            })
+            ->when($institutionId, function($q) use ($institutionId){
+                $q->where('institutions.id', $institutionId);
             })
             ->select(
                 'institutions.name as institution',
@@ -238,6 +287,7 @@ class DashboardRepository
             ->limit(5)
             ->get();
     }
+
 
     public function getBacklogPerTahap($start = null, $end = null)
     {
@@ -271,8 +321,5 @@ class DashboardRepository
 
         return $result;
     }
-
-
-
 
 }

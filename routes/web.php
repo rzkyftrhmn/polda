@@ -95,6 +95,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/recent-reports', [DashboardController::class, 'recentReports']);
         Route::get('/dashboard/kpi-with-evidence', [DashboardController::class, 'kpiWithEvidence']);
         Route::get('/dashboard/top-institusi',[DashboardController::class, 'getTopInstitusi'])->name('dashboard.topInstitusi');
+        Route::get('/reports/without-evidence', [DashboardController::class, 'reportsWithoutEvidence'])
+            ->name('reports.withoutEvidence');
+
 
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
