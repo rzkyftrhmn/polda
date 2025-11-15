@@ -65,6 +65,11 @@ class Report extends Model
         return $this->hasMany(Suspect::class, 'report_id');
     }
 
+    public function evidences()
+    {
+        return $this->hasMany(ReportEvidence::class, 'report_id');
+    }
+
     protected static function booted(): void
     {
         static::created(function (Report $report): void {

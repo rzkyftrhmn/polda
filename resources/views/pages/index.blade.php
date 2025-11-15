@@ -202,7 +202,6 @@
                                             <th>Laporan</th>
                                             <th>Kategori</th>
                                             <th>Institusi</th>
-                                            <th class="text-end">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -379,7 +378,7 @@
 
         //Rata Rata waktu selesai
         $.get('/dashboard/avg-resolution', function(data){
-            var txt = data.avg_resolution_time + ' hari';
+            var txt = data.avg_resolution_time + ' jam';
             setText('kpi_avg_resolution_time', txt);
         });
 
@@ -387,10 +386,16 @@
         $.ajax({
             url: "/dashboard/kpi-with-evidence",
             method: "GET",
+            dataType: "json",
             success: function(res) {
-                setText('kpi_with_evidence', res.rate);
+                $('#kpi_with_evidence').text(res.rate); // update span id="kpi_with_evidence"
+            },
+            error: function(err) {
+                console.error("Gagal load KPI With Evidence:", err);
             }
         });
+
+
 
 
         function renderKPIs() {
@@ -415,24 +420,20 @@
                     dataType: "json",
                     success: function(res) {
 
-                        // Ambil 14 hari mundur dari hari ini
                         var days = 14;
                         var labels = [];
                         var counts = [];
 
                         for (var i = days - 1; i >= 0; i--) {
-
                             var d = new Date();
                             d.setDate(d.getDate() - i);
 
-                            var tanggal = d.toISOString().slice(0, 10); // format YYYY-MM-DD
-                            var tampil = String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                            var tanggal = d.toISOString().slice(0, 10); 
+                            var tampil = String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + d.getFullYear(); // DD-MM-YYYY untuk label
 
                             labels.push(tampil);
 
-                            // cari apakah tanggal ini ada di response
-                            var found = res.find(item => item.date === tanggal);
-
+                            var found = res.find(item => item.date_iso === tanggal); 
                             counts.push(found ? found.total : 0);
                         }
 
@@ -454,9 +455,7 @@
                         console.error("Gagal memuat tren laporan:", err);
                     }
                 });
-
             });
-
 
 
 
@@ -560,7 +559,6 @@
 
         function renderTables() {
             var backlogEl = document.querySelector('#table_backlog_tahap tbody');
-            var tanpaBuktiEl = document.querySelector('#table_tanpa_bukti tbody');
             if (backlogEl) {
                 backlogEl.innerHTML = [
                     '<tr><td>1</td><td>#RPT-1001</td><td>Penyelidikan Awal</td><td>12</td><td class="text-end"><button class="btn btn-sm btn-primary">Detail</button></td></tr>',
@@ -568,13 +566,22 @@
                     '<tr><td>3</td><td>#RPT-1045</td><td>Koordinasi Institusi</td><td>15</td><td class="text-end"><button class="btn btn-sm btn-primary">Detail</button></td></tr>'
                 ].join('');
             }
-            if (tanpaBuktiEl) {
-                tanpaBuktiEl.innerHTML = [
-                    '<tr><td>1</td><td>#RPT-1099</td><td>Penipuan Online</td><td>Polda A</td><td class="text-end"><button class="btn btn-sm btn-warning">Lengkapi Bukti</button></td></tr>',
-                    '<tr><td>2</td><td>#RPT-1103</td><td>Pencurian</td><td>Polres B</td><td class="text-end"><button class="btn btn-sm btn-warning">Lengkapi Bukti</button></td></tr>',
-                    '<tr><td>3</td><td>#RPT-1120</td><td>Kekerasan</td><td>Polsek C</td><td class="text-end"><button class="btn btn-sm btn-warning">Lengkapi Bukti</button></td></tr>'
-                ].join('');
-            }
+            $(document).ready(function() {
+                $('#table_tanpa_bukti').DataTable({
+                    processing: true,
+                    serverSide: false, 
+                    ajax: "{{ route('dashboard.reportsWithoutEvidence') }}",
+                    columns: [
+                        { data: 'DT_RowIndex', name: 'DT_RowIndex' },
+                        { data: 'code', name: 'code' },
+                        { data: 'kategori', name: 'kategori' },
+                        { data: 'institusi', name: 'institusi' },
+                    ],
+                    paging: false,      
+                    searching: false,   
+                    info: false         
+                });
+            });
         }
 
         function getFilterParams() {

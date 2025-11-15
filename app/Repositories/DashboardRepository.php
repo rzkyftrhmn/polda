@@ -8,6 +8,7 @@ use App\Models\Institution;
 use App\Models\ReportCategory;
 use App\Models\ReportJourney;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardRepository
 {
@@ -203,6 +204,15 @@ class DashboardRepository
 
         return round(($withEvidence / $total) * 100);
     }
+
+    public function getReportsWithoutEvidenceQuery()
+    {
+        return Report::with(['category', 'journeys.institution'])
+            ->whereDoesntHave('journeys.evidences', function($q) {
+                $q->whereNotNull('file_url')->where('file_url', '<>', '');
+            });
+    }
+
 
     // ========================================
     // Top Isntitusi by Report Count

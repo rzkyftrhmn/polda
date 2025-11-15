@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Repositories\DashboardRepository;
+use Yajra\DataTables\DataTables;
 
 class DashboardController extends Controller
 {
