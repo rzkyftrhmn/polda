@@ -92,6 +92,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
+        Route::get('/dashboard/backlog-tahap', [DashboardController::class, 'backlogPerTahap']);
 
     }
 );

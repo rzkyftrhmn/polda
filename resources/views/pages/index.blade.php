@@ -305,80 +305,80 @@
 <!-- Dashboard 1 -->
 {{-- <script src="{{ asset('dashboard/js/dashboard/dashboard-1.js') }}"></script> --}}
 <script>
-    // Dummy data initializer for Dashboard KPIs, Charts, and Tables
-    (function() {
-        function numberFormat(n) {
-            try { return n.toLocaleString('id-ID'); } catch(e) { return String(n); }
-        }
 
-        function setText(id, value) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = value;
-        }
+    // ======================================================
+    // GLOBAL FUNCTIONS
+    // ======================================================
+    function getFilterParams() {
+        return {
+            start_date: $('#filter_start_date').val(),
+            end_date: $('#filter_end_date').val(),
+        };
+    }
 
-        function ensureApexCharts() {
-            return new Promise(function(resolve) {
-                if (window.ApexCharts) return resolve();
-                var s = document.createElement('script');
-                s.src = 'https://cdn.jsdelivr.net/npm/apexcharts';
-                s.async = true;
-                s.onload = function() { resolve(); };
-                s.onerror = function() { console.warn('ApexCharts CDN gagal dimuat. Grafik mungkin tidak tampil.'); resolve(); };
-                document.head.appendChild(s);
-            });
-        }
+    // ======================================================
+    // LOAD KPI
+    // ======================================================
+    function loadDashboardKPIs() {
+        const f = getFilterParams();
 
-        //total laporan perbulan ini
-        $(document).ready(function () {
-            $.ajax({
-                url: "/dashboard/total-laporan",
-                method: "GET",
-                success: function (res) {
-                    $("#kpi_total_laporan").text(res.total);
-                },
-                error: function (err) {
-                    console.error("Gagal mengambil total laporan:", err);
-                }
-            });
+        $.get('/dashboard/total-laporan', f, res => {
+            $("#kpi_total_laporan").text(res.total);
         });
 
-        //jumlah kategori berdasarkan status aktif
-        $(document).ready(function () {
-            $.ajax({
-                url: "/dashboard/top-category-active",
-                method: "GET",
-                success: function (res) {
-                    $("#kpi_top_category").text(res.category);
-                },
-                error: function (err) {
-                    console.error("Gagal mengambil kategori terbanyak:", err);
-                }
-            });
+        $.get('/dashboard/laporan-aktif', f, res => {
+            $("#kpi_laporan_aktif").text(res.aktif);
         });
 
-        //jumlah laporan berdasarkan status aktif
-        $(document).ready(function () {
-            $.ajax({
-                url: "/dashboard/laporan-aktif",
-                method: "GET",
-                success: function (res) {
-                    setText('kpi_laporan_aktif', numberFormat(res.aktif));
-                },
-                error: function (err) {
-                    console.error("Gagal mengambil laporan aktif:", err);
-                }
-            });
+        $.get('/dashboard/completion-rate', f, res => {
+            $("#kpi_completion_rate").text(res.rate);
         });
 
+        $.get('/dashboard/avg-resolution', f, res => {
+            $("#kpi_avg_resolution_time").text(res.avg_resolution_time + " hari");
+        });
 
-        //persentase laporan selesai
+        $.get('/dashboard/kpi-with-evidence', f, res => {
+            $("#kpi_with_evidence").text(res.rate);
+        });
+
+        $.get('/dashboard/top-category-active', f, res => {
+            $("#kpi_top_category").text(res.category);
+        });
+    }
+
+
+
+    // ======================================================
+    // LOAD CHART: TOP INSTITUSI
+    // ======================================================
+    function loadTopInstitusiChart() {
+
         $.ajax({
-            url: "/dashboard/completion-rate",
+            url: "{{ route('dashboard.topInstitusi') }}",
             method: "GET",
-            success: function(res) {
-                setText('kpi_completion_rate', res.rate);
+            data: getFilterParams(),
+            success: function (res) {
+
+                let labels = res.map(i => i.institution);
+                let counts = res.map(i => i.total);
+
+                $("#chart_top_institusi").html(""); // clear sebelum render ulang
+
+                new ApexCharts(
+                    document.querySelector("#chart_top_institusi"),
+                    {
+                        chart: { type: 'bar', height: 280, toolbar: { show: false } },
+                        series: [{ name: 'Jumlah', data: counts }],
+                        xaxis: { categories: labels },
+                        plotOptions: { bar: { horizontal: true } },
+                        dataLabels: { enabled: false },
+                        colors: ['#0ea5e9']
+                    }
+                ).render();
             }
         });
+    }
 
         //Rata Rata waktu selesai
         $.get('/dashboard/avg-resolution', function(data){
@@ -386,363 +386,181 @@
             setText('kpi_avg_resolution_time', txt);
         });
 
-        //persentase dengan bukti
+
+    // ======================================================
+    // LOAD CHART: TREN LAPORAN
+    // ======================================================
+    function loadTrendLaporan() {
+
         $.ajax({
-            url: "/dashboard/kpi-with-evidence",
+            url: "{{ route('dashboard.trendReports') }}",
             method: "GET",
-            dataType: "json",
-            success: function(res) {
-                $('#kpi_with_evidence').text(res.rate); // update span id="kpi_with_evidence"
-            },
-            error: function(err) {
-                console.error("Gagal load KPI With Evidence:", err);
+            data: getFilterParams(),
+            success: function(res){
+
+                var labels = [];
+                var counts = [];
+
+                for (var i = 13; i >= 0; i--) {
+                    var d = new Date();
+                    d.setDate(d.getDate() - i);
+
+                    var tgl = d.toISOString().slice(0,10);
+                    var tampil = d.getDate().toString().padStart(2,'0')+'-'+(d.getMonth()+1);
+
+                    labels.push(tampil);
+
+                    var found = res.find(r => r.date === tgl);
+                    counts.push(found ? found.total : 0);
+                }
+
+                $("#chart_tren_laporan").html(""); // clear
+
+                new ApexCharts(
+                    document.querySelector("#chart_tren_laporan"),
+                    {
+                        chart:{ type:'line', height:280, toolbar:{ show:false }},
+                        series:[{ name:'Laporan', data:counts }],
+                        xaxis:{ categories:labels },
+                        stroke:{ curve:'smooth' },
+                        dataLabels:{ enabled:false },
+                        colors:['#3b82f6']
+                    }
+                ).render();
             }
         });
+    }
 
 
 
+    // ======================================================
+    // LOAD CHART: STATUS LAPORAN
+    // ======================================================
+    function loadStatusSummaryChart() {
 
-        function renderKPIs() {
-            
-        }
+        $.ajax({
+            url: "{{ route('dashboard.statusSummary') }}",
+            method: "GET",
+            data: getFilterParams(),
+            success: function(res){
 
-        function renderCharts() {
-            // Helper to safely render ApexCharts if available
-            function render(elId, options) {
-                var el = document.getElementById(elId);
-                if (!el) return;
-                if (!window.ApexCharts) return; // skip if library missing
-                var chart = new ApexCharts(el, options);
-                chart.render();
+                $("#chart_status_laporan").html("");
+
+                new ApexCharts(
+                    document.querySelector("#chart_status_laporan"),
+                    {
+                        chart:{ type:'donut', height:280 },
+                        series: [res.baru, res.diproses, res.selesai],
+                        labels:['Baru','Diproses','Selesai'],
+                        colors:['#60a5fa','#f59e0b','#10b981'],
+                        legend:{ position:'bottom' }
+                    }
+                ).render();
             }
-
-            // 1) Tren Laporan (last 14 days)
-            $(document).ready(function() {
-                $.ajax({
-                    url: "{{ route('dashboard.trendReports') }}",
-                    method: "GET",
-                    dataType: "json",
-                    success: function(res) {
-
-                        var days = 14;
-                        var labels = [];
-                        var counts = [];
-
-                        for (var i = days - 1; i >= 0; i--) {
-                            var d = new Date();
-                            d.setDate(d.getDate() - i);
-
-                            var tanggal = d.toISOString().slice(0, 10); 
-                            var tampil = String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + d.getFullYear(); // DD-MM-YYYY untuk label
-
-                            labels.push(tampil);
-
-                            var found = res.find(item => item.date_iso === tanggal); 
-                            counts.push(found ? found.total : 0);
-                        }
-
-                        var options = {
-                            chart: { type: 'line', height: 280, toolbar: { show: false } },
-                            series: [{ name: 'Laporan', data: counts }],
-                            xaxis: { categories: labels },
-                            stroke: { curve: 'smooth' },
-                            dataLabels: { enabled: false },
-                            colors: ['#3b82f6']
-                        };
-
-                        if(window.ApexCharts){
-                            var chart = new ApexCharts(document.querySelector("#chart_tren_laporan"), options);
-                            chart.render();
-                        }
-                    },
-                    error: function(err) {
-                        console.error("Gagal memuat tren laporan:", err);
-                    }
-                });
-            });
-
-
-
-            // 2) Distribusi Status Laporan
-            $(document).ready(function() {
-                $.ajax({
-                    url: "{{ route('dashboard.statusSummary') }}", 
-                    method: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        var baru = data.baru;
-                        var diproses = data.diproses;
-                        var selesai = data.selesai;
-
-                        var options = {
-                            chart: { type: 'donut', height: 280 },
-                            series: [baru, diproses, selesai],
-                            labels: ['Baru', 'Diproses', 'Selesai'],
-                            colors: ['#60a5fa', '#f59e0b', '#10b981'],
-                            legend: { position: 'bottom' },
-                            dataLabels: { enabled: true }
-                        };
-
-                        if(window.ApexCharts) {
-                            var chart = new ApexCharts(document.querySelector("#chart_status_laporan"), options);
-                            chart.render();
-                        }
-                    },
-                    error: function(err) {
-                        console.error("Gagal mengambil data status:", err);
-                    }
-                });
-            });
-
-
-            // 3) Top 5 Kategori Laporan
-            $(document).ready(function() {
-                $.ajax({
-                    url: "{{ route('dashboard.topCategories') }}",
-                    method: "GET",
-                    dataType: "json",
-                    success: function(data) {
-                        // Ambil label dan data dari response JSON
-                        var kategoriLabels = data.map(item => item.category);
-                        var kategoriCounts = data.map(item => item.total);
-
-                        var options = {
-                            chart: { type: 'bar', height: 280, toolbar: { show: false } },
-                            series: [{ name: 'Jumlah', data: kategoriCounts }],
-                            xaxis: { categories: kategoriLabels },
-                            plotOptions: { bar: { columnWidth: '45%', distributed: true } },
-                            dataLabels: { enabled: false },
-                            colors: ['#ef4444', '#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
-                        };
-
-                        if(window.ApexCharts) {
-                            var chart = new ApexCharts(document.querySelector("#chart_top_kategori"), options);
-                            chart.render();
-                        }
-                    },
-                    error: function(err) {
-                        console.error("Gagal mengambil data top category:", err);
-                    }
-                });
-            });
-
-            // 4) Top Institusi berdasarkan jumlah laporan
-            $(document).ready(function () {
-            $.ajax({
-                    url: "{{ route('dashboard.topInstitusi') }}",
-                    method: "GET",
-                    data: getFilterParams(), // supaya ikut filter tanggal
-                    success: function (res) {
-
-                        let labels = res.map(item => item.institution);
-                        let counts = res.map(item => item.total);
-
-                        var options = {
-                            chart: { type: 'bar', height: 280, toolbar: { show: false } },
-                            series: [{ name: 'Jumlah', data: counts }],
-                            xaxis: { categories: labels },
-                            plotOptions: { bar: { horizontal: true } },
-                            dataLabels: { enabled: false },
-                            colors: ['#0ea5e9']
-                        };
-
-                        if (window.ApexCharts) {
-                            var chart = new ApexCharts(
-                                document.querySelector("#chart_top_institusi"),
-                                options
-                            );
-                            chart.render();
-                        }
-                    },
-                    error: function (err) {
-                        console.error("Gagal mengambil data top institusi:", err);
-                    }
-                });
-            });
-        }
-
-        function renderTables() {
-            var backlogEl = document.querySelector('#table_backlog_tahap tbody');
-            if (backlogEl) {
-                backlogEl.innerHTML = [
-                    '<tr><td>1</td><td>#RPT-1001</td><td>Penyelidikan Awal</td><td>12</td><td class="text-end"><button class="btn btn-sm btn-primary">Detail</button></td></tr>',
-                    '<tr><td>2</td><td>#RPT-1017</td><td>Verifikasi Bukti</td><td>9</td><td class="text-end"><button class="btn btn-sm btn-primary">Detail</button></td></tr>',
-                    '<tr><td>3</td><td>#RPT-1045</td><td>Koordinasi Institusi</td><td>15</td><td class="text-end"><button class="btn btn-sm btn-primary">Detail</button></td></tr>'
-                ].join('');
-            }
-            
-            $(document).ready(function() {
-                let table = $('#table_tanpa_bukti').DataTable({
-                    processing: true,
-                    serverSide: false, // Kalau datanya tidak terlalu besar boleh false, kalau besar ganti ke true
-                    ajax: {
-                        url: "{{ route('dashboard.reportsWithoutEvidence') }}",
-                        data: function (d) {
-                            d.start_date = $('#filter_start_date').val();
-                            d.end_date   = $('#filter_end_date').val();
-                        },
-                        dataSrc: 'data'
-                    },
-                    columns: [
-                        { data: null, render: (data, type, row, meta) => meta.row + 1 },
-                        { data: 'code', name: 'code' },
-                        { data: 'kategori', name: 'kategori' },
-                        { data: 'institusi', name: 'institusi', defaultContent: '-', className: "text-center" },
-                    ],
-                    paging: false,
-                    searching: false,
-                    info: false
-                });
-
-                // Apply Filter
-                $('#btn_apply_date_filter').on('click', function() {
-                    table.ajax.reload();
-                });
-
-                // Reset Filter
-                $('#btn_reset_date_filter').on('click', function() {
-                    $('#filter_start_date').val('');
-                    $('#filter_end_date').val('');
-                    table.ajax.reload();
-                });
-            });
-
-
-        }
-
-        function getFilterParams() {
-            return {
-                start_date: $('#filter_start_date').val(),
-                end_date: $('#filter_end_date').val(),
-            };
-        }
-
-        //filter 
-        $('#btn_apply_date_filter').on('click', function () {
-            console.log("Terapkan filter tanggal");
-            loadDashboardWithFilter();
         });
+    }
 
-        $('#btn_reset_date_filter').on('click', function () {
-            console.log("Reset filter tanggal");
+
+
+    // ======================================================
+    // LOAD CHART: TOP KATEGORI
+    // ======================================================
+    function loadTopKategoriChart() {
+
+        $.ajax({
+            url: "{{ route('dashboard.topCategories') }}",
+            method: "GET",
+            data: getFilterParams(),
+            success: function(res){
+
+                let labels = res.map(i => i.category);
+                let counts = res.map(i => i.total);
+
+                $("#chart_top_kategori").html("");
+
+                new ApexCharts(
+                    document.querySelector("#chart_top_kategori"),
+                    {
+                        chart:{ type:'bar', height:280, toolbar:{ show:false } },
+                        series:[{ name:'Jumlah', data:counts }],
+                        xaxis:{ categories:labels },
+                        plotOptions:{ bar:{ columnWidth:'45%', distributed:true }},
+                        dataLabels:{ enabled:false }
+                    }
+                ).render();
+            }
+        });
+    }
+
+
+
+    // ======================================================
+    // LOAD TABLE: BACKLOG
+    // ======================================================
+    function loadBacklogTable() {
+
+        $.ajax({
+            url: "/dashboard/backlog-tahap",
+            method: "GET",
+            data: getFilterParams(),
+            success: function (res) {
+
+                let tbody = $("#table_backlog_tahap tbody");
+                tbody.empty();
+
+                res.forEach((item, index) => {
+                    tbody.append(`
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.report_id}</td>
+                            <td>${item.tahap}</td>
+                            <td>${item.durasi} hari</td>
+                            <td class="text-end">
+                                <a href="/pelaporan/${item.report_id_raw}" class="btn btn-sm btn-primary">
+                                    Detail
+                                </a>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+        });
+    }
+
+
+
+    // ======================================================
+    // LOAD SEMUA DASHBOARD
+    // ======================================================
+    function loadDashboardAll() {
+        loadDashboardKPIs();
+        loadTrendLaporan();
+        loadStatusSummaryChart();
+        loadTopKategoriChart();
+        loadTopInstitusiChart();
+        loadBacklogTable();
+    }
+
+
+
+    // ======================================================
+    // INIT PAGE
+    // ======================================================
+    $(document).ready(function(){
+
+        // Load pertama kali
+        loadDashboardAll();
+
+        // Apply / Reset Filter
+        $('#btn_apply_date_filter').on('click', loadDashboardAll);
+        $('#btn_reset_date_filter').on('click', function(){
             $('#filter_start_date').val('');
             $('#filter_end_date').val('');
-            loadDashboardWithFilter();
-        });
-
-        //debugg date error
-        $('#filter_start_date').on('change', function () {
-            console.log("Start date changed:", $(this).val());
-        });
-        $('#filter_end_date').on('change', function () {
-            console.log("End date changed:", $(this).val());
-        });
-
-        //get ajax from controller
-        function loadDashboardWithFilter() {
-
-            const filter = getFilterParams();
-            console.log("Load Dashboard with filter:", filter);
-
-            // ---------------- KPI ----------------
-            $.get('/dashboard/total-laporan', filter, function(res){
-                $("#kpi_total_laporan").text(res.total);
-            });
-
-            $.get('/dashboard/laporan-aktif', filter, function(res){
-                $("#kpi_laporan_aktif").text(res.aktif);
-            });
-
-            $.get('/dashboard/completion-rate', filter, function(res){
-                $("#kpi_completion_rate").text(res.rate);
-            });
-
-            $.get('/dashboard/avg-resolution', filter, function(res){
-                $("#kpi_avg_resolution_time").text(res.avg_resolution_time + " hari");
-            });
-
-            $.get('/dashboard/kpi-with-evidence', filter, function(res){
-                $("#kpi_with_evidence").text(res.rate);
-            });
-
-            $.get('/dashboard/top-category-active', filter, function(res){
-                $("#kpi_top_category").text(res.category);
-            });
-
-            // ---------------- TREND CHART ----------------
-            $.get("{{ route('dashboard.trendReports') }}", filter, function(res){
-                console.log("Reload Chart Trend:", res);
-                // nanti bagian reload chart gua bikinin setelah filter kelar
-            });
-        }
-
-        function initDummy() {
-            renderKPIs();
-            renderTables();
-            ensureApexCharts().then(renderCharts);
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initDummy);
-        } else {
-            initDummy();
-        }
-    })();
-    $(document).ready(function () {
-        function statusBadgeClass(status){
-            switch(status){
-                case 'SUBMITTED': return 'badge-primary';
-                case 'PEMERIKSAAN': return 'badge-warning';
-                case 'LIMPAH': return 'badge-info';
-                case 'SIDANG': return 'badge-info';
-                case 'SELESAI': return 'badge-success';
-                case 'DITOLAK': return 'badge-danger';
-                default: return 'badge-light';
-            }
-        }
-
-        // Isi tabel
-        function fillTable(tableId, data){
-            let tbody = $(`#${tableId} tbody`);
-            tbody.empty();
-
-            data.forEach((item, index) => {
-                tbody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.code}</td>
-                        <td>${new Date(item.tanggal).toLocaleDateString('id-ID', {
-                            day: '2-digit', month: 'short', year: 'numeric'
-                        })}</td>
-                        <td>${item.pelapor}</td>
-                        <td>${item.institusi}</td>
-                        <td>${item.kategori}</td>
-                        <td class="text-end">
-                            <span class="badge badge-sm ${statusBadgeClass(item.status)}">
-                                ${item.status.toUpperCase()}
-                            </span>
-                        </td>
-                    </tr>
-                `);
-            });
-        }
-
-        $.ajax({
-            url: "/dashboard/recent-reports",
-            type: "GET",
-            dataType: "json",
-
-            success: function(response){
-                fillTable("table_recent_week", response.slice(0, 6));
-                fillTable("table_recent_month", response.slice(0, 10));
-                fillTable("table_recent_year", response);
-            },
-
-            error: function(xhr){
-                console.error("Gagal load recent report:", xhr.responseText);
-            }
+            loadDashboardAll();
         });
 
     });
+
 </script>
+
 @endsection

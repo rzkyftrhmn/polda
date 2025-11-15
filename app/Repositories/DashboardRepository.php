@@ -269,6 +269,40 @@ class DashboardRepository
             ->get();
     }
 
+    public function getBacklogPerTahap($start = null, $end = null)
+    {
+        // Filter report berdasarkan tanggal awal–akhir
+        $query = Report::query();
+        $query = $this->applyFilters($query, $start, $end);
+
+        $reports = $query->with(['journeys' => function ($q) {
+            $q->orderBy('created_at', 'desc');
+        }])->get();
+
+        $result = [];
+
+        foreach ($reports as $report) {
+            $lastJourney = $report->journeys->first(); // journey terbaru
+
+            if (!$lastJourney) {
+                continue;
+            }
+
+            // Hitung berapa hari laporan STUCK di tahap terakhir
+            $days = $lastJourney->created_at->diffInDays(now());
+
+            $result[] = [
+                'report_id'     => $report->code,
+                'report_id_raw' => $report->id,
+                'tahap'         => $lastJourney->type,          // nama tahap
+                'durasi'        => $days,                       // durasi stuck
+            ];
+        }
+
+        return $result;
+    }
+
+
 
 
 }
