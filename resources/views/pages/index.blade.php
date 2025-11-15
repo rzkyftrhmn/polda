@@ -202,7 +202,6 @@
                                             <th>Laporan</th>
                                             <th>Kategori</th>
                                             <th>Institusi</th>
-                                            <th class="text-end">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -377,6 +376,11 @@
         });
     }
 
+        //Rata Rata waktu selesai
+        $.get('/dashboard/avg-resolution', function(data){
+            var txt = data.avg_resolution_time + ' jam';
+            setText('kpi_avg_resolution_time', txt);
+        });
 
 
     // ======================================================
