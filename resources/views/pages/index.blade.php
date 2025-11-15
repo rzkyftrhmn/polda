@@ -3,33 +3,37 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-xl-12">
-            <!-- Filter Tanggal (Date Range) -->
-            <div class="row mb-3">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body py-3">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-sm-12 col-md-3">
-                                    <label for="filter_start_date" class="form-label mb-0">Mulai</label>
-                                    <input type="date" class="form-control" id="filter_start_date" name="start_date">
-                                </div>
-                                <div class="col-sm-12 col-md-3">
-                                    <label for="filter_end_date" class="form-label mb-0">Sampai</label>
-                                    <input type="date" class="form-control" id="filter_end_date" name="end_date">
-                                </div>
-                                <div class="col-sm-12 col-md-3">
-                                </div>
-                                <div class="col-sm-12 col-md-3 text-md-end">
-                                    <div class="d-flex gap-2 justify-content-md-end">
-                                        <button type="button" class="btn btn-primary" id="btn_apply_date_filter">Terapkan Filter</button>
-                                        <button type="button" class="btn btn-light" id="btn_reset_date_filter">Reset</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <small class="text-muted d-block mt-2">Gunakan filter ini untuk memperbarui KPI, grafik, dan tabel sesuai rentang tanggal yang dipilih.</small>
+            {{-- FILTER DASHBOARD --}}
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Filter Dashboard</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Dari Tanggal</label>
+                            <input type="date" id="filter_start_date" class="form-control">
                         </div>
+
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label">Sampai Tanggal</label>
+                            <input type="date" id="filter_end_date" class="form-control">
+                        </div>
+
+                        <div class="col-md-3 mb-2 d-flex align-items-end">
+                            <button id="btn_apply_date_filter" class="btn btn-primary w-100">Terapkan Filter</button>
+                        </div>
+
+                        <div class="col-md-3 mb-2 d-flex align-items-end">
+                            <button id="btn_reset_date_filter" class="btn btn-secondary w-100">Reset Filter</button>
+                        </div>
+
                     </div>
                 </div>
+            </div>
+            {{-- END FILTER --}}
             </div>
             <!-- Dashboard: Blok baru sesuai speckit -->
             <div class="row">
@@ -548,6 +552,72 @@
                     '<tr><td>3</td><td>#RPT-1120</td><td>Kekerasan</td><td>Polsek C</td><td class="text-end"><button class="btn btn-sm btn-warning">Lengkapi Bukti</button></td></tr>'
                 ].join('');
             }
+        }
+
+        function getFilterParams() {
+            return {
+                start_date: $('#filter_start_date').val(),
+                end_date: $('#filter_end_date').val(),
+            };
+        }
+
+        //filter 
+        $('#btn_apply_date_filter').on('click', function () {
+            console.log("Terapkan filter tanggal");
+            loadDashboardWithFilter();
+        });
+
+        $('#btn_reset_date_filter').on('click', function () {
+            console.log("Reset filter tanggal");
+            $('#filter_start_date').val('');
+            $('#filter_end_date').val('');
+            loadDashboardWithFilter();
+        });
+
+        //debugg date error
+        $('#filter_start_date').on('change', function () {
+            console.log("Start date changed:", $(this).val());
+        });
+        $('#filter_end_date').on('change', function () {
+            console.log("End date changed:", $(this).val());
+        });
+
+        //get ajax from controller
+        function loadDashboardWithFilter() {
+
+            const filter = getFilterParams();
+            console.log("Load Dashboard with filter:", filter);
+
+            // ---------------- KPI ----------------
+            $.get('/dashboard/total-laporan', filter, function(res){
+                $("#kpi_total_laporan").text(res.total);
+            });
+
+            $.get('/dashboard/laporan-aktif', filter, function(res){
+                $("#kpi_laporan_aktif").text(res.aktif);
+            });
+
+            $.get('/dashboard/completion-rate', filter, function(res){
+                $("#kpi_completion_rate").text(res.rate);
+            });
+
+            $.get('/dashboard/avg-resolution', filter, function(res){
+                $("#kpi_avg_resolution_time").text(res.avg_resolution_time + " hari");
+            });
+
+            $.get('/dashboard/kpi-with-evidence', filter, function(res){
+                $("#kpi_with_evidence").text(res.rate);
+            });
+
+            $.get('/dashboard/top-category-active', filter, function(res){
+                $("#kpi_top_category").text(res.category);
+            });
+
+            // ---------------- TREND CHART ----------------
+            $.get("{{ route('dashboard.trendReports') }}", filter, function(res){
+                console.log("Reload Chart Trend:", res);
+                // nanti bagian reload chart gua bikinin setelah filter kelar
+            });
         }
 
         function initDummy() {

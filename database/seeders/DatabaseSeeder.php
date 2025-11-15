@@ -18,5 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ReportCategorySeeder::class);
         $this->call(UserTableSeeder::class);
         $this->call(ReportSeeder::class);
+        $this->call(FullDummySeeder::class);
     }
 }

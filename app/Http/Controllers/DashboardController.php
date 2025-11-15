@@ -13,100 +13,101 @@ class DashboardController extends Controller
     {
         $this->dashboardRepo = $dashboardRepo;
     }
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        return view('pages.index');
+        return view('pages.index'); // sudah tidak butuh institutions
     }
 
-    public function statusSummary()
-    {
-        $statusSummary = $this->dashboardRepo->getStatusSummary();
-        return response()->json($statusSummary);
-    }
-    
-    public function topCategories()
-    {
-        $topCategories = $this->dashboardRepo->getTopCategories();
-        return response()->json($topCategories);
-    }
-
-    public function getTrendReports()
-    {
-        $data = $this->dashboardRepo->getTrendReports();
-
-        return response()->json($data);
-    }
-
-    public function getTotalReports()
-    {
-        $total = $this->dashboardRepo->getTotalReports();
-
-        return response()->json([
-            'total' => $total
-        ]);
-    }
-
-    public function getTopCategoryAktif()
-    {
-        $top = $this->dashboardRepo->getTopCategoryAktif();
-
-        return response()->json([
-            'category' => $top->category ?? '-',
-            'total' => $top->total ?? 0
-        ]);
-    }
-
-    public function getLaporanAktif()
-    {
-        $aktif = $this->dashboardRepo->getLaporanAktif();
-
-        return response()->json([
-            'aktif' => $aktif
-        ]);
-    }
-
-    public function getPersentasiLaporanSelesai()
-    {
-        $rate = $this->dashboardRepo->getPersentasiLaporanSelesai();
-        return response()->json(['rate' => $rate]);
-    }
-
-    public function getAverage()
-    {
-        $avgFinish = $this->dashboardRepo->getAverage();
-
-        return view('dashboard.index', [
-            'avgFinish' => $avgFinish
-        ]);
-    }
-
-    public function getAvgResolution()
-    {
-        $avg = $this->dashboardRepo->getAverageResolutionTime();
-
-        return response()->json([
-            'avg_resolution_time' => $avg
-        ]);
-    }
-
-    public function recentReports()
+    public function statusSummary(Request $request)
     {
         return response()->json(
-            $this->dashboardRepo->getRecentReports()
+            $this->dashboardRepo->getStatusSummary(
+                $request->start_date,
+                $request->end_date
+            )
         );
     }
 
-    public function kpiWithEvidence()
-    {
-        $percent = $this->dashboardRepo->getPercentWithEvidenceSimple();
 
-        return response()->json([
-            'rate' => $percent
-        ]);
+    public function getTrendReports(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getTrendReports(
+                $request->start_date,
+                $request->end_date
+            )
+        );
     }
 
 
+    public function getTotalReports(Request $request)
+    {
+        return response()->json([
+            'total' => $this->dashboardRepo->getTotalReports(
+                $request->start_date,
+                $request->end_date
+            )
+        ]);
+    }
+
+    public function getTopCategoryAktif(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getTopCategoryAktif(
+                $request->start_date,
+                $request->end_date
+            )
+        );
+    }
+
+    public function getLaporanAktif(Request $request)
+    {
+        return response()->json([
+            'aktif' => $this->dashboardRepo->getLaporanAktif(
+                $request->start_date,
+                $request->end_date
+            )
+        ]);
+    }
+
+    public function getPersentasiLaporanSelesai(Request $request)
+    {
+        return response()->json([
+            'rate' => $this->dashboardRepo->getPersentasiLaporanSelesai(
+                $request->start_date,
+                $request->end_date
+            )
+        ]);
+    }
+
+    public function getAvgResolution(Request $request)
+    {
+        return response()->json([
+            'avg_resolution_time' => $this->dashboardRepo->getAverageResolutionTime(
+                $request->start_date,
+                $request->end_date
+            )
+        ]);
+    }
+
+    public function recentReports(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getRecentReports(
+                $request->start_date,
+                $request->end_date
+            )
+        );
+    }
+
+    public function kpiWithEvidence(Request $request)
+    {
+        return response()->json([
+            'rate' => $this->dashboardRepo->getPercentWithEvidenceSimple(
+                $request->start_date,
+                $request->end_date
+            )
+        ]);
+    }
 }

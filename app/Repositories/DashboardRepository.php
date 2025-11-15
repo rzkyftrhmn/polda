@@ -11,137 +11,193 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardRepository
 {
-    public function getStatusSummary()
+    // =========================================
+    // FILTER HELPER
+    // =========================================
+    private function applyFilters($query, $start, $end)
     {
-        $baru = Report::where('status', 'SUBMITTED')->count();
-        $diproses = Report::whereIn('status', ['PEMERIKSAAN', 'LIMPAH', 'SIDANG'])->count();
-        $selesai = Report::where('status', 'SELESAI')->count();
+        if ($start && $end) {
+            $query->whereBetween('reports.created_at', [
+                $start . ' 00:00:00',
+                $end . ' 23:59:59'
+            ]);
+        }
 
-        return compact('baru', 'diproses', 'selesai');
+        return $query;
     }
 
-    public function getTopCategories($limit = 5)
+    // =========================================
+    // STATUS SUMMARY
+    // =========================================
+    public function getStatusSummary($start = null, $end = null)
     {
-        return Report::select('report_categories.name as category', \DB::raw('count(reports.id) as total'))
-            ->join('report_categories', 'reports.category_id', '=', 'report_categories.id')
+        $base = Report::query();
+        $base = $this->applyFilters($base, $start, $end);
+
+        return [
+            'baru' => (clone $base)->where('status','SUBMITTED')->count(),
+            'diproses' => (clone $base)->whereIn('status',['PEMERIKSAAN','LIMPAH','SIDANG'])->count(),
+            'selesai' => (clone $base)->where('status','SELESAI')->count(),
+        ];
+    }
+
+    // =========================================
+    // TOP CATEGORIES
+    // =========================================
+    public function getTopCategories($start = null, $end = null, $limit = 5)
+    {
+        $query = Report::query()
+            ->join('report_categories', 'reports.category_id', '=', 'report_categories.id');
+
+        $query = $this->applyFilters($query, $start, $end);
+
+        return $query
+            ->select('report_categories.name as category', DB::raw('COUNT(reports.id) as total'))
             ->groupBy('report_categories.id', 'report_categories.name')
             ->orderByDesc('total')
             ->limit($limit)
             ->get();
     }
 
-    public function getTrendReports($days = 14)
+    // =========================================
+    // TREND REPORTS
+    // =========================================
+    public function getTrendReports($start = null, $end = null)
     {
-        $startDate = now()->subDays($days - 1)->startOfDay();
+        $query = Report::query();
+        $query = $this->applyFilters($query, $start, $end);
 
-        return Report::where('created_at', '>=', $startDate)
+        return $query
             ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
             ->groupBy('date')
-            ->orderBy('date', 'asc')
+            ->orderBy('date')
             ->get();
     }
 
-    public function getTotalReports()
+
+    // =========================================
+    // TOTAL REPORTS
+    // =========================================
+    public function getTotalReports($start = null, $end = null)
     {
-        return Report::whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->count();
+        $query = Report::query();
+        $query = $this->applyFilters($query, $start, $end);
+
+        return $query->count();
     }
 
-    public function getTopCategoryAktif()
+    // =========================================
+    // TOP CATEGORY ACTIVE
+    // =========================================
+    public function getTopCategoryAktif($start = null, $end = null)
     {
-        return \DB::table('reports')
-            ->join('report_categories', 'report_categories.id', '=', 'reports.category_id')
-            ->select('report_categories.name as category', \DB::raw('COUNT(reports.id) as total'))
-            ->whereIn('reports.status', ['PEMERIKSAAN', 'LIMPAH', 'SIDANG'])
-            ->groupBy('reports.category_id', 'report_categories.name')
+        $query = Report::query()
+            ->join('report_categories', 'reports.category_id', '=', 'report_categories.id')
+            ->whereIn('reports.status', ['PEMERIKSAAN', 'LIMPAH', 'SIDANG']);
+
+        $query = $this->applyFilters($query, $start, $end);
+
+        return $query
+            ->select('report_categories.name as category', DB::raw('COUNT(reports.id) as total'))
+            ->groupBy('report_categories.id','report_categories.name')
             ->orderByDesc('total')
-            ->first(); 
+            ->first();
     }
 
-    public function getLaporanAktif()
+    // =========================================
+    // LAPORAN AKTIF
+    // =========================================
+    public function getLaporanAktif($start = null, $end = null)
     {
-        return Report::whereIn('status', ['PEMERIKSAAN', 'LIMPAH', 'SIDANG'])
-            ->count();
+        $query = Report::query()
+            ->whereIn('status', ['PEMERIKSAAN','LIMPAH','SIDANG']);
+
+        $query = $this->applyFilters($query, $start, $end);
+
+        return $query->count();
     }
 
-    public function getPersentasiLaporanSelesai()
+
+    // =========================================
+    // PERSENTASE SELESAI
+    // =========================================
+    public function getPersentasiLaporanSelesai($start = null, $end = null)
     {
-        $total = Report::whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
+        $query = Report::query();
+        $query = $this->applyFilters($query, $start, $end);
+        $total = $query->count();
 
-        $selesai = Report::where('status', 'SELESAI')
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->count();
+        $selesai = $query->where('status','SELESAI')->count();
 
-        if ($total == 0) {
-            return 0;
-        }
+        if ($total == 0) return 0;
 
         return round(($selesai / $total) * 100);
     }
 
-    public function getAverageResolutionTime()
+    // =========================================
+    // AVG RESOLUTION TIME
+    // =========================================
+    public function getAverageResolutionTime($start = null, $end = null)
     {
-        try {
-            $results = ReportJourney::where('report_journeys.type', 'SELESAI')
-                ->join('reports', 'reports.id', '=', 'report_journeys.report_id')
-                ->whereNotNull('reports.created_at')
-                ->whereNotNull('report_journeys.created_at')
-                ->select(DB::raw('TIMESTAMPDIFF(DAY, reports.created_at, report_journeys.created_at) as diff'))
-                ->pluck('diff');
+        $journey = ReportJourney::query()
+            ->where('type','SELESAI')
+            ->join('reports','reports.id','=','report_journeys.report_id');
 
-            if ($results->isEmpty()) {
-                return 0;
-            }
-
-            return round($results->avg(), 1);
-        } catch (\Exception $e) {
-            \Log::error('AVG RESOLUTION ERROR: ' . $e->getMessage());
-            return 0;
+        // apply filter ke *reports*
+        if ($start && $end) {
+            $journey->whereBetween('reports.created_at', [
+                $start . ' 00:00:00',
+                $end . ' 23:59:59',
+            ]);
         }
+
+        $results = $journey
+            ->select(DB::raw('TIMESTAMPDIFF(DAY, reports.created_at, report_journeys.created_at) as diff'))
+            ->pluck('diff');
+
+        if ($results->isEmpty()) return 0;
+
+        return round($results->avg(), 1);
     }
 
-    public function getRecentReports()
+    // =========================================
+    // RECENT REPORTS
+    // =========================================
+    public function getRecentReports($start = null, $end = null)
     {
-        return Report::with([
-            'suspects',
-            'journeys.institution',
-            'category'
-        ])
-        ->orderBy('created_at', 'desc')
-        ->take(12)
-        ->get()
-        ->map(function ($report) {
-            $pelapor = $report->suspects->sortBy('id')->first()?->name ?? '-';
-            $institusi = $report->journeys
-                ->filter(fn($j) => $j->institution)
-                ->sortBy('id')
-                ->first()?->institution?->type ?? '-';
+        $query = Report::with(['suspects','journeys.institution','category'])
+            ->orderBy('created_at','desc')
+            ->take(20);
 
+        $query = $this->applyFilters($query, $start, $end);
+
+        return $query->get()->map(function ($report) {
             return [
                 'code'       => $report->code,
                 'tanggal'    => $report->created_at->format('Y-m-d'),
-                'pelapor'    => $pelapor,
-                'institusi'  => $institusi,
+                'pelapor'    => $report->suspects->first()?->name ?? '-',
+                'institusi'  => $report->journeys->first()?->institution?->type ?? '-',
                 'kategori'   => $report->category?->name ?? '-',
                 'status'     => $report->status,
             ];
         });
     }
 
-    public function getPercentWithEvidenceSimple()
+    // =========================================
+    // WITH EVIDENCE
+    // =========================================
+    public function getPercentWithEvidenceSimple($start = null, $end = null)
     {
-        $total = Report::count();
+        $query = Report::query();
+        $query = $this->applyFilters($query, $start, $end);
 
-        $withEvidence = Report::whereHas('journeys.evidences', function ($query) {
-            $query->whereNotNull('file_url')
-                ->where('file_url', '<>', '');
+        $total = $query->count();
+
+        $withEvidence = $query->whereHas('journeys.evidences', function($q){
+            $q->whereNotNull('file_url')->where('file_url','<>','');
         })->count();
 
-        if ($total == 0) return 0;
+        if($total == 0) return 0;
 
         return round(($withEvidence / $total) * 100);
     }
