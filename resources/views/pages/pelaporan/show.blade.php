@@ -29,8 +29,8 @@
                         <div>
                             <h4 class="mb-2">{{ $report->title }}</h4>
                             <div class="d-flex flex-wrap align-items-center gap-2">
-                                <span class="badge bg-light text-dark">Kode: {{ $report->code ?? '-' }}</span>
-                                <span class="badge bg-secondary text-uppercase">Status: {{ $statusLabel ?? '-' }}</span>
+                                <span class="badge bg-body-secondary text-body">Kode: {{ $report->code ?? '-' }}</span>
+                                <span class="badge bg-primary-subtle text-primary text-uppercase">Status: {{ $statusLabel ?? '-' }}</span>
                             </div>
                         </div>
                         <div class="text-md-end">
@@ -152,7 +152,7 @@
                                 multiple
                                 accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
                             >
-                            <small class="text-muted">
+                            <small class="form-text">
                                 *Bisa unggah lebih dari satu file (foto, dokumen, atau bukti lainnya).
                             </small>
                         </div>
@@ -175,45 +175,35 @@
 
 @push('styles')
 <style>
-    .report-detail-card .card-header h5 {
-        color: #ffffff;
+    .report-detail-card .card-header {
+        border-bottom: 1px solid var(--bs-border-color);
     }
 
     .report-detail-body {
         color: var(--bs-body-color);
-        background-color: transparent;
     }
 
-    .report-detail-body h4,
-    .report-detail-body p,
-    .report-detail-body .badge,
-    .report-detail-body .list-group-item,
-    .report-detail-body .list-group-item .small,
-    .report-detail-body .list-group-item span,
-    .report-detail-body .list-group-item button,
-    .report-detail-body .text-muted,
-    .report-detail-body .text-body {
+    .report-detail-body .badge {
         color: inherit;
     }
 
-    .report-detail-body .list-group-item {
-        background-color: transparent;
+    #journeyModal .modal-content {
+        background-color: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        border-color: var(--bs-border-color);
     }
 
-    [data-theme-version="dark"] .report-detail-body {
-        color: #f1f5f9;
+    #journeyModal .modal-body,
+    #journeyModal .modal-footer {
+        background-color: inherit;
     }
 
-    [data-theme-version="dark"] .report-detail-body .text-muted {
-        color: rgba(241, 245, 249, 0.7) !important;
+    #journeyModal .form-label {
+        color: var(--bs-body-color);
     }
 
-    [data-theme-version="dark"] .report-detail-body .list-group-item {
-        background-color: rgba(15, 23, 42, 0.35);
-    }
-
-    [data-theme-version="dark"] .report-detail-body .badge.bg-light {
-        color: #0f172a;
+    #journeyModal .form-text {
+        color: var(--bs-secondary-color);
     }
 </style>
 @endpush

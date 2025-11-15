@@ -93,7 +93,7 @@
         background-color: var(--bs-body-bg);
         border: 1px solid var(--bs-border-color);
         border-radius: 0.75rem;
-        box-shadow: 0 18px 40px rgba(var(--bs-body-color-rgb, 15, 23, 42), 0.08);
+        box-shadow: 0 18px 40px rgba(var(--bs-body-color-rgb), 0.08);
         color: var(--bs-body-color);
         width: 45%;
         float: left;
@@ -102,7 +102,7 @@
 
     .cd-timeline-content:hover {
         transform: translateY(-6px);
-        box-shadow: 0 22px 48px rgba(var(--bs-body-color-rgb, 15, 23, 42), 0.12);
+        box-shadow: 0 22px 48px rgba(var(--bs-body-color-rgb), 0.12);
     }
 
     .cd-timeline-content::before {
@@ -157,7 +157,7 @@
     .cd-timeline-content .journey-evidence-list .list-group-item {
         background-color: transparent;
         border: none;
-        border-top: 1px solid rgba(var(--bs-body-color-rgb, 108, 117, 125), 0.2);
+        border-top: 1px solid var(--bs-border-color);
         padding-left: 0;
         padding-right: 0;
     }
@@ -172,33 +172,6 @@
 
     .cd-timeline-content .badge {
         letter-spacing: 0.05em;
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline-content {
-        background-color: rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92);
-        border-color: rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.16);
-        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.75);
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline-content::before {
-        border-color: transparent transparent transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92);
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
-        border-color: transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92) transparent transparent;
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline-img {
-        border-color: rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.95);
-        box-shadow: 0 0 0 5px rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.1);
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline::before {
-        background-color: rgba(var(--bs-body-color-rgb, 255, 255, 255), 0.25);
-    }
-
-    body[data-bs-theme="dark"] .cd-timeline-content .journey-limpah-pill {
-        background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.35), rgba(var(--bs-primary-rgb), 0.18));
     }
 
     .cd-timeline-block::after {
@@ -309,11 +282,6 @@
             left: -18px;
             border-width: 9px 18px 9px 0;
             border-color: transparent var(--bs-body-bg) transparent transparent;
-        }
-
-        body[data-bs-theme="dark"] .cd-timeline-content::before,
-        body[data-bs-theme="dark"] .cd-timeline-block:nth-child(even) .cd-timeline-content::before {
-            border-color: transparent rgba(var(--bs-body-bg-rgb, 13, 17, 23), 0.92) transparent transparent;
         }
     }
 
