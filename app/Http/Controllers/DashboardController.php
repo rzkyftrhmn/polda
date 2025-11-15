@@ -61,6 +61,16 @@ class DashboardController extends Controller
         );
     }
 
+    public function topCategories(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getTopCategories(
+                $request->start_date,
+                $request->end_date
+            )
+        );
+    }
+
     public function getLaporanAktif(Request $request)
     {
         return response()->json([

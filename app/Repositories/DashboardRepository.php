@@ -44,6 +44,8 @@ class DashboardRepository
     // =========================================
     // TOP CATEGORIES
     // =========================================
+
+    
     public function getTopCategories($start = null, $end = null, $limit = 5)
     {
         $query = Report::query()
