@@ -6,8 +6,11 @@
         <div class="col-xl-8 col-lg-10">
             <div class="card shadow-sm border-0 report-detail-card">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Detail Laporan Pelanggaran</h5>
-                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#journeyModal">
+                    <a href="{{ route('pelaporan.index') }}" class="btn btn-light text-primary btn-sm">
+                        <i class="fa fa-arrow-left me-1"></i> Kembali
+                    </a>
+                    <h5 class="text-white mb-0">Detail Laporan Pelanggaran</h5>
+                    <button class="btn btn-light text-primary btn-sm" data-bs-toggle="modal" data-bs-target="#journeyModal">
                         <i class="fa fa-plus me-1"></i> Tambah Tahapan Penanganan
                     </button>
                 </div>
