@@ -22,31 +22,31 @@
                 </a>
             </li>
             <li class="nav-item dropdown notification_dropdown">
-                <a class="nav-link " href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
-                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="32px" height="32px" viewBox="0 0 24 24" version="1.1" class="svg-main-icon">
-                        <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-                            <path d="M17,12 L18.5,12 C19.3284271,12 20,12.6715729 20,13.5 C20,14.3284271 19.3284271,15 18.5,15 L5.5,15 C4.67157288,15 4,14.3284271 4,13.5 C4,12.6715729 4.67157288,12 5.5,12 L7,12 L7.5582739,6.97553494 C7.80974924,4.71225688 9.72279394,3 12,3 C14.2772061,3 16.1902508,4.71225688 16.4417261,6.97553494 L17,12 Z" fill="#fff"/>
+                <!-- TOMBOL NOTIFIKASI -->
+                <a class="nav-link" href="#" id="notifDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32px" height="32px" viewBox="0 0 24 24" class="svg-main-icon">
+                        <g fill="none" fill-rule="evenodd">
+                            <path d="M17,12 L18.5,12 C19.3,12 20,12.7 20,13.5 C20,14.3 19.3,15 18.5,15 L5.5,15 C4.7,15 4,14.3 4,13.5 C4,12.7 4.7,12 5.5,12 L7,12 L7.56,6.97 C7.81,4.71 9.72,3 12,3 C14.28,3 16.19,4.71 16.44,6.97 L17,12 Z" fill="#fff"/>
                             <rect fill="#fff" opacity="0.3" x="10" y="16" width="4" height="4" rx="2"/>
                         </g>
                     </svg>
+                    <span id="notif-count" class="badge bg-danger">0</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-end of-visible">
-                    <div id="DZ_W_Notification3" class="widget-media dlab-scroll p-3" style="height:380px;">
-                        <ul class="timeline">
-                            <li>
-                                <div class="timeline-panel">
-                                    <div class="media me-2">
-                                        <img alt="image" width="50" src="images/avatar/1.jpg">
-                                    </div>
-                                    <div class="media-body">
-                                        <h6 class="mb-1">Dr sultads Send you Photo</h6>
-                                        <small class="d-block">29 July 2020 - 02:26 PM</small>
-                                    </div>
-                                </div>
-                            </li>
+
+                <!-- DROPDOWN MENU -->
+                <div class="dropdown-menu dropdown-menu-end of-visible" style="width: 350px;">
+
+                    <!-- LIST NOTIF -->
+                    <div class="widget-media dlab-scroll p-3" style="height: 380px;">
+                        <ul class="timeline" id="notif-list">
+                            <li class="dropdown-item text-center text-muted">Loading..</li>
                         </ul>
                     </div>
-                    <a class="all-notification" href="javascript:void(0);">See all notifications <i class="ti-arrow-end"></i></a>
+
+                    <button class="dropdown-item text-center" id="markAllReadBtn">Baca Semua Notifikasi</button>
+                    <a class="all-notification text-center" href="{{ route('notifications.all') }}">
+                        Lihat Semua Notifikasi <i class="ti-arrow-end"></i>
+                    </a>
                 </div>
             </li>
             <li>
@@ -93,3 +93,76 @@
         </ul>
     </div>
 </nav>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $.get('/notifications')
+    .done(function(res) {
+        let data = res.data;
+        let html = '';
+
+        data.sort(function(a, b) {
+            return new Date(b.created_at) - new Date(a.created_at);
+        });
+
+        if (!data || data.length === 0) {
+            html = `<li class="dropdown-item text-center text-muted">Tidak ada notifikasi</li>`;
+        } else {
+            data.forEach(function(n) {
+                html += `
+                    <li class="dropdown-item ${n.read_at ? 'read' : 'unread'}" style="cursor:pointer;" onclick="markAsRead(${n.id})">
+                        <div class="notif-text">${n.message}</div>
+                        <small class="text-muted">${n.created_at}</small>
+                    </li>
+                `;
+            });
+        }
+
+        $('#notif-list').html(html);
+    })
+    .fail(function(err) {
+        console.log("AJAX ERROR:", err);
+    });
+
+    function loadNotifCount() {
+        $.get('/notifications/unread-count', function(res) {
+            if (res.count > 0) {
+                $('#notif-count').text(res.count).show();
+            } else {
+                $('#notif-count').hide();
+            }
+        });
+    }
+
+    function markAsRead(id) {
+        $.post(`/notifications/${id}/read`, {_token: "{{ csrf_token() }}"})
+            .done(function() {
+                loadNotifCount();
+                loadNotifications();
+            });
+    }
+
+    $('#markAllReadBtn').on('click', function () {
+        $('#notif-list li').removeClass('unread').addClass('read');
+        $('#notif-count').hide(); 
+
+        $.ajax({
+            url: '{{ route('notifications.markAllAsRead') }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function () {
+                loadNotifications(); 
+            },
+            error: function (err) {
+                console.error('Failed to mark all as read', err);
+            }
+        });
+    });
+
+    $('#notifDropdown').on('click', function () {
+        loadNotifications();
+    });
+
+    loadNotifCount();
+</script>

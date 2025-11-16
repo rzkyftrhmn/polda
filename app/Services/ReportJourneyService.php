@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ReportJourneyType;
 use App\Interfaces\ReportJourneyRepositoryInterface;
+use App\Services\NotificationService;
 use App\Models\Division;
 use App\Models\Institution;
 use App\Models\Report;
@@ -18,7 +19,8 @@ use Throwable;
 class ReportJourneyService
 {
     public function __construct(
-        protected ReportJourneyRepositoryInterface $repository
+        protected ReportJourneyRepositoryInterface $repository,
+        protected NotificationService $notificationService
     ) {
     }
 
@@ -114,6 +116,32 @@ class ReportJourneyService
             /** @var ReportJourney $journey */
             $journey = $this->repository->store($journeyData);
 
+            $changedFields = [];
+            // Cek jika status adalah 'LIMPAH' dan ada perubahan pada instansi atau divisi
+            if ($type->value === 'LIMPAH') {
+                // Cek jika ada perubahan pada instansi
+                if (!empty($data['institution_id'])) {
+                    $changedFields[] = "Instansi tujuan diperbarui";
+                }
+
+                // Cek jika ada perubahan pada divisi
+                if (!empty($data['division_id'])) {
+                    $changedFields[] = "Divisi tujuan diperbarui";
+                }
+            }
+
+            // Jika ada perubahan, kirimkan notifikasi untuk laporan yang diperbarui
+            if (!empty($changedFields)) {
+                $this->notificationService->notifyLaporanDiupdate(
+                    $journey->report,
+                    implode(', ', $changedFields)
+                );
+            }
+
+
+
+            $createdFiles = [];
+            
             foreach ($files as $file) {
                 if (! $file instanceof UploadedFile) {
                     continue;
@@ -134,9 +162,18 @@ class ReportJourneyService
                     'file_url' => Storage::url($storedPath),
                     'file_type' => strtolower($file->getClientOriginalExtension()),
                 ]);
+                $createdFiles[] = $filename;
+            }
+            if (!empty($createdFiles)) {
+                $fileNames = implode(', ', $createdFiles);
+
+                $this->notificationService->notifyBuktiDitambahkan(
+                    $journey->report,
+                    $fileNames
+                );
             }
 
-
+            // Update status report sesuai dengan type journey yang baru
             $reportUpdate = ['status' => $type->value];
 
             if ($type === ReportJourneyType::COMPLETED) {
@@ -144,6 +181,8 @@ class ReportJourneyService
             }
 
             Report::whereKey($journey->report_id)->update($reportUpdate);
+
+            $this->notificationService->notifyReportStatus($journey->report, $type->value);
 
             DB::commit();
 
@@ -163,6 +202,7 @@ class ReportJourneyService
             ];
         }
     }
+
 
     private function normalizeType(null|ReportJourneyType|string $type): ?ReportJourneyType
     {

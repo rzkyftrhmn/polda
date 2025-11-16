@@ -23,6 +23,7 @@ class Report extends Model
         'status',
         'code',
         'finish_time',
+        'created_by',
     ];
 
     protected $casts = [
@@ -68,6 +69,17 @@ class Report extends Model
     public function evidences()
     {
         return $this->hasMany(ReportEvidence::class, 'report_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by'); 
+    }
+
+
+    public function division()
+    {
+        return $this->hasOneThrough(Division::class, ReportJourney::class, 'report_id', 'id', 'id', 'division_id');
     }
 
     protected static function booted(): void

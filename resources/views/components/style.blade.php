@@ -94,4 +94,18 @@
         }
     }
 
+    /* Navbar */
+    .unread {
+        font-weight: bold;
+    }
+    .read {
+        font-weight: normal;
+    }
+    .timeline li {
+        display: block !important;
+    }
+    .timeline .dropdown-item {
+        white-space: normal !important;
+        padding: 10px 5px;
+    }
 </style>

@@ -6,9 +6,15 @@ use App\Models\Report;
 use App\Models\Suspect;
 use App\Models\ReportJourney;
 use Illuminate\Support\Facades\DB;
+use App\Services\NotificationService;
 
 class PelaporanRepository
 {
+    protected $notificationRepo;
+    public function __construct(NotificationService $repo)
+    {
+        $this->notificationRepo = $repo;
+    }
     public function getDataTableQuery($filter_q = null)
     {
         $query = Report::with(['suspects','reportCategory','province','city','district']);
@@ -23,7 +29,7 @@ class PelaporanRepository
     public function store(array $data)
     {
         return DB::transaction(function() use ($data) {
-            // Simpan report
+
             $report = Report::create([
                 'title' => $data['title'],
                 'description' => $data['description'],
@@ -34,12 +40,18 @@ class PelaporanRepository
                 'address_detail' => $data['address_detail'] ?? null,
                 'category_id' => $data['category_id'],
                 'status' => $data['status'],
-                'code' => $data['code'], 
+                'code' => $data['code'],
                 'finish_time' => $data['finish_time'] ?? null,
+                'created_by' => $data['created_by'], // PENTING!
             ]);
 
-            if(!empty($data['suspects'])) {
-                foreach($data['suspects'] as $suspect){
+            // Simpan notifikasi
+            $this->notificationRepo->notifyReportStatus($report, 'SUBMITTED');
+
+
+            // Simpan suspects
+            if (!empty($data['suspects'])) {
+                foreach ($data['suspects'] as $suspect) {
                     Suspect::create([
                         'report_id' => $report->id,
                         'name' => $suspect['name'],

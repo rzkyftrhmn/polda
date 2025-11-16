@@ -163,18 +163,23 @@ class PelaporanController extends Controller
             'suspects.*.description' => 'nullable|string',
         ]);
 
-        // Set default status jika tidak dikirim dari form
+        // Isi created_by di sini, bukan di validasi!!
+        $validated['created_by'] = auth()->id();
+
+        // Set default status
         if (empty($validated['status'])) {
             $validated['status'] = 'SUBMITTED';
         }
 
         // Generate kode otomatis
-        $bulanTahun = now()->format('my'); // misal November 2025 → 1125
+        $bulanTahun = now()->format('my'); 
         $lastReport = Report::whereMonth('created_at', now()->month)
                             ->whereYear('created_at', now()->year)
                             ->latest()->first();
+
         $noUrut = $lastReport ? (intval(substr($lastReport->code, -4)) + 1) : 1;
-        $validated['code'] = 'RPT-'.$bulanTahun.str_pad($noUrut, 4, '0', STR_PAD_LEFT);
+
+        $validated['code'] = 'RPT-' . $bulanTahun . str_pad($noUrut, 4, '0', STR_PAD_LEFT);
 
         // Simpan laporan
         $report = $this->service->store($validated);
@@ -184,9 +189,9 @@ class PelaporanController extends Controller
         }
 
         return redirect()->route('pelaporan.show', $report->id)
-                 ->with('success', 'Laporan berhasil dibuat.');
-
+            ->with('success', 'Laporan berhasil dibuat.');
     }
+
 
 
     /** Form edit laporan */
@@ -277,6 +282,5 @@ class PelaporanController extends Controller
             ? redirect()->route('pelaporan.index')->with('success', 'Laporan berhasil dihapus')
             : back()->with('error', 'Gagal menghapus laporan');
     }
-
     
 }

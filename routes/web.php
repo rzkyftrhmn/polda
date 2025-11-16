@@ -13,6 +13,7 @@ use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ReportJourneyController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PelaporanController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
         Route::get('/dashboard/backlog-tahap', [DashboardController::class, 'backlogPerTahap']);
+        Route::get('/test-auth', function() {
+            return dd(auth()->user());
+        });
 
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/notifications/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+        Route::get('/notifications/all', [NotificationController::class, 'allNotifications'])->name('notifications.all');
     }
 );

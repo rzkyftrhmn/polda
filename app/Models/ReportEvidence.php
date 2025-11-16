@@ -9,7 +9,7 @@ class ReportEvidence extends Model
 {
     use HasFactory;
 
-    protected $table = 'report_evidences';
+    protected $table = 'report_evidence';
 
     protected $fillable = [
         'report_journey_id',

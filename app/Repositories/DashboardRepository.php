@@ -239,8 +239,8 @@ class DashboardRepository
             ->join('report_categories', 'report_categories.id', '=', 'reports.category_id')
             ->whereNotExists(function ($q) {
                 $q->select(DB::raw(1))
-                  ->from('report_evidences')
-                  ->whereColumn('report_evidences.report_id', 'reports.id')
+                  ->from('report_evidence')
+                  ->whereColumn('report_evidence.report_id', 'reports.id')
                   ->whereNotNull('file_url')
                   ->where('file_url', '<>', '');
             });
