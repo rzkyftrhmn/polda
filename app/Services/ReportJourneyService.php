@@ -69,11 +69,9 @@ class ReportJourneyService
             return $journey;
         });
 
-        // FIX 4: assign back WITHOUT setCollection() kalau tidak ada
         if (method_exists($paginator, 'setCollection')) {
             $paginator->setCollection($journeys);
         } else {
-            // bikin paginator baru (fallback)
             $paginator = new LengthAwarePaginator(
                 $journeys,
                 $paginator->total(),
