@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('report_id');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->unsignedBigInteger('division_id');
             $table->timestamps();
         });
     }

@@ -12,11 +12,16 @@ class Suspect extends Model
     protected $fillable = [
         'report_id',
         'name',
-        'description',
+        'division_id',
     ];
 
     public function report()
     {
         return $this->belongsTo(Report::class);
+    }
+    
+    public function division()
+    {
+        return $this->belongsTo(Division::class, 'division_id');
     }
 }

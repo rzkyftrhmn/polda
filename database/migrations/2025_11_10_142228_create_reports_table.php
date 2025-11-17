@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('division_id')->nullable();
             $table->string('title');
-            $table->text('description')->nullable();
             $table->datetime('incident_datetime');
             $table->unsignedBigInteger('province_id')->nullable();
             $table->unsignedBigInteger('city_id')->nullable();
@@ -22,6 +22,10 @@ return new class extends Migration
             $table->text('address_detail')->nullable();
             $table->unsignedBigInteger('category_id');
             $table->enum('status', ['SUBMITTED', 'PEMERIKSAAN', 'LIMPAH', 'SIDANG', 'SELESAI'])->default('SUBMITTED');
+            $table->text('description')->nullable();
+            $table->string('name_of_reporter');
+            $table->text('address_of_reporter');
+            $table->string('phone_of_reporter');
             $table->timestamps();
         });
     }

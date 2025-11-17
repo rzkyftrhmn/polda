@@ -13,7 +13,6 @@ class ReportJourney extends Model
 
     protected $fillable = [
         'report_id',
-        'institution_id',
         'division_id',
         'type',
         'description',

@@ -11,12 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('report_journeys', function (Blueprint $table) {
+        Schema::create('access_datas', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('division_id');
             $table->unsignedBigInteger('report_id');
-            $table->unsignedBigInteger('division_id')->nullable();
-            $table->enum('type', ['SUBMITTED', 'PEMERIKSAAN', 'LIMPAH', 'SIDANG', 'SELESAI'])->default('SUBMITTED');
-            $table->text('description');
+            $table->boolean('is_finish')->default(false);
             $table->timestamps();
         });
     }
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('report_journeys');
+        Schema::dropIfExists('access_datas');
     }
 };

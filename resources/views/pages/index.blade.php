@@ -190,30 +190,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header border-0 pb-0">
-                            <h4 class="card-title">Laporan Tanpa Bukti</h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-responsive-md" id="table_tanpa_bukti">
-                                    <thead>
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Laporan</th>
-                                            <th>Kategori</th>
-                                            <th class="text-end">Institusi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- DataTables server-side -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="row">
                 <div class="col-lg-12">
@@ -575,42 +551,6 @@
             },
             error: function (err) {
                 console.error("AJAX error:", err);
-            }
-        });
-    }
-
-    // =====================================================
-    // LOAD TABLE: TANPA BUKTI
-    // ======================================================
-    function loadReportsWithoutEvidence() {
-        const tbody = $("#table_tanpa_bukti tbody");
-        tbody.html('<tr><td colspan="4" class="text-center">Memuat data...</td></tr>');
-
-        $.ajax({
-            url: '/reports/without-evidence',
-            method: 'GET',
-            data: getFilterParams(),
-            success: function(res) {
-                tbody.empty();
-
-                if (!res.length) {
-                    tbody.html('<tr><td colspan="4" class="text-center text-muted">Tidak ada data tersedia</td></tr>');
-                    return;
-                }
-
-                res.forEach((item, index) => {
-                    tbody.append(`
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.code}</td>
-                            <td>${item.kategori}</td>
-                            <td class="text-center">${item.institusi}</td>
-                        </tr>
-                    `);
-                });
-            },
-            error: function() {
-                tbody.html('<tr><td colspan="4" class="text-center text-danger">Terjadi kesalahan memuat data.</td></tr>');
             }
         });
     }

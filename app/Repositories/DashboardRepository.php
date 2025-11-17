@@ -219,74 +219,37 @@ class DashboardRepository
         return round(($withEvidence / $total) * 100);
     }
 
-    // ========================================
-    // REPORTS WITHOUT EVIDENCE QUERY(tanpa bukti)
-    // ========================================
-    public function getReportsWithoutEvidenceQuery($start = null, $end = null)
-    {
-        $query = Report::query()
-            ->select([
-                'reports.id',
-                'reports.code',
-                'report_categories.name as kategori',
-                DB::raw('(SELECT i.type 
-                    FROM report_journeys rj
-                    JOIN institutions i ON i.id = rj.institution_id
-                    WHERE rj.report_id = reports.id
-                    LIMIT 1
-                ) AS institusi'),
-            ])
-            ->join('report_categories', 'report_categories.id', '=', 'reports.category_id')
-            ->whereNotExists(function ($q) {
-                $q->select(DB::raw(1))
-                  ->from('report_evidence')
-                  ->whereColumn('report_evidence.report_id', 'reports.id')
-                  ->whereNotNull('file_url')
-                  ->where('file_url', '<>', '');
-            });
-
-        // filter tanggal
-        if ($start && $end) {
-            $query->whereBetween('reports.created_at', [
-                $start . ' 00:00:00',
-                $end . ' 23:59:59'
-            ]);
-        }
-
-        return $query;
-    }
-
 
 
     // ========================================
     // Top Isntitusi by Report Count
     // ========================================
 
-    public function getTopInstitusi($start = null, $end = null)
-    {
-        $institutionId = Auth::user()->institution_id;
+    // public function getTopInstitusi($start = null, $end = null)
+    // {
+    //     $institutionId = Auth::user()->institution_id;
 
-        return DB::table('report_journeys')
-            ->join('institutions', 'institutions.id', '=', 'report_journeys.institution_id')
-            ->join('reports', 'reports.id', '=', 'report_journeys.report_id')
-            ->when($start && $end, function($q) use ($start, $end){
-                $q->whereBetween('reports.created_at', [
-                    $start . ' 00:00:00',
-                    $end . ' 23:59:59'
-                ]);
-            })
-            ->when($institutionId, function($q) use ($institutionId){
-                $q->where('institutions.id', $institutionId);
-            })
-            ->select(
-                'institutions.name as institution',
-                DB::raw('COUNT(DISTINCT reports.id) as total')
-            )
-            ->groupBy('institutions.id', 'institutions.name')
-            ->orderByDesc('total')
-            ->limit(5)
-            ->get();
-    }
+    //     return DB::table('report_journeys')
+    //         ->join('institutions', 'institutions.id', '=', 'report_journeys.institution_id')
+    //         ->join('reports', 'reports.id', '=', 'report_journeys.report_id')
+    //         ->when($start && $end, function($q) use ($start, $end){
+    //             $q->whereBetween('reports.created_at', [
+    //                 $start . ' 00:00:00',
+    //                 $end . ' 23:59:59'
+    //             ]);
+    //         })
+    //         ->when($institutionId, function($q) use ($institutionId){
+    //             $q->where('institutions.id', $institutionId);
+    //         })
+    //         ->select(
+    //             'institutions.name as institution',
+    //             DB::raw('COUNT(DISTINCT reports.id) as total')
+    //         )
+    //         ->groupBy('institutions.id', 'institutions.name')
+    //         ->orderByDesc('total')
+    //         ->limit(5)
+    //         ->get();
+    // }
 
 
     public function getBacklogPerTahap($start = null, $end = null)

@@ -20,6 +20,8 @@ class Division extends Model
         'permissions',
         'name',
         'type',
+        'level',
+        'permissions',
     ];
 
     public function parent()
@@ -42,5 +44,19 @@ class Division extends Model
         return $this->hasMany(ReportJourney::class, 'institution_id');
     }
 
+    public function report()
+    {
+        return $this->hasMany(Report::class, 'division_id');
+    }
+
+    public function access_datas()
+    {
+        return $this->hasMany(AccessData::class, 'division_id');
+    }
+
+    public function division()
+    {
+        return $this->hasMany(Suspect::class, 'division_id');
+    }
 
 }

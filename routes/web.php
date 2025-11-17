@@ -79,6 +79,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('datatables/pelaporan', [PelaporanController::class, 'datatables'])->name('datatables.pelaporan');
         Route::get('get-cities/{provinceId}', [PelaporanController::class, 'getCitiesByProvince']);
         Route::get('get-districts/{cityId}', [PelaporanController::class, 'getDistrictsByCity']);
+        Route::get('/api/divisions', [PelaporanController::class, 'byType'])->name('api.divisions');
+
 
         // report data routes
         Route::get('report-data', [ReportDataController::class, 'index'])->name('report-data.index');
@@ -100,8 +102,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/recent-reports', [DashboardController::class, 'recentReports']);
         Route::get('/dashboard/kpi-with-evidence', [DashboardController::class, 'kpiWithEvidence']);
         Route::get('/dashboard/top-institusi',[DashboardController::class, 'getTopInstitusi'])->name('dashboard.topInstitusi');
-        Route::get('/reports/without-evidence', [DashboardController::class, 'reportsWithoutEvidence'])
-            ->name('reports.withoutEvidence');
 
 
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])

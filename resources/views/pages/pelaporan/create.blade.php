@@ -23,15 +23,15 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Nama Pelapor</label>
-                                    <input type="text" name="reporter_name" class="form-control" value="{{ old('reporter.name') }}">
+                                    <input type="text" name="name_of_reporter" class="form-control" value="{{ old('name_of_reporter') }}">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">No Telepon Pelapor</label>
-                                    <input type="text" name="reporter_phone" class="form-control" value="{{ old('reporter.phone') }}">
+                                    <input type="number" name="phone_of_reporter" class="form-control" value="{{ old('phone_of_reporter') }}">
                                 </div>
                                 <div class="col-md-12 mb-3">
                                     <label class="form-label">Alamat Pelapor</label>
-                                    <textarea type="text" name="reporter_address" class="form-control" value="{{ old('reporter.address') }}"></textarea>
+                                    <textarea type="text" name="address_of_reporter" class="form-control" value="{{ old('address_of_reporter') }}"></textarea>
                                 </div>
 
                                 <div class="col-12"><hr></div>
@@ -101,8 +101,6 @@
                                         <thead>
                                             <tr>
                                                 <th>Nama</th>
-                                                <th>Alamat</th>
-                                                <th>Telepon</th>
                                                 <th>Jenis Satuan</th>
                                                 <th>Satker/Satwil</th>
                                                 <th>Aksi</th>
@@ -123,7 +121,7 @@
     </div>
  </div>
 
- <div class="modal fade" id="terlaporModal" tabindex="-1" aria-labelledby="terlaporModalLabel" aria-hidden="true">
+<div class="modal fade" id="terlaporModal" tabindex="-1" aria-labelledby="terlaporModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
@@ -134,14 +132,6 @@
         <div class="mb-3">
           <label class="form-label">Nama Terlapor</label>
           <input type="text" class="form-control" id="tlp-name">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Alamat Terlapor</label>
-          <input type="text" class="form-control" id="tlp-address">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">No Telepon Terlapor</label>
-          <input type="text" class="form-control" id="tlp-phone">
         </div>
         <div class="mb-3">
           <label class="form-label">Jenis Satuan</label>
@@ -175,122 +165,125 @@
 
 @section('scripts')
 <script>
-$(document).ready(function() {
-    let suspectIndex = 0;
-    const suspectsTableBody = $('#suspects-table-body');
-    const hiddenInputs = $('#suspects-hidden-inputs');
-    let suspectsData = [];
-
-    function addSuspectRow(data) {
-        suspectsData.push(data);
-        const satUnit = data.unit_type === 'Satker' ? (data.satker_name || '-') : (data.satwil_name || '-');
-        const rowId = `suspect-row-${suspectIndex}`;
-        const row = `<tr id="${rowId}">
-            <td>${data.name}</td>
-            <td>${data.address || '-'}</td>
-            <td>${data.phone || '-'}</td>
-            <td>${data.unit_type || '-'}</td>
-            <td>${satUnit}</td>
-            <td><button type="button" class="btn btn-danger btn-sm" data-row="${rowId}">Hapus</button></td>
-        </tr>`;
-        suspectsTableBody.append(row);
-        const inputs = `
-            <div id="hidden-${rowId}">
-                <input type="hidden" name="suspects[${suspectIndex}][name]" value="${data.name}">
-                <input type="hidden" name="suspects[${suspectIndex}][address]" value="${data.address || ''}">
-                <input type="hidden" name="suspects[${suspectIndex}][phone]" value="${data.phone || ''}">
-                <input type="hidden" name="suspects[${suspectIndex}][unit_type]" value="${data.unit_type || ''}">
-                <input type="hidden" name="suspects[${suspectIndex}][satker_id]" value="${data.satker_id || ''}">
-                <input type="hidden" name="suspects[${suspectIndex}][satwil_id]" value="${data.satwil_id || ''}">
-            </div>`;
-        hiddenInputs.append(inputs);
-        suspectIndex++;
-    }
-
-    window.appendSuspectRow = addSuspectRow;
-
-    $(document).on('click', '#suspects-table-body .btn-danger', function() {
-        const rowId = $(this).data('row');
-        $('#' + rowId).remove();
-        $('#hidden-' + rowId).remove();
-    });
-
-    const initialSuspects = @json(old('suspects', []));
-    if (Array.isArray(initialSuspects)) {
-        initialSuspects.forEach(function(s) {
-            window.appendSuspectRow({
-                name: s.name || '',
-                address: s.address || '',
-                phone: s.phone || '',
-                unit_type: s.unit_type || '',
-                satker_id: s.satker_id || '',
-                satwil_id: s.satwil_id || '',
-                satker_name: s.satker_name || '',
-                satwil_name: s.satwil_name || ''
-            });
-        });
-    }
-});
-
-$(document).ready(function() {
-    var oldProvinceId = '{{ old('province_id', $pelaporan->province_id ?? '') }}';
-    var oldCityId = '{{ old('city_id', $pelaporan->city_id ?? '') }}';
-    var oldDistrictId = '{{ old('district_id', $pelaporan->district_id ?? '') }}';
-
-    function loadCities(provinceId, selectedCityId = null){
-        if(!provinceId){
-            $('#city_id').html('<option value="">Pilih Provinsi terlebih dahulu</option>');
-            $('#district_id').html('<option value="">Pilih Kota terlebih dahulu</option>');
-            return;
-        }
-        $.get('/get-cities/' + provinceId, function(data){
-            $('#city_id').html('<option value="">Pilih Kota</option>');
-            $.each(data, function(i, city){
-                var selected = city.id == selectedCityId ? 'selected' : '';
-                $('#city_id').append('<option value="'+city.id+'" '+selected+'>'+city.name+'</option>');
-            });
-            if(selectedCityId){
-                loadDistricts(selectedCityId, oldDistrictId);
-            }
-        });
-    }
-
-    function loadDistricts(cityId, selectedDistrictId = null){
-        if(!cityId){
-            $('#district_id').html('<option value="">Pilih Kota terlebih dahulu</option>');
-            return;
-        }
-        $.get('/get-districts/' + cityId, function(data){
-            $('#district_id').html('<option value="">Pilih Kecamatan</option>');
-            $.each(data, function(i, district){
-                var selected = district.id == selectedDistrictId ? 'selected' : '';
-                $('#district_id').append('<option value="'+district.id+'" '+selected+'>'+district.name+'</option>');
-            });
-        });
-    }
-
-    if(oldProvinceId){
-        loadCities(oldProvinceId, oldCityId);
-    }
-
-    $('#province_id').change(function(){
-        loadCities($(this).val());
-    });
-
-    $('#city_id').change(function(){
-        loadDistricts($(this).val());
+var oldCityId = "{{ $data->city_id ?? '' }}";
+var oldDistrictId = "{{ $data->district_id ?? '' }}";
+$(document).ready(function () {
+    loadCities(oldCityId);
+    
+    $('#city_id').on('change', function () {
+        loadDistricts($(this).val(), null);
     });
 });
+    
+function loadCities(selectedCityId = null) {
+    const provinceId = 12; // FIX: Jawa Barat
+    
+    $.get('/get-cities/' + provinceId, function (data) {
+        $('#city_id').html('<option value="">Pilih Kota</option>');
+        
+        $.each(data, function (i, city) {
+            let selected = city.id == selectedCityId ? 'selected' : '';
+            $('#city_id').append(
+                '<option value="' + city.id + '" ' + selected + '>' + city.name + '</option>'
+            );
+        });
+
+        if (selectedCityId) {
+            loadDistricts(selectedCityId, oldDistrictId);
+        }
+    });
+}
+
+function loadDistricts(cityId, selectedDistrictId = null) {
+    if (!cityId) {
+        $('#district_id').html('<option value="">Pilih Kota terlebih dahulu</option>');
+        return;
+    }
+
+    $.get('/get-districts/' + cityId, function (data) {
+        $('#district_id').html('<option value="">Pilih Kecamatan</option>');
+
+        $.each(data, function (i, district) {
+            let selected = district.id == selectedDistrictId ? 'selected' : '';
+            $('#district_id').append(
+                '<option value="' + district.id + '" ' + selected + '>' + district.name + '</option>'
+            );
+        });
+    });
+}
+
+// ======================
+// FUNGSI TAMBAH TERLAPOR KE TABEL
+// ======================
+window.appendSuspectRow = function(data) {
+    const tbody = document.getElementById('suspects-table-body');
+    const hiddenInputs = document.getElementById('suspects-hidden-inputs');
+
+    const index = tbody.children.length; // hitung row ke berapa
+
+    // Tentukan nama satuan (Satker / Satwil)
+    const unitName = data.unit_type === 'Satker' ? data.satker_name : data.satwil_name;
+
+    // ====== Tampilkan di tabel ======
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${data.name}</td>
+        <td>${data.unit_type}</td>
+        <td>${unitName}</td>
+        <td>
+            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('tr').remove()">Hapus</button>
+        </td>
+    `;
+    tbody.appendChild(row);
+
+    // ====== Hidden input untuk dikirim ke controller ======
+    hiddenInputs.innerHTML += `
+      <input type="hidden" name="suspects[${index}][name]" value="${data.name}">
+      <input type="hidden" name="suspects[${index}][unit_type]" value="${data.unit_type}">
+      <input type="hidden" name="suspects[${index}][division_id]" 
+            value="${data.unit_type === 'Satker' ? data.satker_id : data.satwil_id}">
+  `;
+
+};
 
 document.addEventListener('DOMContentLoaded', function() {
   const unitType = document.getElementById('tlp-unit-type');
   const satkerField = document.getElementById('tlp-satker-field');
   const satwilField = document.getElementById('tlp-satwil-field');
+  const satkerSelect = document.getElementById('tlp-satker');
+  const satwilSelect = document.getElementById('tlp-satwil');
+
+  function loadDivisions(type) {
+    fetch(`/api/divisions?type=${type}`)
+      .then(res => res.json())
+      .then(data => {
+        const targetSelect = type === 'Satker' ? satkerSelect : satwilSelect;
+
+        targetSelect.innerHTML = `<option value="">Pilih ${type}</option>`;
+
+        data.forEach(item => {
+          targetSelect.innerHTML += `
+            <option value="${item.id}">${item.name}</option>
+          `;
+        });
+      });
+  }
 
   function toggleUnitFields() {
     const val = unitType.value;
+
     satkerField.style.display = val === 'Satker' ? 'block' : 'none';
     satwilField.style.display = val === 'Satwil' ? 'block' : 'none';
+
+    if (val === 'Satker') {
+      satwilSelect.innerHTML = '<option value="">Pilih Satwil</option>';
+      loadDivisions('Satker');
+    }
+
+    if (val === 'Satwil') {
+      satkerSelect.innerHTML = '<option value="">Pilih Satker</option>';
+      loadDivisions('Satwil');
+    }
   }
 
   unitType.addEventListener('change', toggleUnitFields);
@@ -298,26 +291,25 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('tlp-save').addEventListener('click', function() {
     const data = {
       name: document.getElementById('tlp-name').value.trim(),
-      address: document.getElementById('tlp-address').value.trim(),
-      phone: document.getElementById('tlp-phone').value.trim(),
       unit_type: unitType.value,
-      satker_id: document.getElementById('tlp-satker').value,
-      satwil_id: document.getElementById('tlp-satwil').value,
-      satker_name: document.getElementById('tlp-satker').selectedOptions[0]?.text || '',
-      satwil_name: document.getElementById('tlp-satwil').selectedOptions[0]?.text || ''
+      satker_id: satkerSelect.value,
+      satwil_id: satwilSelect.value,
+      satker_name: satkerSelect.selectedOptions[0]?.text || '',
+      satwil_name: satwilSelect.selectedOptions[0]?.text || ''
     };
+
     if (!data.name) return;
+
     if (window.appendSuspectRow) {
       window.appendSuspectRow(data);
     }
-    const modalEl = document.getElementById('terlaporModal');
-    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('terlaporModal')).hide();
+
     document.getElementById('tlp-name').value = '';
-    document.getElementById('tlp-address').value = '';
-    document.getElementById('tlp-phone').value = '';
-    unitType.value = '';
-    toggleUnitFields();
   });
 });
+
+
 </script>
 @endsection
