@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->string('name');
             $table->string('type')->nullable();
+            $table->string('level');
+            $table->json('permissions')->nullable();
             $table->timestamps();
         });
     }

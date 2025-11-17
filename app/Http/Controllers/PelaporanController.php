@@ -148,51 +148,38 @@ class PelaporanController extends Controller
     /** Simpan laporan baru */
     public function store(Request $request)
     {
+        // dd($request->suspects);
+
         $validated = $request->validate([
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'incident_datetime' => 'required|date',
-            'province_id' => 'required|integer',
-            'city_id' => 'required|integer',
-            'district_id' => 'required|integer',
-            'category_id' => 'required|integer',
-            'address_detail' => 'nullable|string',
-            'status' => 'nullable|string',
-            'suspects' => 'nullable|array',
-            'suspects.*.name' => 'required|string',
-            'suspects.*.description' => 'nullable|string',
+            'title'                => 'required|string',
+            'incident_datetime'    => 'required|date',
+            'category_id'          => 'required|integer',
+            'description'            => 'required|string',
+
+            'city_id'              => 'required|integer',
+            'district_id'          => 'required|integer',
+            'address_detail'       => 'nullable|string',
+
+            'name_of_reporter'     => 'required|string',
+            'address_of_reporter'  => 'required|string',
+            'phone_of_reporter'    => 'required|string',
+
+            'suspects'             => 'nullable|array',
+            'suspects.*.name'      => 'required_with:suspects|string',
+            'suspects.*.division_id' => 'nullable|integer',
         ]);
-
-        // Isi created_by di sini, bukan di validasi!!
-        $validated['created_by'] = auth()->id();
-
-        // Set default status
-        if (empty($validated['status'])) {
-            $validated['status'] = 'SUBMITTED';
-        }
-
-        // Generate kode otomatis
-        $bulanTahun = now()->format('my'); 
-        $lastReport = Report::whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year)
-                            ->latest()->first();
-
-        $noUrut = $lastReport ? (intval(substr($lastReport->code, -4)) + 1) : 1;
-
-        $validated['code'] = 'RPT-' . $bulanTahun . str_pad($noUrut, 4, '0', STR_PAD_LEFT);
-
-        // Simpan laporan
         $report = $this->service->store($validated);
+        return redirect()->route('pelaporan.index')
+                 ->with('success', 'Laporan Berhasil Dibuat.');
 
-        if (!$report) {
-            return back()->with('error', 'Gagal membuat laporan')->withInput();
-        }
-
-        return redirect()->route('pelaporan.show', $report->id)
-            ->with('success', 'Laporan berhasil dibuat.');
     }
 
+    public function byType()
+    {
+        $type = request('type'); 
 
+        return Division::where('type', $type)->get();
+    }
 
     /** Form edit laporan */
     public function edit($id)

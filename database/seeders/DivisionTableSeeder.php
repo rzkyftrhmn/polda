@@ -12,32 +12,66 @@ class DivisionTableSeeder extends Seeder
      */
     public function run(): void
     {
-        // Parents
+        // PARENT DIVISIONS
         $reskrim = Division::updateOrCreate(
             ['name' => 'Reskrim'],
-            ['parent_id' => null, 'type' => 'polres']
-        );
-        $intelkam = Division::updateOrCreate(
-            ['name' => 'Intelkam'],
-            ['parent_id' => null, 'type' => 'polres']
-        );
-        $umum = Division::updateOrCreate(
-            ['name' => 'Umum'],
-            ['parent_id' => null, 'type' => 'polres']
+            [
+                'parent_id'   => null,
+                'type'        => 'polres',
+                'level'       => 'parent',
+                'permissions' => json_encode(['view', 'create', 'update']),
+            ]
         );
 
-        // Children
+        $intelkam = Division::updateOrCreate(
+            ['name' => 'Intelkam'],
+            [
+                'parent_id'   => null,
+                'type'        => 'polres',
+                'level'       => 'parent',
+                'permissions' => json_encode(['view', 'create']),
+            ]
+        );
+
+        $umum = Division::updateOrCreate(
+            ['name' => 'Umum'],
+            [
+                'parent_id'   => null,
+                'type'        => 'polres',
+                'level'       => 'parent',
+                'permissions' => json_encode(['view']),
+            ]
+        );
+
+        // CHILDREN DIVISIONS
         Division::updateOrCreate(
             ['name' => 'Sat Reskrim'],
-            ['parent_id' => $reskrim->id, 'type' => 'satuan']
+            [
+                'parent_id'   => $reskrim->id,
+                'type'        => 'satuan',
+                'level'       => 'child',
+                'permissions' => json_encode(['view', 'create', 'update', 'delete']),
+            ]
         );
-        Division::updateOrCreate(
-            ['name' => 'Subbag Umum'],
-            ['parent_id' => $umum->id, 'type' => 'subbag']
-        );
+
         Division::updateOrCreate(
             ['name' => 'Sat Intelkam'],
-            ['parent_id' => $intelkam->id, 'type' => 'satuan']
+            [
+                'parent_id'   => $intelkam->id,
+                'type'        => 'satuan',
+                'level'       => 'child',
+                'permissions' => json_encode(['view', 'update']),
+            ]
+        );
+
+        Division::updateOrCreate(
+            ['name' => 'Subbag Umum'],
+            [
+                'parent_id'   => $umum->id,
+                'type'        => 'subbag',
+                'level'       => 'child',
+                'permissions' => json_encode(['view']),
+            ]
         );
     }
 }

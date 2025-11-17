@@ -132,26 +132,6 @@ class DashboardController extends Controller
         );
     }
 
-    public function reportsWithoutEvidence(Request $request)
-    {
-        $start = $request->start_date;
-        $end   = $request->end_date;
-
-        $reports = $this->dashboardRepo
-            ->getReportsWithoutEvidenceQuery($start, $end)
-            ->get()
-            ->map(function ($report) {
-                return [
-                    'id'        => $report->id,
-                    'code'      => $report->code,
-                    'kategori'  => $report->kategori,
-                    'institusi' => $report->institusi ?? '-',
-                ];
-            });
-
-        return response()->json($reports);
-    }
-
     public function backlogPerTahap(Request $request)
     {
         return response()->json(

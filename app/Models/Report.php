@@ -12,8 +12,9 @@ class Report extends Model
     use HasFactory;
 
     protected $fillable = [
+        'division_id',
+        'code',
         'title',
-        'description',
         'incident_datetime',
         'province_id',
         'city_id',
@@ -21,8 +22,11 @@ class Report extends Model
         'address_detail',
         'category_id',
         'status',
-        'code',
+        'description',
         'finish_time',
+        'name_of_reporter',
+        'phone_of_reporter',
+        'address_of_reporter',
         'created_by',
     ];
 
@@ -34,6 +38,11 @@ class Report extends Model
     public function journeys(): HasMany
     {
         return $this->hasMany(ReportJourney::class, 'report_id');
+    }
+
+    public function accessDatas()
+    {
+        return $this->hasMany(AccessData::class, 'report_id');
     }
 
     public function category(): BelongsTo
@@ -76,9 +85,8 @@ class Report extends Model
         return $this->belongsTo(User::class, 'created_by'); 
     }
 
-
-    public function division()
+    public function divisi()
     {
-        return $this->hasOneThrough(Division::class, ReportJourney::class, 'report_id', 'id', 'id', 'division_id');
+        return $this->belongsTo(Division::class, 'division_id'); 
     }
 }
