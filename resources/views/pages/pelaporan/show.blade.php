@@ -486,6 +486,23 @@ document.addEventListener('DOMContentLoaded', function() {
     return fresh;
   }
 
+  function removePlaceholder() {
+    var placeholder = bodyEl ? bodyEl.querySelector('.admin-placeholder') : null;
+    if (placeholder) {
+      placeholder.remove();
+    }
+  }
+
+  function addPlaceholderIfEmpty() {
+    if (!bodyEl) return;
+    var hasRow = bodyEl.querySelector('tr');
+    if (hasRow) return;
+    var placeholder = document.createElement('tr');
+    placeholder.className = 'admin-placeholder';
+    placeholder.innerHTML = '<td colspan="5" class="text-center">Belum ada dokumen administrasi</td>';
+    bodyEl.appendChild(placeholder);
+  }
+
   function appendAdminRow(data, fileInputEl) {
     var rowId = 'admin-doc-row-' + adminIndex;
     var fileName = fileInputEl && fileInputEl.files && fileInputEl.files[0] ? fileInputEl.files[0].name : '-';
