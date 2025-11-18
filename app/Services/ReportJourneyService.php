@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Throwable;
@@ -495,10 +496,10 @@ class ReportJourneyService
             $updateData = ['status' => $type->value];
 
             if ($type === ReportJourneyType::COMPLETED) {
-                $updateData['finish_time'] = Carbon::now();
+                $updateData['finish_time'] = $this->resolveFinishTimeValue();
             }
 
-            $report->update($updateData);
+            $this->applyReportUpdate($report, $updateData);
         }
 
         if (!empty($createdFiles)) {
@@ -529,6 +530,69 @@ class ReportJourneyService
         }
     }
 
+    private function applyReportUpdate(Report $report, array $updateData): void
+    {
+        $columnType = $this->determineFinishTimeColumnType();
+        $needsRawUpdate = isset($updateData['finish_time']) &&
+            (!$columnType || !$this->isDateTimeType($columnType));
+
+        if ($needsRawUpdate) {
+            $report->newQuery()->whereKey($report->id)->update($updateData);
+            $report->refresh(); // keep the current instance in sync
+
+            return;
+        }
+
+        $report->update($updateData);
+    }
+
+    private function resolveFinishTimeValue(): int|Carbon
+    {
+        $columnType = $this->determineFinishTimeColumnType();
+
+        if ($columnType && $this->isDateTimeType($columnType)) {
+            return Carbon::now();
+        }
+
+        return Carbon::now()->getTimestamp();
+    }
+
+    private function determineFinishTimeColumnType(): ?string
+    {
+        try {
+            return Schema::getColumnType('reports', 'finish_time');
+        } catch (Throwable) {
+            return $this->determineFinishTimeColumnTypeFallback();
+        }
+    }
+
+    private function determineFinishTimeColumnTypeFallback(): ?string
+    {
+        try {
+            $connection = Schema::getConnection();
+            $driver     = $connection->getDriverName();
+
+            if ($driver === 'mysql') {
+                $result = $connection->selectOne('SHOW COLUMNS FROM `reports` LIKE ?', ['finish_time']);
+
+                if ($result && isset($result->Type)) {
+                    return (string) $result->Type;
+                }
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        return null;
+    }
+
+    private function isDateTimeType(string $type): bool
+    {
+        $type = strtolower($type);
+
+        return str_contains($type, 'date') ||
+            str_contains($type, 'time');
+    }
 
     private function finishAccess(Report $report): void
     {
@@ -568,4 +632,3 @@ class ReportJourneyService
         return null;
     }
 }
-

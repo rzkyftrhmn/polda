@@ -271,7 +271,7 @@
           <label class="form-label">Tanggal Dokumen</label>
           <input type="date" class="form-control" id="admin-doc-date">
         </div>
-        <div class="mb-3">
+        <div class="mb-3" id="admin-doc-file-wrapper">
           <label class="form-label">Upload File</label>
           <input type="file" class="form-control" id="admin-doc-file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
         </div>
@@ -414,13 +414,6 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Reset file inputs saat halaman dimuat
-    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
-    var trialFileInput = document.querySelector('input[name="trial_file"]');
-    
-    if (inspectionFilesInput) inspectionFilesInput.value = '';
-    if (trialFileInput) trialFileInput.value = '';
-
     const modalEl = document.getElementById('journeyModal');
     const openModal = @json(session('open_modal'));
 
@@ -609,24 +602,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!progressForm || !actionInput || !flowInput) return;
     actionInput.value = action;
     flowInput.value = flow;
-    
-    // Reset file inputs setelah submit
-    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
-    var trialFileInput = document.querySelector('input[name="trial_file"]');
-    
-    // Simpan referensi sebelum submit
-    var onSuccessReset = function() {
-      setTimeout(function() {
-        if (inspectionFilesInput) inspectionFilesInput.value = '';
-        if (trialFileInput) trialFileInput.value = '';
-      }, 500);
-    };
-    
-    // Jika ada response sukses, reset form
-    progressForm.addEventListener('submit', function() {
-      onSuccessReset();
-    }, {once: true});
-    
     progressForm.submit();
   }
 
@@ -666,6 +641,32 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+
+  // Reset file inputs secara manual
+  function resetFileInputs() {
+    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
+    var trialFileInput = document.querySelector('input[name="trial_file"]');
+    if (inspectionFilesInput) {
+      inspectionFilesInput.value = '';
+    }
+    if (trialFileInput) {
+      trialFileInput.value = '';
+    }
+  }
+
+  // Reset form setelah page selesai dimuat (jika ada redirect/reload)
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      resetFileInputs();
+    }
+  });
+
+  // Juga reset saat tab berubah
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function() {
+      resetFileInputs();
+    });
+  });
 });
 </script>
 @endsection
