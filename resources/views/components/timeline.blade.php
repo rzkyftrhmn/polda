@@ -385,6 +385,9 @@
                 $targetDivision = $item->target_division ?? null;
                 $evidences = method_exists($item, 'evidences') ? $item->evidences : ($item->evidences ?? []);
                 $evidences = $evidences instanceof \Illuminate\Support\Collection ? $evidences : collect($evidences);
+                $payload = $item->description_payload ?? [];
+                $docKind = $payload['doc_kind'] ?? null;
+                $decision = $payload['decision'] ?? null;
             @endphp
             <div class="cd-timeline-block">
                 <div class="cd-timeline-img"></div>
@@ -399,6 +402,10 @@
                     </div>
 
                     <p class="mb-3">{!! nl2br(e($item->description)) !!}</p>
+
+                    @if($decision && ($item->type === \App\Enums\ReportJourneyType::TRIAL->value || ($item->type === \App\Enums\ReportJourneyType::COMPLETED->value && $docKind === 'sidang')))
+                        <div class="mb-3"><strong>Putusan:</strong> {{ $decision }}</div>
+                    @endif
 
                     @if($targetInstitution || $targetDivision)
                         <div class="journey-limpah-pill mb-3">
@@ -433,15 +440,15 @@
                                         </span>
                                         <div class="d-flex gap-2">
                                             @if($fileUrl)
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-sm btn-outline-primary btn-preview-file"
-                                                    data-file-url="{{ $fileUrl }}"
+                                                <a
+                                                    href="{{ $fileUrl }}"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="btn btn-sm btn-outline-primary"
                                                     data-file-type="{{ $fileType }}"
-                                                    data-file-name="{{ $fileName }}"
                                                 >
                                                     <i class="fa fa-eye me-1"></i> Lihat File
-                                                </button>
+                                                </a>
                                             @endif
                                         </div>
                                     </li>
