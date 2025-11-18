@@ -25,11 +25,13 @@
                                 <i class="fa fa-file-alt me-2"></i>Detail Laporan
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-progress" type="button" role="tab">
-                                <i class="fa fa-tasks me-2"></i>Update Progress
-                            </button>
-                        </li>
+                        @if($report->status !== \App\Enums\ReportJourneyType::COMPLETED->value)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-progress" type="button" role="tab">
+                                    <i class="fa fa-tasks me-2"></i>Update Progress
+                                </button>
+                            </li>
+                        @endif
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-timeline" type="button" role="tab">
                                 <i class="fa fa-clock me-2"></i>Timeline
@@ -102,19 +104,21 @@
                             <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-3">Kembali</a>
                         </div>
 
+                        @if($report->status !== \App\Enums\ReportJourneyType::COMPLETED->value)
                         <div class="tab-pane fade" id="tab-progress" role="tabpanel">
                             @if(!$canInspection && !$canInvestigation)
                                 <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
                             @else
                                 <form id="progressForm" action="{{ route('reports.progress.store', $report->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
-                                    <input type="hidden" name="action" id="progress-action" value="complete">
+                                    <input type="hidden" name="action" id="progress-action" value="save">
+                                    <input type="hidden" name="flow" id="progress-flow" value="inspection">
                                     <input type="hidden" name="target_institution_id" id="target_institution_id">
                                     <input type="hidden" name="target_division_id" id="target_division_id">
 
                                     @if($canInspection)
                                     <div class="row g-3">
-                                        <div class="col-12"><h6 class="fw-semibold">Upload Document Pemeriksaan</h6></div>
+                                        <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
                                         <div class="col-md-4">
                                             <label class="form-label">No Dokumen Pemeriksaan</label>
                                             <input type="text" class="form-control" name="inspection_doc_number" placeholder="Masukkan nomor dokumen">
@@ -125,21 +129,29 @@
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Upload File</label>
-                                            <input type="file" class="form-control" name="inspection_files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                            <input type="file" class="form-control" name="inspection_files[]" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" multiple>
                                         </div>
-                                        <div class="col-12"><hr></div>
+
                                         <div class="col-12"><h6 class="fw-semibold">Input Kesimpulan Gelar Perkara</h6></div>
                                         <div class="col-12">
                                             <textarea class="form-control" name="inspection_conclusion" rows="4" placeholder="Tuliskan kesimpulan"></textarea>
                                         </div>
+
+                                        <div class="col-12 d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary mt-2 progress-action" data-action="save" data-flow="inspection">Simpan</button>
+                                            <button type="button" class="btn btn-success mt-2 progress-action" data-action="complete" data-flow="inspection">Simpan dan Selesai</button>
+                                            <button type="button" class="btn btn-info mt-2" id="transfer-btn" data-flow="inspection">Simpan dan Limpah</button>
+                                            <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-2">Kembali</a>
+                                        </div>
                                     </div>
                                     @endif
 
+                                    @if($canInspection && $canInvestigation)
+                                        <hr class="my-4">
+                                    @endif
+
                                     @if($canInvestigation)
-                                    <div class="row g-3 mt-3">
-                                        @if($canInspection)
-                                            <div class="col-12"><hr></div>
-                                        @endif
+                                    <div class="row g-3">
                                         <div class="col-12 d-flex align-items-center justify-content-between">
                                             <h6 class="fw-semibold mb-0">Administrasi Penyidikan</h6>
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminDocModal">Tambah Dokumen</button>
@@ -182,19 +194,19 @@
                                         <div class="col-12">
                                             <textarea class="form-control" name="trial_decision" rows="4" placeholder="Tuliskan putusan"></textarea>
                                         </div>
-                                    </div>
-                                    @endif
 
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <button type="button" id="complete-btn" class="btn btn-success mt-3">Simpan dan Selesai</button>
-                                            <button type="button" id="transfer-btn" class="btn btn-info mt-3">Simpan dan Limpah</button>
-                                            <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-3">Kembali</a>
+                                        <div class="col-12 d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary mt-2 progress-action" data-action="save" data-flow="investigation">Simpan</button>
+                                            <button type="button" class="btn btn-success mt-2 progress-action" data-action="complete" data-flow="investigation">Simpan dan Selesai</button>
+                                            <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-2">Kembali</a>
                                         </div>
                                     </div>
+                                    @endif
                                 </form>
                             @endif
                         </div>
+
+                        @endif
 
                         <div class="tab-pane fade" id="tab-timeline" role="tabpanel">
                             <h5 class="mt-1 mb-3"><i class="fa fa-route me-2"></i>Timeline Penanganan</h5>
@@ -442,6 +454,37 @@ document.addEventListener('DOMContentLoaded', function() {
   var bodyEl = document.getElementById('adminDocTableBody');
   var hiddenEl = document.getElementById('adminDocHiddenInputs');
   var saveBtn = document.getElementById('admin-doc-save');
+  var adminDocModal = document.getElementById('adminDocModal');
+
+  function removePlaceholder() {
+    var placeholder = bodyEl ? bodyEl.querySelector('.admin-placeholder') : null;
+    if (placeholder) {
+      placeholder.remove();
+    }
+  }
+
+  function addPlaceholderIfEmpty() {
+    if (!bodyEl) return;
+    var hasRow = bodyEl.querySelector('tr');
+    if (hasRow) return;
+    var placeholder = document.createElement('tr');
+    placeholder.className = 'admin-placeholder';
+    placeholder.innerHTML = '<td colspan="5" class="text-center">Belum ada dokumen administrasi</td>';
+    bodyEl.appendChild(placeholder);
+  }
+
+  function freshFileInput() {
+    var existing = document.getElementById('admin-doc-file');
+    if (!existing) return null;
+    var wrapper = existing.parentElement;
+    var fresh = document.createElement('input');
+    fresh.type = 'file';
+    fresh.className = 'form-control';
+    fresh.id = 'admin-doc-file';
+    fresh.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
+    existing.replaceWith(fresh);
+    return fresh;
+  }
 
   function removePlaceholder() {
     var placeholder = bodyEl ? bodyEl.querySelector('.admin-placeholder') : null;
@@ -488,6 +531,12 @@ document.addEventListener('DOMContentLoaded', function() {
     adminIndex++;
   }
 
+  if (adminDocModal) {
+    adminDocModal.addEventListener('show.bs.modal', function() {
+      freshFileInput();
+    });
+  }
+
   if (saveBtn) {
     saveBtn.addEventListener('click', function() {
       var nameEl = document.getElementById('admin-doc-name');
@@ -506,12 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
       nameEl.value = '';
       numberEl.value = '';
       dateEl.value = '';
-      var freshFile = document.createElement('input');
-      freshFile.type = 'file';
-      freshFile.className = 'form-control';
-      freshFile.id = 'admin-doc-file';
-      freshFile.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
-      fileEl.replaceWith(freshFile);
+      freshFileInput();
     });
   }
 
@@ -533,34 +577,60 @@ document.addEventListener('DOMContentLoaded', function() {
   addPlaceholderIfEmpty();
 
   var progressForm = document.getElementById('progressForm');
-  var completeBtn = document.getElementById('complete-btn');
-  var transferBtn = document.getElementById('transfer-btn');
   var actionInput = document.getElementById('progress-action');
+  var flowInput = document.getElementById('progress-flow');
   var targetInstitutionInput = document.getElementById('target_institution_id');
   var targetDivisionInput = document.getElementById('target_division_id');
   var transferModalEl = document.getElementById('transferModal');
   var transferInstitution = document.getElementById('transfer-institution');
   var transferDivision = document.getElementById('transfer-division');
   var transferConfirm = document.getElementById('transfer-confirm');
+  var transferBtn = document.getElementById('transfer-btn');
+  var actionButtons = document.querySelectorAll('.progress-action');
 
-  function submitWithAction(action) {
-    if (!progressForm) return;
-    actionInput.value = action;
-    if (action !== 'transfer') {
-      targetInstitutionInput.value = '';
-      targetDivisionInput.value = '';
+  function showConfirm(message, callback) {
+    if (window.Swal) {
+      Swal.fire({
+        title: 'Konfirmasi',
+        text: message,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Batal'
+      }).then(function(result) {
+        if (result.isConfirmed) callback();
+      });
+    } else if (confirm(message)) {
+      callback();
     }
+  }
+
+  function submitProgress(action, flow) {
+    if (!progressForm || !actionInput || !flowInput) return;
+    actionInput.value = action;
+    flowInput.value = flow;
     progressForm.submit();
   }
 
-  if (completeBtn) {
-    completeBtn.addEventListener('click', function() {
-      submitWithAction('complete');
+  actionButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.getAttribute('data-action');
+      var flow = btn.getAttribute('data-flow') || 'inspection';
+      var messages = {
+        save: 'Simpan data progres laporan?',
+        complete: 'Simpan dan tandai laporan selesai?',
+        transfer: 'Simpan dan limpahkan laporan?'
+      };
+      showConfirm(messages[action] || 'Lanjutkan proses?', function() {
+        submitProgress(action, flow);
+      });
     });
-  }
+  });
 
   if (transferBtn && transferModalEl) {
     transferBtn.addEventListener('click', function() {
+      var flow = transferBtn.getAttribute('data-flow') || 'inspection';
+      flowInput.value = flow;
       bootstrap.Modal.getOrCreateInstance(transferModalEl).show();
     });
   }
@@ -571,13 +641,11 @@ document.addEventListener('DOMContentLoaded', function() {
         transferDivision && transferDivision.focus();
         return;
       }
-      actionInput.value = 'transfer';
-      if (targetInstitutionInput) targetInstitutionInput.value = transferInstitution ? transferInstitution.value : '';
-      if (targetDivisionInput) targetDivisionInput.value = transferDivision.value;
-      if (transferModalEl) {
-        bootstrap.Modal.getOrCreateInstance(transferModalEl).hide();
-      }
-      submitWithAction('transfer');
+      targetInstitutionInput.value = transferInstitution ? transferInstitution.value : '';
+      targetDivisionInput.value = transferDivision.value;
+      showConfirm('Simpan dan limpahkan laporan?', function() {
+        submitProgress('transfer', 'inspection');
+      });
     });
   }
 });

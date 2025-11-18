@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ReportJourneyType;
+use App\Models\Division;
 use App\Models\Report;
 use App\Services\ReportJourneyService;
 use Illuminate\Http\RedirectResponse;
@@ -18,10 +20,16 @@ class ReportProgressController extends Controller
 
     public function store(Request $request, Report $report): RedirectResponse
     {
+        $user = Auth::user();
+        $division = $user?->division;
+
         $action = $request->input('action');
+        $flow = $request->input('flow', 'inspection');
 
         $validated = $request->validate([
-            'action' => ['required', Rule::in(['complete', 'transfer'])],
+            'action' => ['required', Rule::in(['save', 'complete', 'transfer'])],
+            'flow' => ['required', Rule::in(['inspection', 'investigation'])],
+
             'inspection_doc_number' => ['nullable', 'string'],
             'inspection_doc_date' => ['nullable', 'date'],
             'inspection_conclusion' => ['nullable', 'string'],
@@ -40,16 +48,16 @@ class ReportProgressController extends Controller
             'trial_decision' => ['nullable', 'string'],
 
             'target_institution_id' => [
+                Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
                 'nullable',
                 'integer',
                 'exists:institutions,id',
-                Rule::requiredIf(fn () => $action === 'transfer'),
             ],
             'target_division_id' => [
+                Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
                 'nullable',
                 'integer',
                 'exists:divisions,id',
-                Rule::requiredIf(fn () => $action === 'transfer'),
             ],
         ]);
 
@@ -67,14 +75,31 @@ class ReportProgressController extends Controller
             'trial_file' => $request->file('trial_file'),
         ];
 
-        $user = Auth::user();
+        $divisionId = $division?->id;
+        $institutionId = $user?->institution_id;
+
+        if ($flow === 'inspection' && !$division?->canInspection()) {
+            return back()->with('error', 'Divisi Anda tidak dapat melakukan pemeriksaan.');
+        }
+
+        if ($flow === 'investigation' && !$division?->canInvestigation()) {
+            return back()->with('error', 'Divisi Anda tidak dapat melakukan penyidikan.');
+        }
+
+        if ($action === 'transfer' && $flow === 'inspection') {
+            $targetDivision = Division::find($validated['target_division_id']);
+            if ($targetDivision && !$targetDivision->canInvestigation()) {
+                return back()->with('error', 'Unit tujuan tidak memiliki kewenangan penyidikan.');
+            }
+        }
 
         $result = $this->service->storeProgress(
             $report,
             $validated,
             $files,
-            $user?->division_id,
-            $user?->institution_id,
+            $divisionId,
+            $institutionId,
+            $user?->id,
         );
 
         if ($result['status']) {

@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ReportJourneyType;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,8 +34,25 @@ class Report extends Model
 
     protected $casts = [
         'incident_datetime' => 'datetime',
-        'finish_time' => 'datetime',
     ];
+
+    protected function finishTime(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if (!$value) {
+                    return null;
+                }
+
+                if (is_numeric($value)) {
+                    return Carbon::createFromTimestamp((int) $value);
+                }
+
+                return Carbon::parse($value);
+            },
+            set: fn ($value) => $value ? Carbon::parse($value)->timestamp : null,
+        );
+    }
 
     public function journeys(): HasMany
     {
