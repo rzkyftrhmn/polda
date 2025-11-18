@@ -231,7 +231,7 @@ class PelaporanController extends Controller
    /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
-        $report = Report::with(['category', 'province', 'city', 'district','suspects'])->findOrFail($id);
+        $report = Report::with(['category', 'province', 'city', 'district','suspects.division'])->findOrFail($id);
 
         $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
 
