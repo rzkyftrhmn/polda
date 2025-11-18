@@ -250,7 +250,7 @@
                     <label class="form-label">Unit/Sub-bagian Tujuan</label>
                     <select id="transfer-division" class="form-control">
                         <option value="">-- Pilih Unit/Sub-bagian --</option>
-                        @foreach($divisions->filter(fn($division) => $division->canInvestigation()) as $divisionOption)
+                        @foreach($investigationDivisions as $divisionOption)
                             <option value="{{ $divisionOption->id }}">{{ $divisionOption->parent ? $divisionOption->parent->name . ' - ' : '' }}{{ $divisionOption->name }}</option>
                         @endforeach
                     </select>
