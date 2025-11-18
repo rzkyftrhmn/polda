@@ -82,18 +82,20 @@ class ReportJourneyService
 
     public function ensureInitialAccess(Report $report): void
     {
-        if ($report->status !== ReportJourneyType::SUBMITTED->value) {
+        if ($report->status === ReportJourneyType::COMPLETED->value) {
             return;
         }
 
-        if ($report->accessDatas()->exists()) {
+        if ($report->accessDatas()->where('is_finish', false)->exists()) {
             return;
         }
 
-        $creatorDivisionId = $report->creator?->division_id ?? $report->division_id;
+        $creatorDivisionId = $report->creator?->division_id
+            ?? $report->division_id
+            ?? auth()->user()?->division_id;
 
         if ($creatorDivisionId) {
-            AccessData::create([
+            AccessData::firstOrCreate([
                 'report_id' => $report->id,
                 'division_id' => $creatorDivisionId,
                 'is_finish' => false,
@@ -111,10 +113,27 @@ class ReportJourneyService
             return false;
         }
 
-        return $report->accessDatas()
+        $hasActiveAccess = $report->accessDatas()
             ->where('division_id', $division->id)
             ->where('is_finish', false)
             ->exists();
+
+        if ($hasActiveAccess) {
+            return true;
+        }
+
+        $hasAccessData = $report->accessDatas()->exists();
+
+        if (
+            !$hasAccessData
+            && $report->creator
+            && $report->creator->division_id === $division->id
+            && $report->status !== ReportJourneyType::COMPLETED->value
+        ) {
+            return true;
+        }
+
+        return false;
     }
 
     public function store(array $data, array $files = []): array

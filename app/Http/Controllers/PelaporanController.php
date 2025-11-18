@@ -254,8 +254,8 @@ class PelaporanController extends Controller
 
         $hasAccess = $this->journeyService->hasAccess($division, $report, $isAdmin);
 
-        $showInspectionForm = $hasAccess && ($division?->canInspection() ?? false);
-        $showInvestigationForm = $hasAccess && !$showInspectionForm && ($division?->canInvestigation() ?? false);
+        $showInspectionForm = $hasAccess && $division?->canInspection();
+        $showInvestigationForm = $hasAccess && !$showInspectionForm && $division?->canInvestigation();
         $showProgressTab = ($showInspectionForm || $showInvestigationForm)
             && $report->status !== ReportJourneyType::COMPLETED->value;
 
