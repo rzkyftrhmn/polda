@@ -112,7 +112,8 @@ class ReportJourneyService
             return false;
         }
 
-        // 1. Active accessDatas
+        $hasAccessRecord = $report->accessDatas()->exists();
+
         $hasActive = $report->accessDatas()
             ->where('division_id', $division->id)
             ->where('is_finish', false)
@@ -123,12 +124,8 @@ class ReportJourneyService
         }
 
         // 2. Creator always has access until complete
-        if (
-            $report->creator
-            && $report->creator->division_id === $division->id
-            && $report->status !== ReportJourneyType::COMPLETED->value
-        ) {
-            return true;
+        if (!$hasAccessRecord && $report->creator && $report->creator->division_id === $division->id) {
+            return $report->status !== ReportJourneyType::COMPLETED->value;
         }
 
         return false;

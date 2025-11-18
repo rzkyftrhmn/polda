@@ -442,10 +442,10 @@
                                             @if($fileUrl)
                                                 <a
                                                     href="{{ $fileUrl }}"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    class="btn btn-sm btn-outline-primary"
+                                                    class="btn btn-sm btn-outline-primary btn-preview-file"
+                                                    data-file-url="{{ $fileUrl }}"
                                                     data-file-type="{{ $fileType }}"
+                                                    data-file-name="{{ $fileName }}"
                                                 >
                                                     <i class="fa fa-eye me-1"></i> Lihat File
                                                 </a>

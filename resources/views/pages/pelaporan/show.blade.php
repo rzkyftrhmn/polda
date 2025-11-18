@@ -416,7 +416,7 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     const modalEl = document.getElementById('journeyModal');
-    const openModal = @json(session('open_modal') ?? ($errors->any() ? 'journey' : null));
+    const openModal = @json(session('open_modal'));
 
     if (openModal === 'journey' && modalEl) {
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -514,6 +514,9 @@ document.addEventListener('DOMContentLoaded', function() {
     adminDocModal.addEventListener('show.bs.modal', function() {
       freshFileInput();
     });
+    adminDocModal.addEventListener('hidden.bs.modal', function() {
+      freshFileInput();
+    });
   }
 
   if (saveBtn) {
@@ -527,7 +530,10 @@ document.addEventListener('DOMContentLoaded', function() {
         number: (numberEl.value || '').trim(),
         date: (dateEl.value || '').trim()
       };
-      if (!data.name) return;
+      if (!data.name || !data.number || !data.date || !fileEl || !fileEl.files || !fileEl.files[0]) {
+        alert('Isi nama, nomor, tanggal, dan pilih file dokumen administrasi.');
+        return;
+      }
       appendAdminRow(data, fileEl);
       var modalEl = document.getElementById('adminDocModal');
       bootstrap.Modal.getOrCreateInstance(modalEl).hide();
