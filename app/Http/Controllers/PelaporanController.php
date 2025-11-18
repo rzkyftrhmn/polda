@@ -231,7 +231,8 @@ class PelaporanController extends Controller
    /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
-        $report = Report::with(['category', 'province', 'city', 'district','suspects'])->findOrFail($id);
+        $report = Report::with(['category', 'province', 'city', 'district', 'suspects.division', 'accessDatas'])
+            ->findOrFail($id);
 
         $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
 
@@ -239,9 +240,27 @@ class PelaporanController extends Controller
         $divisions = Division::with('parent')
             ->whereNotNull('parent_id')
             ->orderBy('name')
-            ->get(['id', 'name', 'type', 'parent_id']);
+            ->get(['id', 'name', 'type', 'parent_id', 'permissions']);
 
         $journeyTypes = ReportJourneyType::manualOptions();
+
+        $user = auth()->user();
+        $division = $user?->division;
+        $isAdmin = $user && method_exists($user, 'hasAnyRole')
+            ? $user->hasAnyRole(['super admin', 'super-admin', 'admin'])
+            : false;
+
+        $hasAccess = $isAdmin;
+
+        if (!$hasAccess && $division) {
+            $hasAccess = $report->accessDatas()
+                ->where('division_id', $division->id)
+                ->where('is_finish', false)
+                ->exists();
+        }
+
+        $canInspection = $hasAccess && (($division?->canInspection() ?? false) || $isAdmin);
+        $canInvestigation = $hasAccess && (($division?->canInvestigation() ?? false) || $isAdmin);
 
         return view('pages.pelaporan.show', [
             'report' => $report,
@@ -250,6 +269,9 @@ class PelaporanController extends Controller
             'institutions' => $institutions,
             'divisions' => $divisions,
             'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
+            'canInspection' => $canInspection,
+            'canInvestigation' => $canInvestigation,
+            'hasAccess' => $hasAccess,
         ]);
     }
 
