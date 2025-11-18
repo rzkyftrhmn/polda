@@ -234,6 +234,8 @@ class PelaporanController extends Controller
         $report = Report::with(['category', 'province', 'city', 'district', 'suspects.division', 'accessDatas'])
             ->findOrFail($id);
 
+        $this->journeyService->ensureInitialAccess($report);
+
         $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
 
         $institutions = Institution::orderBy('name')->get(['id', 'name']);
@@ -250,17 +252,12 @@ class PelaporanController extends Controller
             ? $user->hasAnyRole(['super admin', 'super-admin', 'admin'])
             : false;
 
-        $hasAccess = $isAdmin;
+        $hasAccess = $this->journeyService->hasAccess($division, $report, $isAdmin);
 
-        if (!$hasAccess && $division) {
-            $hasAccess = $report->accessDatas()
-                ->where('division_id', $division->id)
-                ->where('is_finish', false)
-                ->exists();
-        }
-
-        $canInspection = $hasAccess && (($division?->canInspection() ?? false) || $isAdmin);
-        $canInvestigation = $hasAccess && (($division?->canInvestigation() ?? false) || $isAdmin);
+        $showInspectionForm = $hasAccess && ($division?->canInspection() ?? false);
+        $showInvestigationForm = $hasAccess && !$showInspectionForm && ($division?->canInvestigation() ?? false);
+        $showProgressTab = ($showInspectionForm || $showInvestigationForm)
+            && $report->status !== ReportJourneyType::COMPLETED->value;
 
         return view('pages.pelaporan.show', [
             'report' => $report,
@@ -269,9 +266,10 @@ class PelaporanController extends Controller
             'institutions' => $institutions,
             'divisions' => $divisions,
             'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
-            'canInspection' => $canInspection,
-            'canInvestigation' => $canInvestigation,
+            'showInspectionForm' => $showInspectionForm,
+            'showInvestigationForm' => $showInvestigationForm,
             'hasAccess' => $hasAccess,
+            'showProgressTab' => $showProgressTab,
         ]);
     }
 

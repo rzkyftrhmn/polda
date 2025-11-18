@@ -80,6 +80,43 @@ class ReportJourneyService
         return $paginator;
     }
 
+    public function ensureInitialAccess(Report $report): void
+    {
+        if ($report->status !== ReportJourneyType::SUBMITTED->value) {
+            return;
+        }
+
+        if ($report->accessDatas()->exists()) {
+            return;
+        }
+
+        $creatorDivisionId = $report->creator?->division_id ?? $report->division_id;
+
+        if ($creatorDivisionId) {
+            AccessData::create([
+                'report_id' => $report->id,
+                'division_id' => $creatorDivisionId,
+                'is_finish' => false,
+            ]);
+        }
+    }
+
+    public function hasAccess(?Division $division, Report $report, bool $isAdmin = false): bool
+    {
+        if ($isAdmin) {
+            return true;
+        }
+
+        if (!$division) {
+            return false;
+        }
+
+        return $report->accessDatas()
+            ->where('division_id', $division->id)
+            ->where('is_finish', false)
+            ->exists();
+    }
+
     public function store(array $data, array $files = []): array
     {
         DB::beginTransaction();
@@ -148,24 +185,37 @@ class ReportJourneyService
         DB::beginTransaction();
 
         try {
-            $lastJourney = $report->journeys()->latest()->first();
-            $lastType = $lastJourney ? $lastJourney->typeEnum() : ReportJourneyType::SUBMITTED;
+            $lastType = $this->lastJourneyType($report);
+            $firstFlow = $this->determineFirstFlow($report);
             $flow = $data['flow'] ?? 'inspection';
             $action = $data['action'] ?? 'save';
 
             $division = $divisionId ? Division::find($divisionId) : null;
-            $canSkipInspection = $division?->canInvestigation() && $report->created_by === $userId;
+
+            if ($division?->canInspection() && !$division?->canInvestigation()) {
+                $flow = 'inspection';
+            } elseif ($division?->canInvestigation() && !$division?->canInspection()) {
+                $flow = 'investigation';
+            }
+
+            if ($lastType === ReportJourneyType::COMPLETED) {
+                throw new RuntimeException('Laporan sudah selesai.');
+            }
 
             $journeys = [];
 
             if ($flow === 'inspection') {
-                if (!$this->validInspectionStart($lastType)) {
-                    throw new RuntimeException('Urutan tahapan tidak valid untuk pemeriksaan.');
+                if ($firstFlow !== 'inspection') {
+                    throw new RuntimeException('Laporan ini langsung masuk ke penyidikan. Tahap pemeriksaan dilewati.');
+                }
+
+                if (!in_array($lastType, [ReportJourneyType::SUBMITTED, ReportJourneyType::INVESTIGATION], true)) {
+                    throw new RuntimeException('Tahap pemeriksaan tidak tersedia untuk status laporan saat ini.');
                 }
 
                 $touchStatus = $action !== 'save';
 
-                $inspectionJourney = $this->createJourney(
+                $journeys[] = $this->createJourney(
                     $report,
                     ReportJourneyType::INVESTIGATION,
                     [
@@ -181,15 +231,8 @@ class ReportJourneyService
                     $touchStatus,
                 );
 
-                $journeys[] = $inspectionJourney;
-                $lastType = ReportJourneyType::INVESTIGATION;
-
                 if ($action === 'transfer') {
-                    if (!$this->validFlow($lastType, ReportJourneyType::TRANSFER)) {
-                        throw new RuntimeException('Tidak bisa LIMPAH karena status terakhir belum PEMERIKSAAN.');
-                    }
-
-                    $transferJourney = $this->createJourney(
+                    $journeys[] = $this->createJourney(
                         $report,
                         ReportJourneyType::TRANSFER,
                         [
@@ -207,17 +250,11 @@ class ReportJourneyService
                         $institutionId
                     );
 
-                    $journeys[] = $transferJourney;
-                    $lastType = ReportJourneyType::TRANSFER;
                     $this->handleTransferAccess($report, $divisionId, $data['target_division_id'] ?? null);
                 }
 
                 if ($action === 'complete') {
-                    if (!$this->validFlow($lastType, ReportJourneyType::COMPLETED)) {
-                        throw new RuntimeException('Laporan sudah SELESAI sebelumnya.');
-                    }
-
-                    $completeJourney = $this->createJourney(
+                    $journeys[] = $this->createJourney(
                         $report,
                         ReportJourneyType::COMPLETED,
                         [
@@ -233,22 +270,18 @@ class ReportJourneyService
                         $institutionId
                     );
 
-                    $journeys[] = $completeJourney;
-                    $lastType = ReportJourneyType::COMPLETED;
                     $this->finishAccess($report, $divisionId);
                 }
             } else {
-                if ($canSkipInspection && $lastType === ReportJourneyType::SUBMITTED) {
-                    $lastType = ReportJourneyType::INVESTIGATION;
-                } elseif (!$this->validInvestigationEntry($lastType)) {
-                    throw new RuntimeException('Urutan tahapan tidak valid untuk Administrasi Penyidikan.');
+                $canSkipInspection = $firstFlow === 'investigation' && $lastType === ReportJourneyType::SUBMITTED;
+
+                $allowedInvestigationEntries = [ReportJourneyType::INVESTIGATION, ReportJourneyType::TRANSFER, ReportJourneyType::TRIAL];
+
+                if (!$canSkipInspection && !in_array($lastType, $allowedInvestigationEntries, true)) {
+                    throw new RuntimeException('Laporan belum siap untuk tahap penyidikan.');
                 }
 
                 foreach ($data['admin_documents'] ?? [] as $index => $doc) {
-                    if (!$this->validFlow($lastType, ReportJourneyType::INVESTIGATION)) {
-                        throw new RuntimeException('Urutan tahapan tidak valid untuk Administrasi Penyidikan.');
-                    }
-
                     $journeys[] = $this->createJourney(
                         $report,
                         ReportJourneyType::INVESTIGATION,
@@ -262,9 +295,9 @@ class ReportJourneyService
                         $divisionId,
                         $institutionId
                     );
-
-                    $lastType = ReportJourneyType::INVESTIGATION;
                 }
+
+                $hasInvestigationEntry = $canSkipInspection || !empty($journeys);
 
                 $needsTrial = (
                     !empty($data['trial_doc_number'])
@@ -274,8 +307,8 @@ class ReportJourneyService
                 );
 
                 if ($needsTrial) {
-                    if (!$this->validFlow($lastType, ReportJourneyType::TRIAL)) {
-                        throw new RuntimeException('Tidak bisa SIDANG karena status terakhir belum tahap penyidikan.');
+                    if (!$hasInvestigationEntry && !$canSkipInspection && $lastType === ReportJourneyType::SUBMITTED) {
+                        throw new RuntimeException('Dokumen penyidikan perlu ditambahkan sebelum sidang.');
                     }
 
                     $journeys[] = $this->createJourney(
@@ -292,15 +325,9 @@ class ReportJourneyService
                         $divisionId,
                         $institutionId
                     );
-
-                    $lastType = ReportJourneyType::TRIAL;
                 }
 
                 if ($action === 'complete') {
-                    if (!$this->validFlow($lastType, ReportJourneyType::COMPLETED)) {
-                        throw new RuntimeException('Laporan sudah SELESAI sebelumnya.');
-                    }
-
                     $journeys[] = $this->createJourney(
                         $report,
                         ReportJourneyType::COMPLETED,
@@ -340,6 +367,28 @@ class ReportJourneyService
                 'message' => $throwable->getMessage(),
             ];
         }
+    }
+
+    private function determineFirstFlow(Report $report): string
+    {
+        $creatorDivision = $report->creator?->division;
+
+        if ($creatorDivision?->canInspection()) {
+            return 'inspection';
+        }
+
+        if ($creatorDivision?->canInvestigation()) {
+            return 'investigation';
+        }
+
+        return 'inspection';
+    }
+
+    private function lastJourneyType(Report $report): ReportJourneyType
+    {
+        $lastJourney = $report->journeys()->latest()->first();
+
+        return $lastJourney ? $lastJourney->typeEnum() : ReportJourneyType::SUBMITTED;
     }
 
     private function createJourney(
@@ -431,27 +480,6 @@ class ReportJourneyService
         }
 
         $query->update(['is_finish' => true]);
-    }
-
-    private function validInspectionStart(ReportJourneyType $lastType): bool
-    {
-        return in_array($lastType, [ReportJourneyType::SUBMITTED, ReportJourneyType::INVESTIGATION], true);
-    }
-
-    private function validInvestigationEntry(ReportJourneyType $lastType): bool
-    {
-        return in_array($lastType, [ReportJourneyType::INVESTIGATION, ReportJourneyType::TRANSFER], true);
-    }
-
-    private function validFlow(ReportJourneyType $lastType, ReportJourneyType $currentType): bool
-    {
-        return match ($currentType) {
-            ReportJourneyType::INVESTIGATION => in_array($lastType, [ReportJourneyType::INVESTIGATION, ReportJourneyType::TRANSFER, ReportJourneyType::SUBMITTED], true),
-            ReportJourneyType::TRANSFER => $lastType === ReportJourneyType::INVESTIGATION,
-            ReportJourneyType::TRIAL => $lastType === ReportJourneyType::INVESTIGATION,
-            ReportJourneyType::COMPLETED => in_array($lastType, [ReportJourneyType::INVESTIGATION, ReportJourneyType::TRANSFER, ReportJourneyType::TRIAL], true),
-            default => false,
-        };
     }
 
     private function normalizeType(null|ReportJourneyType|string $type): ?ReportJourneyType

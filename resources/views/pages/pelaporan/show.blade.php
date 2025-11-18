@@ -13,10 +13,11 @@
                         $provinceName = $report->province?->name;
                         $cityName     = $report->city?->name;
                         $districtName = $report->district?->name;
-                        $canInspection = $canInspection ?? false;
-                        $canInvestigation = $canInvestigation ?? false;
+                        $showInspectionForm = $showInspectionForm ?? false;
+                        $showInvestigationForm = $showInvestigationForm ?? false;
                         $hasAccess = $hasAccess ?? false;
-                        $showProgressTab = $hasAccess && ($canInspection || $canInvestigation) && $report->status !== \App\Enums\ReportJourneyType::COMPLETED->value;
+                        $showProgressTab = $showProgressTab ?? ($hasAccess && ($showInspectionForm || $showInvestigationForm) && $report->status !== \App\Enums\ReportJourneyType::COMPLETED->value);
+                        $defaultFlow = $showInspectionForm ? 'inspection' : 'investigation';
                     @endphp
 
                     <ul class="nav nav-tabs" role="tablist">
@@ -108,17 +109,17 @@
                         <div class="tab-pane fade" id="tab-progress" role="tabpanel">
                             @if(!$hasAccess)
                                 <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
-                            @elseif(!$canInspection && !$canInvestigation)
+                            @elseif(!$showInspectionForm && !$showInvestigationForm)
                                 <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
                             @else
                                 <form id="progressForm" action="{{ route('reports.progress.store', $report->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="action" id="progress-action" value="save">
-                                    <input type="hidden" name="flow" id="progress-flow" value="inspection">
+                                    <input type="hidden" name="flow" id="progress-flow" value="{{ $defaultFlow }}">
                                     <input type="hidden" name="target_institution_id" id="target_institution_id">
                                     <input type="hidden" name="target_division_id" id="target_division_id">
 
-                                    @if($canInspection)
+                                    @if($showInspectionForm)
                                     <div class="row g-3">
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
                                         <div class="col-md-4">
@@ -148,11 +149,7 @@
                                     </div>
                                     @endif
 
-                                    @if($canInspection && $canInvestigation)
-                                        <hr class="my-4">
-                                    @endif
-
-                                    @if($canInvestigation)
+                                    @if($showInvestigationForm)
                                     <div class="row g-3">
                                         <div class="col-12 d-flex align-items-center justify-content-between">
                                             <h6 class="fw-semibold mb-0">Administrasi Penyidikan</h6>

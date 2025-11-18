@@ -24,6 +24,8 @@ class ReportProgressController extends Controller
         $user = Auth::user();
         $division = $user?->division;
 
+        $this->service->ensureInitialAccess($report);
+
         $action = $request->input('action');
         $flow = $request->input('flow', 'inspection');
 
@@ -31,14 +33,15 @@ class ReportProgressController extends Controller
             ? $user->hasAnyRole(['super admin', 'super-admin', 'admin'])
             : false;
 
-        $hasAccess = $isAdmin;
+        $hasAccess = $this->service->hasAccess($division, $report, $isAdmin);
 
-        if (!$hasAccess && $division) {
-            $hasAccess = $report->accessDatas()
-                ->where('division_id', $division->id)
-                ->where('is_finish', false)
-                ->exists();
+        if ($division?->canInspection() && !$division?->canInvestigation()) {
+            $flow = 'inspection';
+        } elseif ($division?->canInvestigation() && !$division?->canInspection()) {
+            $flow = 'investigation';
         }
+
+        $request->merge(['flow' => $flow]);
 
         if (!$hasAccess) {
             return back()->with('error', 'Anda tidak memiliki akses untuk mengupdate progress laporan ini.');
