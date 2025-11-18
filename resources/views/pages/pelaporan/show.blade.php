@@ -414,6 +414,12 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Reset file inputs saat halaman dimuat
+    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
+    var trialFileInput = document.querySelector('input[name="trial_file"]');
+    
+    if (inspectionFilesInput) inspectionFilesInput.value = '';
+    if (trialFileInput) trialFileInput.value = '';
 
     const modalEl = document.getElementById('journeyModal');
     const openModal = @json(session('open_modal'));
@@ -483,11 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function ensureFileInputVisible() {
-    var wrapper = document.getElementById('admin-doc-file-wrapper');
-    if (!wrapper) return;
-    if (!wrapper.querySelector('input[type="file"]')) {
-      freshFileInput();
-    }
+    freshFileInput();
   }
 
   function appendAdminRow(data, fileInputEl) {
@@ -524,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (adminDocModal) {
     adminDocModal.addEventListener('shown.bs.modal', function() {
-      ensureFileInputVisible();
+      freshFileInput();
     });
     adminDocModal.addEventListener('hidden.bs.modal', function() {
       freshFileInput();
@@ -607,6 +609,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!progressForm || !actionInput || !flowInput) return;
     actionInput.value = action;
     flowInput.value = flow;
+    
+    // Reset file inputs setelah submit
+    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
+    var trialFileInput = document.querySelector('input[name="trial_file"]');
+    
+    // Simpan referensi sebelum submit
+    var onSuccessReset = function() {
+      setTimeout(function() {
+        if (inspectionFilesInput) inspectionFilesInput.value = '';
+        if (trialFileInput) trialFileInput.value = '';
+      }, 500);
+    };
+    
+    // Jika ada response sukses, reset form
+    progressForm.addEventListener('submit', function() {
+      onSuccessReset();
+    }, {once: true});
+    
     progressForm.submit();
   }
 
