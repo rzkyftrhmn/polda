@@ -222,26 +222,73 @@ class PelaporanController extends Controller
             return back()->with('error', 'Gagal memperbarui laporan')->withInput();
         }
 
+
         return redirect()->route('pelaporan.show', $report->id)
                  ->with('success', 'Laporan Berhasil Diupdate.');
     }
 
 
-    /** Tampilkan detail laporan */
-   /** Tampilkan detail laporan + timeline journey */
     public function show($id)
     {
-        $report = Report::with(['category', 'province', 'city', 'district','suspects'])->findOrFail($id);
+        $report = Report::with([
+            'category',
+            'province',
+            'city',
+            'district',
+            'suspects.division',
+            'accessDatas',
+            'creator',
+        ])->findOrFail($id);
 
-        $journeys = $this->journeyService->paginateByReport($report->id, 5, order: 'desc');
+        // Pastikan akses awal creator dibuat
+        $this->journeyService->ensureInitialAccess($report);
 
+        // Ambil timeline journey
+        $journeys = $this->journeyService->paginateByReport(
+            reportId: $report->id,
+            perPage: 5,
+            order: 'desc'
+        );
+
+        // Data referensi dropdown
         $institutions = Institution::orderBy('name')->get(['id', 'name']);
         $divisions = Division::with('parent')
-            ->whereNotNull('parent_id')
             ->orderBy('name')
-            ->get(['id', 'name', 'type', 'parent_id']);
+            ->get(['id', 'name', 'type', 'parent_id', 'permissions']);
 
+        $investigationDivisions = $divisions
+            ->filter(fn ($division) => $division->canInvestigation())
+            ->values();
+        
         $journeyTypes = ReportJourneyType::manualOptions();
+
+        // User & admin check
+        $user = auth()->user();
+        $division = $user?->division;
+
+        $isAdmin = $user && method_exists($user, 'hasAnyRole')
+            ? $user->hasAnyRole(['admin', 'super admin', 'super-admin'])
+            : false;
+
+        // Cek akses
+        $hasAccess = $this->journeyService->hasAccess(
+            division: $division,
+            report: $report,
+            isAdmin: $isAdmin
+        );
+
+        // Logic form mana yang boleh muncul
+        $canInspection = $division?->canInspection() ?? false;
+        $canInvestigation = $division?->canInvestigation() ?? false;
+
+        $showInspectionForm = $hasAccess && $canInspection;
+        $showInvestigationForm = $hasAccess && !$showInspectionForm && $canInvestigation;
+
+        // Tab progress muncul kalau user boleh update
+        $showProgressTab = ($isAdmin || $showInspectionForm || $showInvestigationForm)
+            && $report->status !== ReportJourneyType::COMPLETED->value;
+
+        $defaultFlow = $showInspectionForm ? 'inspection' : 'investigation';
 
         return view('pages.pelaporan.show', [
             'report' => $report,
@@ -249,9 +296,17 @@ class PelaporanController extends Controller
             'journeyTypes' => $journeyTypes,
             'institutions' => $institutions,
             'divisions' => $divisions,
+            'investigationDivisions' => $investigationDivisions,
+            'defaultFlow' => $defaultFlow,
             'statusLabel' => ReportJourneyType::tryFrom($report->status)?->label() ?? $report->status,
+            'hasAccess' => $hasAccess,
+            'showInspectionForm' => $showInspectionForm,
+            'showInvestigationForm' => $showInvestigationForm,
+            'showProgressTab' => $showProgressTab,
         ]);
     }
+
+
 
     /** Hapus laporan */
     public function destroy($id)

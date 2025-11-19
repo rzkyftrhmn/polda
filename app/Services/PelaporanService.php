@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ReportJourneyType;
 use App\Repositories\PelaporanRepository;
 use Illuminate\Support\Facades\DB;
 use App\Models\Report;
@@ -16,13 +17,11 @@ class PelaporanService
     }
     
     public function store(array $data){
-        
+
         DB::beginTransaction();
 
-        $divisionId = $data['division_id']
-            ?? ($data['suspects'][0]['division_id'] ?? null)
-            ?? auth()->user()->division_id
-            ?? null;
+        $user = auth()->user();
+        $divisionId = $user?->division_id;
 
         if (!$divisionId) {
             throw new \Exception('Division id tidak ditentukan.');
@@ -42,9 +41,9 @@ class PelaporanService
             'name_of_reporter' => $data['name_of_reporter'],
             'address_of_reporter' => $data['address_of_reporter'],
             'phone_of_reporter' => $data['phone_of_reporter'],
-            'created_by' => auth()->id(),
-            'status' => 'SUBMITTED',
-            'division_id' => $divisionId, 
+            'created_by' => $user?->id,
+            'status' => ReportJourneyType::SUBMITTED->value,
+            'division_id' => $divisionId,
             'code' => $this->generateReportCode(),
         ]);
 

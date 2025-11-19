@@ -13,6 +13,8 @@
                         $provinceName = $report->province?->name;
                         $cityName     = $report->city?->name;
                         $districtName = $report->district?->name;
+                        $isCompleted = $report->status === \App\Enums\ReportJourneyType::COMPLETED->value;
+                        $defaultFlow = $defaultFlow ?? ($showInspectionForm ? 'inspection' : 'investigation');
                     @endphp
 
                     <ul class="nav nav-tabs" role="tablist">
@@ -21,11 +23,13 @@
                                 <i class="fa fa-file-alt me-2"></i>Detail Laporan
                             </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-progress" type="button" role="tab">
-                                <i class="fa fa-tasks me-2"></i>Update Progress
-                            </button>
-                        </li>
+                        @if($showProgressTab)
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-progress" type="button" role="tab">
+                                    <i class="fa fa-tasks me-2"></i>Update Progress
+                                </button>
+                            </li>
+                        @endif
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-timeline" type="button" role="tab">
                                 <i class="fa fa-clock me-2"></i>Timeline
@@ -49,9 +53,9 @@
                                 <div class="col-12">
                                     <h6 class="fw-semibold">Data Identitas Pelapor</h6>
                                 </div>
-                                <div class="col-md-4"><p class="mb-1"><strong>Nama Pelapor:</strong> {{ $report->reporter_name ?? '-' }}</p></div>
-                                <div class="col-md-4"><p class="mb-1"><strong>Alamat Pelapor:</strong> {{ $report->reporter_address ?? '-' }}</p></div>
-                                <div class="col-md-4"><p class="mb-1"><strong>No Telepon Pelapor:</strong> {{ $report->reporter_phone ?? '-' }}</p></div>
+                                <div class="col-md-4"><p class="mb-1"><strong>Nama Pelapor:</strong> {{ $report->name_of_reporter ?? '-' }}</p></div>
+                                <div class="col-md-4"><p class="mb-1"><strong>Alamat Pelapor:</strong> {{ $report->address_of_reporter ?? '-' }}</p></div>
+                                <div class="col-md-4"><p class="mb-1"><strong>No Telepon Pelapor:</strong> {{ $report->phone_of_reporter ?? '-' }}</p></div>
                                 <div class="col-12"><hr></div>
                                 <div class="col-12">
                                     <h6 class="fw-semibold">Data Laporan</h6>
@@ -77,15 +81,19 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($report->suspects ?? [] as $suspect)
+                                            @forelse($report->suspects ?? [] as $suspect)
                                                 <tr>
                                                     <td>{{ $suspect->name ?? '-' }}</td>
-                                                    <td>{{ $suspect->address ?? '-' }}</td>
-                                                    <td>{{ $suspect->phone ?? '-' }}</td>
-                                                    <td>{{ $suspect->unit_type ?? '-' }}</td>
-                                                    <td>{{ $suspect->satker_name ?? $suspect->satwil_name ?? '-' }}</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>{{ $suspect->division?->type ?? '-' }}</td>
+                                                    <td>{{ $suspect->division?->name ?? '-' }}</td>
                                                 </tr>
-                                            @endforeach
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center">Tidak ada data terlapor.</td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </div>
@@ -94,77 +102,107 @@
                             <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-3">Kembali</a>
                         </div>
 
+                        @if($showProgressTab)
                         <div class="tab-pane fade" id="tab-progress" role="tabpanel">
-                            <div class="row g-3">
-                                <div class="col-12"><h6 class="fw-semibold">Upload Document Pemeriksaan</h6></div>
-                                <div class="col-md-4">
-                                    <label class="form-label">No Dokumen Pemeriksaan</label>
-                                    <input type="text" class="form-control" placeholder="Masukkan nomor dokumen">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Tanggal Dokumen Pemeriksaan</label>
-                                    <input type="date" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Upload File</label>
-                                    <input type="file" class="form-control" multiple>
-                                </div>
-                                <div class="col-12"><hr></div>
-                                <div class="col-12"><h6 class="fw-semibold">Input Kesimpulan Gelar Perkara</h6></div>
-                                <div class="col-12">
-                                    <textarea class="form-control" rows="4" placeholder="Tuliskan kesimpulan"></textarea>
-                                </div>
-                            </div>
-                            <div class="col-12"><hr></div>
+                            @if(!$hasAccess)
+                                <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
+                            @elseif(!$showInspectionForm && !$showInvestigationForm)
+                                <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
+                            @else
+                                <form id="progressForm" action="{{ route('reports.progress.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <input type="hidden" name="action" id="progress-action" value="save">
+                                    <input type="hidden" name="flow" id="progress-flow" value="{{ $defaultFlow }}">
+                                    <input type="hidden" name="target_institution_id" id="target_institution_id">
+                                    <input type="hidden" name="target_division_id" id="target_division_id">
 
-                            <div class="row g-3">
-                                <div class="col-12 d-flex align-items-center justify-content-between">
-                                    <h6 class="fw-semibold mb-0">Administrasi Penyidikan</h6>
-                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminDocModal">Tambah Dokumen</button>
-                                </div>
-                                <div class="col-12">
-                                    <table class="table table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Nama Dokumen</th>
-                                                <th>No Dokumen</th>
-                                                <th>Tanggal Dokumen</th>
-                                                <th>Berkas</th>
-                                                <th>Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="adminDocTableBody"></tbody>
-                                    </table>
-                                    <div id="adminDocHiddenInputs" style="display:none"></div>
-                                </div>
+                                    @if($showInspectionForm)
+                                    <div class="row g-3">
+                                        <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">No Dokumen Pemeriksaan</label>
+                                            <input type="text" class="form-control" name="inspection_doc_number" placeholder="Masukkan nomor dokumen">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Tanggal Dokumen Pemeriksaan</label>
+                                            <input type="date" class="form-control" name="inspection_doc_date">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Upload File</label>
+                                            <input type="file" class="form-control" name="inspection_files[]" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" multiple>
+                                        </div>
 
-                                <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Sidang</h6></div>
-                                <div class="col-md-4">
-                                    <label class="form-label">No Dokumen Sidang</label>
-                                    <input type="text" class="form-control" placeholder="Masukkan nomor dokumen">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Tanggal Dokumen Sidang</label>
-                                    <input type="date" class="form-control">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">Upload File</label>
-                                    <input type="file" class="form-control" multiple>
-                                </div>
+                                        <div class="col-12"><h6 class="fw-semibold">Input Kesimpulan Gelar Perkara</h6></div>
+                                        <div class="col-12">
+                                            <textarea class="form-control" name="inspection_conclusion" rows="4" placeholder="Tuliskan kesimpulan"></textarea>
+                                        </div>
 
-                                <div class="col-12"><h6 class="fw-semibold">Putusan</h6></div>
-                                <div class="col-12">
-                                    <textarea class="form-control" rows="4" placeholder="Tuliskan putusan"></textarea>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-success mt-3">Simpan dan Selesai</button>
-                                    <button type="submit" class="btn btn-info mt-3">Simpan dan Limpah</button>
-                                    <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-3">Kembali</a>
-                                </div>
-                            </div>
+                                        <div class="col-12 d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary mt-2 progress-action" data-action="save" data-flow="inspection">Simpan</button>
+                                            <button type="button" class="btn btn-success mt-2 progress-action" data-action="complete" data-flow="inspection">Simpan dan Selesai</button>
+                                            <button type="button" class="btn btn-info mt-2" id="transfer-btn" data-flow="inspection">Simpan dan Limpah</button>
+                                            <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-2">Kembali</a>
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    @if($showInvestigationForm)
+                                    <div class="row g-3">
+                                        <div class="col-12 d-flex align-items-center justify-content-between">
+                                            <h6 class="fw-semibold mb-0">Administrasi Penyidikan</h6>
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminDocModal">Tambah Dokumen</button>
+                                        </div>
+                                        <div class="col-12">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Nama Dokumen</th>
+                                                        <th>No Dokumen</th>
+                                                        <th>Tanggal Dokumen</th>
+                                                        <th>Berkas</th>
+                                                        <th>Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="adminDocTableBody">
+                                                    <tr class="admin-placeholder">
+                                                        <td colspan="5" class="text-center">Belum ada dokumen administrasi</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                            <div id="adminDocHiddenInputs" style="display:none"></div>
+                                        </div>
+
+                                        <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Sidang</h6></div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">No Dokumen Sidang</label>
+                                            <input type="text" class="form-control" name="trial_doc_number" placeholder="Masukkan nomor dokumen">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Tanggal Dokumen Sidang</label>
+                                            <input type="date" class="form-control" name="trial_doc_date">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Upload File</label>
+                                            <input type="file" class="form-control" name="trial_file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                        </div>
+
+                                        <div class="col-12"><h6 class="fw-semibold">Putusan</h6></div>
+                                        <div class="col-12">
+                                            <textarea class="form-control" name="trial_decision" rows="4" placeholder="Tuliskan putusan"></textarea>
+                                        </div>
+
+                                        <div class="col-12 d-flex flex-wrap gap-2">
+                                            <button type="button" class="btn btn-primary mt-2 progress-action" data-action="save" data-flow="investigation">Simpan</button>
+                                            <button type="button" class="btn btn-success mt-2 progress-action" data-action="complete" data-flow="investigation">Simpan dan Selesai</button>
+                                            <a href="{{ route('pelaporan.index') }}" class="btn btn-warning mt-2">Kembali</a>
+                                        </div>
+                                    </div>
+                                    @endif
+                                </form>
+                            @endif
                         </div>
+
+                        @endif
 
                         <div class="tab-pane fade" id="tab-timeline" role="tabpanel">
                             <h5 class="mt-1 mb-3"><i class="fa fa-route me-2"></i>Timeline Penanganan</h5>
@@ -172,6 +210,42 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferModalLabel">Pilih Tujuan Limpah</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Institusi Tujuan</label>
+                    <select id="transfer-institution" class="form-control">
+                        <option value="">-- Pilih Institusi --</option>
+                        @foreach($institutions as $institution)
+                            <option value="{{ $institution->id }}">{{ $institution->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Unit/Sub-bagian Tujuan</label>
+                    <select id="transfer-division" class="form-control">
+                        <option value="">-- Pilih Unit/Sub-bagian --</option>
+                        @foreach($investigationDivisions as $divisionOption)
+                            <option value="{{ $divisionOption->id }}">{{ $divisionOption->parent ? $divisionOption->parent->name . ' - ' : '' }}{{ $divisionOption->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="alert alert-warning mb-0">Limpahkan hanya ke unit yang memiliki kewenangan penyidikan.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="transfer-confirm">Simpan dan Limpah</button>
             </div>
         </div>
     </div>
@@ -197,7 +271,7 @@
           <label class="form-label">Tanggal Dokumen</label>
           <input type="date" class="form-control" id="admin-doc-date">
         </div>
-        <div class="mb-3">
+        <div class="mb-3" id="admin-doc-file-wrapper">
           <label class="form-label">Upload File</label>
           <input type="file" class="form-control" id="admin-doc-file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
         </div>
@@ -340,9 +414,8 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-
     const modalEl = document.getElementById('journeyModal');
-    const openModal = @json(session('open_modal') ?? ($errors->any() ? 'journey' : null));
+    const openModal = @json(session('open_modal'));
 
     if (openModal === 'journey' && modalEl) {
         bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -376,6 +449,41 @@ document.addEventListener('DOMContentLoaded', function() {
   var bodyEl = document.getElementById('adminDocTableBody');
   var hiddenEl = document.getElementById('adminDocHiddenInputs');
   var saveBtn = document.getElementById('admin-doc-save');
+  var adminDocModal = document.getElementById('adminDocModal');
+
+  function removePlaceholder() {
+    var placeholder = bodyEl ? bodyEl.querySelector('.admin-placeholder') : null;
+    if (placeholder) {
+      placeholder.remove();
+    }
+  }
+
+  function addPlaceholderIfEmpty() {
+    if (!bodyEl) return;
+    var hasRow = bodyEl.querySelector('tr');
+    if (hasRow) return;
+    var placeholder = document.createElement('tr');
+    placeholder.className = 'admin-placeholder';
+    placeholder.innerHTML = '<td colspan="5" class="text-center">Belum ada dokumen administrasi</td>';
+    bodyEl.appendChild(placeholder);
+  }
+
+  function freshFileInput() {
+    var wrapper = document.getElementById('admin-doc-file-wrapper');
+    if (!wrapper) return null;
+    wrapper.querySelectorAll('input[type="file"]').forEach(function(el) { el.remove(); });
+    var fresh = document.createElement('input');
+    fresh.type = 'file';
+    fresh.className = 'form-control';
+    fresh.id = 'admin-doc-file';
+    fresh.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
+    wrapper.appendChild(fresh);
+    return fresh;
+  }
+
+  function ensureFileInputVisible() {
+    freshFileInput();
+  }
 
   function appendAdminRow(data, fileInputEl) {
     var rowId = 'admin-doc-row-' + adminIndex;
@@ -387,6 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
                    '<td>' + (data.date || '-') + '</td>' +
                    '<td>' + fileName + '</td>' +
                    '<td><button type="button" class="btn btn-danger btn-sm" data-row="' + rowId + '">Hapus</button></td>';
+    removePlaceholder();
     bodyEl.appendChild(tr);
 
     var hidden = document.createElement('div');
@@ -398,10 +507,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (fileInputEl) {
       fileInputEl.name = 'admin_documents[' + adminIndex + '][file]';
       fileInputEl.style.display = 'none';
+      fileInputEl.id = '';
+      if (fileInputEl.parentElement) {
+        fileInputEl.parentElement.removeChild(fileInputEl);
+      }
       hidden.appendChild(fileInputEl);
     }
     hiddenEl.appendChild(hidden);
     adminIndex++;
+  }
+
+  if (adminDocModal) {
+    adminDocModal.addEventListener('shown.bs.modal', function() {
+      freshFileInput();
+    });
+    adminDocModal.addEventListener('hidden.bs.modal', function() {
+      freshFileInput();
+    });
   }
 
   if (saveBtn) {
@@ -415,19 +537,17 @@ document.addEventListener('DOMContentLoaded', function() {
         number: (numberEl.value || '').trim(),
         date: (dateEl.value || '').trim()
       };
-      if (!data.name) return;
+      if (!data.name || !data.number || !data.date || !fileEl || !fileEl.files || !fileEl.files[0]) {
+        alert('Isi nama, nomor, tanggal, dan pilih file dokumen administrasi.');
+        return;
+      }
       appendAdminRow(data, fileEl);
       var modalEl = document.getElementById('adminDocModal');
       bootstrap.Modal.getOrCreateInstance(modalEl).hide();
       nameEl.value = '';
       numberEl.value = '';
       dateEl.value = '';
-      var freshFile = document.createElement('input');
-      freshFile.type = 'file';
-      freshFile.className = 'form-control';
-      freshFile.id = 'admin-doc-file';
-      freshFile.accept = '.jpg,.jpeg,.png,.pdf,.doc,.docx';
-      fileEl.replaceWith(freshFile);
+      freshFileInput();
     });
   }
 
@@ -440,8 +560,113 @@ document.addEventListener('DOMContentLoaded', function() {
       var hidden = document.getElementById('hidden-' + rowId);
       if (row) row.remove();
       if (hidden) hidden.remove();
+      if (bodyEl && bodyEl.querySelectorAll('tr').length === 0) {
+        addPlaceholderIfEmpty();
+      }
     });
   }
+
+  addPlaceholderIfEmpty();
+  ensureFileInputVisible();
+  
+  var progressForm = document.getElementById('progressForm');
+  var actionInput = document.getElementById('progress-action');
+  var flowInput = document.getElementById('progress-flow');
+  var targetInstitutionInput = document.getElementById('target_institution_id');
+  var targetDivisionInput = document.getElementById('target_division_id');
+  var transferModalEl = document.getElementById('transferModal');
+  var transferInstitution = document.getElementById('transfer-institution');
+  var transferDivision = document.getElementById('transfer-division');
+  var transferConfirm = document.getElementById('transfer-confirm');
+  var transferBtn = document.getElementById('transfer-btn');
+  var actionButtons = document.querySelectorAll('.progress-action');
+
+  function showConfirm(message, callback) {
+    if (window.Swal) {
+      Swal.fire({
+        title: 'Konfirmasi',
+        text: message,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya',
+        cancelButtonText: 'Batal'
+      }).then(function(result) {
+        if (result.isConfirmed) callback();
+      });
+    } else if (confirm(message)) {
+      callback();
+    }
+  }
+
+  function submitProgress(action, flow) {
+    if (!progressForm || !actionInput || !flowInput) return;
+    actionInput.value = action;
+    flowInput.value = flow;
+    progressForm.submit();
+  }
+
+  actionButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.getAttribute('data-action');
+      var flow = btn.getAttribute('data-flow') || 'inspection';
+      var messages = {
+        save: 'Simpan data progres laporan?',
+        complete: 'Simpan dan tandai laporan selesai?',
+        transfer: 'Simpan dan limpahkan laporan?'
+      };
+      showConfirm(messages[action] || 'Lanjutkan proses?', function() {
+        submitProgress(action, flow);
+      });
+    });
+  });
+
+  if (transferBtn && transferModalEl) {
+    transferBtn.addEventListener('click', function() {
+      var flow = transferBtn.getAttribute('data-flow') || 'inspection';
+      flowInput.value = flow;
+      bootstrap.Modal.getOrCreateInstance(transferModalEl).show();
+    });
+  }
+
+  if (transferConfirm) {
+    transferConfirm.addEventListener('click', function() {
+      if (!transferDivision || !transferDivision.value) {
+        transferDivision && transferDivision.focus();
+        return;
+      }
+      targetInstitutionInput.value = transferInstitution ? transferInstitution.value : '';
+      targetDivisionInput.value = transferDivision.value;
+      showConfirm('Simpan dan limpahkan laporan?', function() {
+        submitProgress('transfer', 'inspection');
+      });
+    });
+  }
+
+  // Reset file inputs secara manual
+  function resetFileInputs() {
+    var inspectionFilesInput = document.querySelector('input[name="inspection_files[]"]');
+    var trialFileInput = document.querySelector('input[name="trial_file"]');
+    if (inspectionFilesInput) {
+      inspectionFilesInput.value = '';
+    }
+    if (trialFileInput) {
+      trialFileInput.value = '';
+    }
+  }
+
+  // Reset form setelah page selesai dimuat (jika ada redirect/reload)
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      resetFileInputs();
+    }
+  });
+
+  // Juga reset saat tab berubah
+  document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function() {
+      resetFileInputs();
+    });
+  });
 });
 </script>
 @endsection
