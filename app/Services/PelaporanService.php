@@ -18,13 +18,11 @@ class PelaporanService
     }
     
     public function store(array $data){
-        
+
         DB::beginTransaction();
 
-        $divisionId = $data['division_id']
-            ?? ($data['suspects'][0]['division_id'] ?? null)
-            ?? auth()->user()->division_id
-            ?? null;
+        $user = auth()->user();
+        $divisionId = $user?->division_id;
 
         if (!$divisionId) {
             throw new \Exception('Division id tidak ditentukan.');

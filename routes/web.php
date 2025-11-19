@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubDivisionController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\ReportJourneyController;
+use App\Http\Controllers\ReportProgressController;
 use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
@@ -106,6 +107,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::post('/reports/{report}/journeys', [ReportJourneyController::class, 'store'])
             ->name('reports.journeys.store');
+        Route::post('/reports/{report}/progress', [ReportProgressController::class, 'store'])
+            ->name('reports.progress.store');
         Route::get('/dashboard/backlog-tahap', [DashboardController::class, 'backlogPerTahap']);
         Route::get('/test-auth', function() {
             return dd(auth()->user());

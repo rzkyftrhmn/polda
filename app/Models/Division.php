@@ -24,6 +24,10 @@ class Division extends Model
         'permissions',
     ];
 
+    protected $casts = [
+        'permissions' => 'array',
+    ];
+
     public function parent()
     {
         return $this->belongsTo(Division::class, 'parent_id');
@@ -33,7 +37,7 @@ class Division extends Model
     {
         return $this->hasMany(Division::class, 'parent_id');
     }
-  
+
     public function users()
     {
         return $this->hasMany(User::class);
@@ -59,4 +63,36 @@ class Division extends Model
         return $this->hasMany(Suspect::class, 'division_id');
     }
 
+    public function hasPermission(string $key): bool
+    {
+        $permissions = $this->permissions ?? [];
+
+        if (is_string($permissions)) {
+            $decoded = json_decode($permissions, true);
+            $permissions = is_array($decoded) ? $decoded : [];
+        }
+
+        if (!is_array($permissions)) {
+            return false;
+        }
+
+        return !empty($permissions[$key]);
+    }
+
+    /**
+     * Divisions that can perform "pemeriksaan" (inspection) – TOP section.
+     */
+    public function canInspection(): bool
+    {
+        return $this->hasPermission('inspection');
+    }
+
+    /**
+     * Divisions that can perform "penyidikan/penyelidikan" (investigation) – BOTTOM section.
+     */
+    public function canInvestigation(): bool
+    {
+        return $this->hasPermission('investigation');
+    }
 }
+

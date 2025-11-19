@@ -144,12 +144,19 @@ class ReportJourneyController extends Controller
             $validated['subdivision_target_id'] = null;
         }
 
+        $action = match ($currentType) {
+            ReportJourneyType::COMPLETED => 'complete',
+            ReportJourneyType::TRANSFER => 'transfer',
+            default => 'save',
+        };
+
         $payload = [
             'report_id'           => $reportId,
             'institution_id'      => optional(auth()->user())->institution_id,
             'division_id'         => optional(auth()->user())->division_id,
             'type'                => $validated['type'],
             'description'         => $validated['description'],
+            'action'              => $action,
             'institution_target_id' => $validated['institution_target_id'] ?? null,
             'division_target_id'    => $validated['subdivision_target_id'] ?? null,
         ];
