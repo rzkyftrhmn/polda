@@ -21,10 +21,10 @@ class SubDivisionService
         try {
             $division = $this->subDivisionRepository->store($data);
             DB::commit();
-            return ['status' => true, 'message' => 'Sub Divisi berhasil dibuat.'];
+            return ['status' => true, 'message' => 'Unit berhasil dibuat.'];
         } catch (\Throwable $e) {
             DB::rollBack();
-            return ['status' => false, 'message' => 'Gagal membuat Sub Divisi: ' . $e->getMessage()];
+            return ['status' => false, 'message' => 'Gagal membuat Unit: ' . $e->getMessage()];
         }
     }
 
@@ -35,10 +35,10 @@ class SubDivisionService
         try {
             $this->subDivisionRepository->update($id, $data);
             DB::commit();
-            return ['status' => true, 'message' => 'Sub Divisi berhasil diperbarui.'];
+            return ['status' => true, 'message' => 'Unit berhasil diperbarui.'];
         } catch (\Throwable $e) {
             DB::rollBack();
-            return ['status' => false, 'message' => 'Gagal memperbarui Sub Divisi: ' . $e->getMessage()];
+            return ['status' => false, 'message' => 'Gagal memperbarui Unit: ' . $e->getMessage()];
         }
     }
 
