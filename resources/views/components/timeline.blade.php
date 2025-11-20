@@ -8,6 +8,8 @@
 @once
 <style>
     .cd-container {
+        position: relative;
+        z-index: 0;
         width: 100%;
         max-width: 100%;
         margin: 0 auto;
@@ -16,6 +18,7 @@
 
     .cd-timeline {
         position: relative;
+        z-index: 0;
         padding: 2rem 0;
         margin: 0;
         --cd-timeline-height: 100%;
@@ -31,7 +34,7 @@
         height: 100%;
         background-color: var(--bs-primary, #0d6efd);
         transition: background-color 0.3s ease;
-        z-index: 1;
+        z-index: 0;
     }
 
     .cd-timeline.is-empty::before {
@@ -46,6 +49,7 @@
 
     .cd-timeline-block {
         position: relative;
+        z-index: 0;
         margin: 2rem 0;
         min-height: 60px;
     }
@@ -73,7 +77,7 @@
         align-items: center;
         justify-content: center;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
-        z-index: 3;
+        z-index: 1;
     }
 
     .cd-timeline-img::after {
@@ -89,6 +93,7 @@
     
     .cd-timeline-content {
         position: relative;
+        z-index: 1;
         margin-left: 0;
         padding: 1.5rem;
         background-color: var(--bs-body-bg);

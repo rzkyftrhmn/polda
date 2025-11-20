@@ -130,7 +130,15 @@ class PelaporanController extends Controller
                 ->with('error', 'Divisi anda tidak valid. Hubungi admin.');
         }
 
-        $perm = json_decode($division->permissions ?? '{}', true);
+        //error fix perrmission check
+        $perm = $division->permissions;
+        if (is_string($perm)) {
+            $decoded = json_decode($perm, true);
+            $perm = is_array($decoded) ? $decoded : [];
+        }
+        if (!is_array($perm)) {
+            $perm = [];
+        }
 
         if (($perm['inspection'] ?? false) === false && ($perm['investigation'] ?? false) === false) {
             return redirect()->route('pelaporan.index')
@@ -255,7 +263,7 @@ class PelaporanController extends Controller
         $this->service->update($id, $validated);
 
 
-        return redirect()->route('pelaporan.show', $report->id)
+        return redirect()->route('pelaporan.show', $id)
                  ->with('success', 'Laporan Berhasil Diperbaharui.');
     }
 
@@ -321,6 +329,11 @@ class PelaporanController extends Controller
             && $report->status !== ReportJourneyType::COMPLETED->value;
 
         $defaultFlow = $showInspectionForm ? 'inspection' : 'investigation';
+        $inspectionPrefill = $this->journeyService->latestInspectionPrefill($report);
+        $inspectionEvidence = $this->journeyService->latestInspectionEvidence($report);
+        $trialPrefill = $this->journeyService->latestTrialPrefill($report);
+        $adminDocuments = $this->journeyService->adminDocumentsPrefill($report);
+        $trialEvidence = $this->journeyService->latestTrialEvidence($report);
 
         return view('pages.pelaporan.show', [
             'report' => $report,
@@ -335,6 +348,11 @@ class PelaporanController extends Controller
             'showInspectionForm' => $showInspectionForm,
             'showInvestigationForm' => $showInvestigationForm,
             'showProgressTab' => $showProgressTab,
+            'inspectionPrefill' => $inspectionPrefill,
+            'inspectionEvidence' => $inspectionEvidence,
+            'trialPrefill' => $trialPrefill,
+            'trialEvidence' => $trialEvidence,
+            'adminDocuments' => $adminDocuments,
         ]);
     }
 

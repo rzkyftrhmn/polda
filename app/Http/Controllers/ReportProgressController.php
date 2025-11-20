@@ -90,7 +90,7 @@ class ReportProgressController extends Controller
             ],
         ]);
 
-        $validator->after(function ($validator) use ($request, $action, $flow) {
+            $validator->after(function ($validator) use ($request, $action, $flow, $report) {
             if ($flow === 'inspection' && in_array($action, ['save', 'complete', 'transfer'], true)) {
                 if (!$request->filled('inspection_doc_number')) {
                     $validator->errors()->add('inspection_doc_number', 'Nomor dokumen pemeriksaan wajib diisi.');
@@ -109,17 +109,42 @@ class ReportProgressController extends Controller
                         break;
                     }
                 }
-                if (!$hasInspectionFile) {
+                $existingInspectionEvidence = $this->service->journeyHasEvidence(
+                    $report,
+                    ReportJourneyType::INVESTIGATION,
+                    $request->input('inspection_doc_number'),
+                    null // tangkap data lama tanpa doc_kind
+                );
+                if (!$hasInspectionFile && !$existingInspectionEvidence) {
                     $validator->errors()->add('inspection_files', 'Minimal satu file pemeriksaan harus diunggah.');
                 }
             }
 
+            $adminDocNumbers = [];
             foreach ($request->input('admin_documents', []) as $idx => $doc) {
                 $file = $request->file("admin_documents.$idx.file");
+                $docNumber = $doc['number'] ?? null;
+
+                if ($docNumber) {
+                    if (isset($adminDocNumbers[$docNumber])) {
+                        $validator->errors()->add("admin_documents.$idx.number", 'Nomor dokumen administrasi duplikat.');
+                    } else {
+                        $adminDocNumbers[$docNumber] = true;
+                    }
+                }
+
+                $existingAdminEvidence = $docNumber
+                    ? $this->service->journeyHasEvidence(
+                        $report,
+                        ReportJourneyType::INVESTIGATION,
+                        $docNumber,
+                        null // tangkap data lama tanpa doc_kind
+                    )
+                    : false;
                 if (!($doc['name'] ?? null)) {
                     $validator->errors()->add("admin_documents.$idx.name", 'Nama dokumen administrasi wajib diisi.');
                 }
-                if (!$file) {
+                if (!$file && !$existingAdminEvidence) {
                     $validator->errors()->add("admin_documents.$idx.file", 'File dokumen administrasi wajib diunggah.');
                 }
                 if (!($doc['number'] ?? null)) {
@@ -139,6 +164,13 @@ class ReportProgressController extends Controller
             );
 
             if ($requiresTrial) {
+                $existingTrialEvidence = $this->service->journeyHasEvidence(
+                    $report,
+                    ReportJourneyType::TRIAL,
+                    $request->input('trial_doc_number'),
+                    null // dok_kind bisa null untuk data lama
+                );
+
                 foreach ([
                     'trial_doc_number' => 'Nomor dokumen sidang wajib diisi.',
                     'trial_doc_date' => 'Tanggal dokumen sidang wajib diisi.',
@@ -148,7 +180,7 @@ class ReportProgressController extends Controller
                         $validator->errors()->add($field, $message);
                     }
                 }
-                if (!$request->file('trial_file')) {
+                if (!$request->file('trial_file') && !$existingTrialEvidence) {
                     $validator->errors()->add('trial_file', 'File dokumen sidang wajib diunggah.');
                 }
             }
@@ -205,4 +237,3 @@ class ReportProgressController extends Controller
             ->with('error', $result['message'] ?? 'Gagal memperbarui progress laporan.');
     }
 }
-

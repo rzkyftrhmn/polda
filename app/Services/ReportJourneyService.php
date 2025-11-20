@@ -170,6 +170,89 @@ class ReportJourneyService
         return $journey ? $journey->evidences()->exists() : false;
     }
 
+    public function latestInspectionPrefill(Report $report): array
+    {
+        $journeys = $report->journeys()
+            ->where('type', ReportJourneyType::INVESTIGATION->value)
+            ->latest('id')
+            ->get();
+
+        $journey = $journeys->first(fn ($j) => ($j->description_payload['doc_kind'] ?? null) === 'pemeriksaan')
+            ?? $journeys->first(); // fallback data lama tanpa doc_kind
+
+        if (!$journey) {
+            return [];
+        }
+
+        $payload = $journey->description_payload ?? [];
+        $docDate = $payload['doc_date'] ?? null;
+
+        if ($docDate instanceof \DateTimeInterface) {
+            $docDate = $docDate->format('Y-m-d');
+        }
+
+        return [
+            'doc_number' => $payload['doc_number'] ?? null,
+            'doc_date' => $docDate,
+            'conclusion' => $payload['conclusion'] ?? null,
+        ];
+    }
+
+    public function adminDocumentsPrefill(Report $report): array
+    {
+        $journeys = $report->journeys()
+            ->where('type', ReportJourneyType::INVESTIGATION->value)
+            ->with('evidences')
+            ->orderBy('id')
+            ->get()
+            ->filter(function ($journey) {
+                $kind = $journey->description_payload['doc_kind'] ?? null;
+                $text = strtolower($journey->description ?? '');
+
+                if ($kind === 'penyidikan') {
+                    return true;
+                }
+
+                // data lama tanpa doc_kind tapi teks berisi administrasi penyidikan
+                return $kind === null && str_contains($text, 'administrasi penyidikan');
+            });
+
+        return $journeys->values()->map(function (ReportJourney $journey) {
+            $payload = $journey->description_payload ?? [];
+            $evidence = $journey->evidences->first();
+            $docName = $this->extractDocNameFromText($journey->description ?? '');
+            $docDate = $payload['doc_date'] ?? null;
+
+            if ($docDate instanceof \DateTimeInterface) {
+                $docDate = $docDate->format('Y-m-d');
+            }
+
+            return [
+                'id' => $journey->id,
+                'name' => $docName,
+                'number' => $payload['doc_number'] ?? null,
+                'date' => $docDate,
+                'file_url' => $evidence->file_url ?? null,
+                'file_name' => $evidence ? basename($evidence->file_url) : null,
+            ];
+        })->all();
+    }
+
+    private function extractDocNameFromText(?string $text): ?string
+    {
+        if (!$text) {
+            return null;
+        }
+
+        $parts = explode(':', $text, 2);
+
+        if (count($parts) === 2) {
+            return trim($parts[1]);
+        }
+
+        return trim($text);
+    }
+
     public function store(array $data, array $files = []): array
     {
             DB::beginTransaction();
@@ -195,8 +278,7 @@ class ReportJourneyService
                     $type,
                     $description,
                     $files,
-                    $data['division_id'] ?? null,
-                    $data['institution_id'] ?? null
+                    $data['division_id'] ?? null
                 );
 
                 if ($type === ReportJourneyType::TRANSFER) {
@@ -319,8 +401,7 @@ class ReportJourneyService
                             'division_target_id' => $data['target_division_id'] ?? null,
                         ],
                         [],
-                        $divisionId,
-                        $institutionId
+                        $divisionId
                     );
 
                     $this->handleTransferAccess(
@@ -589,7 +670,6 @@ class ReportJourneyService
 
         if ($existingJourney) {
             $existingJourney->division_id = $divisionId;
-            $existingJourney->institution_id = $institutionId;
             $existingJourney->type = $type->value;
             $existingJourney->description = $description;
             $existingJourney->save();
@@ -638,7 +718,6 @@ class ReportJourneyService
     ): ReportJourney {
         $journeyData = [
             'report_id' => $report->id,
-            'institution_id' => $institutionId,
             'division_id' => $divisionId,
             'type' => $type->value,
             'description' => $description,
@@ -685,6 +764,80 @@ class ReportJourneyService
                 'is_finish' => false,
             ]);
         }
+    }
+
+    public function latestInspectionEvidence(Report $report): array
+    {
+        return $this->latestEvidenceByKind($report, ReportJourneyType::INVESTIGATION, 'pemeriksaan');
+    }
+
+    public function latestTrialPrefill(Report $report): array
+    {
+        $journey = $report->journeys()
+            ->where('type', ReportJourneyType::TRIAL->value)
+            ->latest('id')
+            ->get()
+            ->first(function ($j) {
+                $kind = $j->description_payload['doc_kind'] ?? null;
+
+                return $kind === 'sidang' || $kind === null;
+            });
+
+        if (!$journey) {
+            return [];
+        }
+
+        $payload = $journey->description_payload ?? [];
+        $docDate = $payload['doc_date'] ?? null;
+
+        if ($docDate instanceof \DateTimeInterface) {
+            $docDate = $docDate->format('Y-m-d');
+        }
+
+        return [
+            'doc_number' => $payload['doc_number'] ?? null,
+            'doc_date' => $docDate,
+            'decision' => $payload['decision'] ?? null,
+        ];
+    }
+
+    public function latestTrialEvidence(Report $report): array
+    {
+        return $this->latestEvidenceByKind($report, ReportJourneyType::TRIAL, 'sidang');
+    }
+
+    private function latestEvidenceByKind(
+        Report $report,
+        ReportJourneyType $type,
+        ?string $docKind
+    ): array
+    {
+        $journey = $report->journeys()
+            ->where('type', $type->value)
+            ->latest('id')
+            ->with('evidences')
+            ->get()
+            ->first(function ($journey) use ($docKind) {
+                $kind = $journey->description_payload['doc_kind'] ?? null;
+
+                // terima doc_kind yang cocok, atau kosong (data lama)
+                return ($docKind === null) || $kind === $docKind || $kind === null;
+            });
+
+        if (!$journey) {
+            return [];
+        }
+
+        return $journey->evidences
+            ->map(function ($evidence) {
+                return [
+                    'url' => $evidence->file_url ?? null,
+                    'name' => $evidence->file_url ? basename($evidence->file_url) : 'Lampiran',
+                    'type' => $evidence->file_type ?? null,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     private function applyReportUpdate(Report $report, array $updateData): void

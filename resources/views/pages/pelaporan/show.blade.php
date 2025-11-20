@@ -235,20 +235,50 @@
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Sidang</h6></div>
                                         <div class="col-md-4">
                                             <label class="form-label">No Dokumen Sidang</label>
-                                            <input type="text" class="form-control" name="trial_doc_number" placeholder="Masukkan nomor dokumen">
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                name="trial_doc_number"
+                                                placeholder="Masukkan nomor dokumen"
+                                                value="{{ old('trial_doc_number', $trialPrefill['doc_number'] ?? '') }}"
+                                            >
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Tanggal Dokumen Sidang</label>
-                                            <input type="date" class="form-control" name="trial_doc_date">
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                name="trial_doc_date"
+                                                value="{{ old('trial_doc_date', $trialPrefill['doc_date'] ?? '') }}"
+                                            >
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Upload File</label>
                                             <input type="file" class="form-control" name="trial_file" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx">
+                                            @if(!empty($trialEvidence))
+                                                <div class="mt-2">
+                                                    <small class="text-muted d-block">File tersimpan:</small>
+                                                    <ul class="mb-0 ps-3">
+                                                        @foreach($trialEvidence as $ev)
+                                                            @if(!empty($ev['url']))
+                                                                <li><a href="{{ $ev['url'] }}" target="_blank">{{ $ev['name'] ?? 'Lampiran' }}</a></li>
+                                                            @else
+                                                                <li>{{ $ev['name'] ?? 'Lampiran' }}</li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <div class="col-12"><h6 class="fw-semibold">Putusan</h6></div>
                                         <div class="col-12">
-                                            <textarea class="form-control" name="trial_decision" rows="4" placeholder="Tuliskan putusan"></textarea>
+                                            <textarea
+                                                class="form-control"
+                                                name="trial_decision"
+                                                rows="4"
+                                                placeholder="Tuliskan putusan"
+                                            >{{ old('trial_decision', $trialPrefill['decision'] ?? '') }}</textarea>
                                         </div>
 
                                         <div class="col-12 d-flex flex-wrap gap-2">

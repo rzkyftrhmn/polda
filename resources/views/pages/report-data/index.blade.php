@@ -40,10 +40,7 @@
                                 <div class="col-xl-4 col-lg-6">
                                     <label class="form-label">Provinsi</label>
                                     <select class="form-control select2" id="filter_province_id" name="province_id">
-                                        <option value="">Semua Provinsi</option>
-                                        @foreach ($provinces as $province)
-                                            <option value="{{ $province->id }}">{{ $province->name }}</option>
-                                        @endforeach
+                                        <option value="12" selected>Jawa Barat</option>
                                     </select>
                                 </div>
                                 <div class="col-xl-4 col-lg-6">
@@ -183,6 +180,7 @@
         const exportPdfUrl = '{{ route('report-data.export.pdf') }}';
         const citiesEndpointTemplate = '{{ route('report-data.cities', ['province' => '__province__']) }}';
         const districtsEndpointTemplate = '{{ route('report-data.districts', ['city' => '__city__']) }}';
+        const defaultProvinceId = 12;
 
         const table = $('#report-data-table').DataTable({
             processing: true,
@@ -274,12 +272,14 @@
             window.location.href = exportPdfUrl + '?' + params.toString();
         });
 
+        loadCities(defaultProvinceId);
+
         function getFilters() {
             return {
                 q: $('#filter_q').val() || '',
                 status: $('#filter_status').val() || '',
                 category_id: $('#filter_category_id').val() || '',
-                province_id: $('#filter_province_id').val() || '',
+                province_id: defaultProvinceId,
                 city_id: $('#filter_city_id').val() || '',
                 district_id: $('#filter_district_id').val() || '',
                 incident_from: $('#filter_incident_from').val() || '',
@@ -295,36 +295,10 @@
 
         function resetFilters() {
             $('#filter-form')[0].reset();
-            $('#filter_city_id').html('<option value="">Semua Kota/Kabupaten</option>');
+            $('#filter_province_id').val(defaultProvinceId).trigger('change.select2');
+            loadCities(defaultProvinceId);
             $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
         }
-
-        // PROVINSI → KOTA (sync select2)
-        $('#filter_province_id').on('change', function () {
-            const provinceId = $(this).val();
-            $('#filter_city_id').html('<option value="">Semua Kota/Kabupaten</option>');
-            $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
-
-            if (!provinceId) {
-                $('#filter_city_id').trigger('change.select2');
-                $('#filter_district_id').trigger('change.select2');
-                return;
-            }
-
-            const url = citiesEndpointTemplate.replace('__province__', provinceId);
-
-            $.get(url, function (response) {
-                $('#filter_city_id').html('<option value="">Pilih Kota</option>');
-                if (Array.isArray(response)) {
-                    response.forEach(city => {
-                        $('#filter_city_id').append(
-                            `<option value="${city.id}">${city.name}</option>`
-                        );
-                    });
-                }
-                $('#filter_city_id').trigger('change.select2');
-            });
-        });
 
         // KOTA → KECAMATAN (sync select2)
         $('#filter_city_id').on('change', function () {
@@ -351,6 +325,24 @@
             });
         });
 
+        function loadCities(provinceId) {
+            $('#filter_city_id').html('<option value="">Semua Kota/Kabupaten</option>');
+            $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
+
+            const url = citiesEndpointTemplate.replace('__province__', provinceId);
+
+            $.get(url, function (response) {
+                $('#filter_city_id').html('<option value="">Pilih Kota</option>');
+                if (Array.isArray(response)) {
+                    response.forEach(city => {
+                        $('#filter_city_id').append(
+                            `<option value="${city.id}">${city.name}</option>`
+                        );
+                    });
+                }
+                $('#filter_city_id').trigger('change.select2');
+            });
+        }
 
     });
 </script>
