@@ -199,10 +199,10 @@ class SubDivisionController extends Controller
         if (request()->ajax()) {
             return response()->json([
                 'status' => $result,
-                'message' => $result ? 'Sub Divisi berhasil dihapus' : 'Gagal menghapus Sub Divisi',
+                'message' => $result ? 'Unit berhasil dihapus' : 'Gagal menghapus Unit',
             ]);
         }
 
-        return redirect()->route('subdivisions.index')->with('success', $result ? 'Sub Divisi berhasil dihapus' : 'Gagal menghapus Sub Divisi');
+        return redirect()->route('subdivisions.index')->with('success', $result ? 'Unit berhasil dihapus' : 'Gagal menghapus Unit');
     }
 }
