@@ -123,6 +123,11 @@ class ReportJourney extends Model
             'text' => '',
             'institution_target_id' => null,
             'division_target_id' => null,
+            'doc_kind' => null,
+            'doc_number' => null,
+            'doc_date' => null,
+            'conclusion' => null,
+            'decision' => null,
         ], $overrides);
     }
 }
