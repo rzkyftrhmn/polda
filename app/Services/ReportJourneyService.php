@@ -132,6 +132,44 @@ class ReportJourneyService
         return false;
     }
 
+    public function findJourneyByDocNumber(
+        Report $report,
+        ReportJourneyType $type,
+        ?string $docNumber,
+        ?string $docKind = null
+    ): ?ReportJourney {
+        if (!$docNumber) {
+            return null;
+        }
+
+        $needleNumber = trim((string) $docNumber);
+
+        return $report->journeys()
+            ->where('type', $type->value)
+            ->latest('id')
+            ->get()
+            ->first(function ($journey) use ($needleNumber, $docKind) {
+                $payload = $journey->description_payload ?? [];
+                $matchesNumber = isset($payload['doc_number']) &&
+                    strcasecmp(trim((string) $payload['doc_number']), $needleNumber) === 0;
+                $matchesKind = $docKind === null ||
+                    (($payload['doc_kind'] ?? null) === $docKind);
+
+                return $matchesNumber && $matchesKind;
+            });
+    }
+
+    public function journeyHasEvidence(
+        Report $report,
+        ReportJourneyType $type,
+        ?string $docNumber,
+        ?string $docKind = null
+    ): bool {
+        $journey = $this->findJourneyByDocNumber($report, $type, $docNumber, $docKind);
+
+        return $journey ? $journey->evidences()->exists() : false;
+    }
+
     public function store(array $data, array $files = []): array
     {
             DB::beginTransaction();
@@ -243,21 +281,26 @@ class ReportJourneyService
 
                 $touchStatus = $action !== 'save';
 
-                // Create Investigation journey
-                $journeys[] = $this->createJourney(
+                $inspectionDocNumber = $data['inspection_doc_number'] ?? null;
+                $inspectionFiles = $files['inspection_files'] ?? [];
+
+                // Upsert Investigation journey by report + doc number + doc kind
+                $journeys[] = $this->upsertJourneyWithFiles(
                     $report,
                     ReportJourneyType::INVESTIGATION,
                     [
                         'text' => 'Dokumen pemeriksaan',
                         'doc_kind' => 'pemeriksaan',
-                        'doc_number' => $data['inspection_doc_number'] ?? null,
+                        'doc_number' => $inspectionDocNumber,
                         'doc_date' => $data['inspection_doc_date'] ?? null,
                         'conclusion' => $data['inspection_conclusion'] ?? null,
                     ],
-                    $files['inspection_files'] ?? [],
+                    $inspectionFiles,
                     $divisionId,
                     $institutionId,
-                    $touchStatus
+                    $touchStatus,
+                    'pemeriksaan',
+                    $inspectionDocNumber
                 );
 
                 /* === Transfer === */
@@ -331,20 +374,33 @@ class ReportJourneyService
                 }
 
                 /* ===== ADMINISTRASI PENYIDIKAN ===== */
+                $adminDocNumbers = [];
                 foreach ($data['admin_documents'] ?? [] as $i => $doc) {
+                    $docNumber = $doc['number'] ?? null;
 
-                    $journeys[] = $this->createJourney(
+                    if ($docNumber && isset($adminDocNumbers[$docNumber])) {
+                        continue; // hindari duplikasi pada request yang sama
+                    }
+
+                    if ($docNumber) {
+                        $adminDocNumbers[$docNumber] = true;
+                    }
+
+                    $journeys[] = $this->upsertJourneyWithFiles(
                         $report,
                         ReportJourneyType::INVESTIGATION,
                         [
                             'text' => 'Administrasi penyidikan: ' . ($doc['name'] ?? ''),
                             'doc_kind' => 'penyidikan',
-                            'doc_number' => $doc['number'] ?? null,
+                            'doc_number' => $docNumber,
                             'doc_date' => $doc['date'] ?? null,
                         ],
                         isset($files['admin_files'][$i]) ? [$files['admin_files'][$i]] : [],
                         $divisionId,
-                        $institutionId
+                        $institutionId,
+                        true,
+                        'penyidikan',
+                        $docNumber
                     );
                 }
 
@@ -363,7 +419,7 @@ class ReportJourneyService
                         throw new RuntimeException('Tambahkan dokumen penyidikan sebelum sidang.');
                     }
 
-                    $journeys[] = $this->createJourney(
+                    $journeys[] = $this->upsertJourneyWithFiles(
                         $report,
                         ReportJourneyType::TRIAL,
                         [
@@ -377,7 +433,10 @@ class ReportJourneyService
                             ? [$files['trial_file']]
                             : [],
                         $divisionId,
-                        $institutionId
+                        $institutionId,
+                        true,
+                        'sidang',
+                        $data['trial_doc_number'] ?? null
                     );
                 }
 
@@ -452,6 +511,122 @@ class ReportJourneyService
         return $lastJourney ? $lastJourney->typeEnum() : ReportJourneyType::SUBMITTED;
     }
 
+    private function persistEvidenceFiles(ReportJourney $journey, array $files, bool $replaceExisting = false): array
+    {
+        $uploaded = array_filter($files, static fn ($file) => $file instanceof UploadedFile);
+
+        if ($replaceExisting) {
+            foreach ($journey->evidences as $evidence) {
+                $this->deleteEvidenceFile($evidence);
+                $evidence->delete();
+            }
+        }
+
+        if (empty($uploaded)) {
+            return [];
+        }
+
+        $createdFiles = [];
+
+        foreach ($uploaded as $file) {
+            $original = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $file->getClientOriginalName());
+            $filename = time() . '-' . $original;
+            $storedPath = $file->storeAs('evidences', $filename, 'public');
+
+            ReportEvidence::create([
+                'report_journey_id' => $journey->id,
+                'report_id' => $journey->report_id,
+                'file_url' => Storage::url($storedPath),
+                'file_type' => strtolower($file->getClientOriginalExtension()),
+            ]);
+            $createdFiles[] = $filename;
+        }
+
+        return $createdFiles;
+    }
+
+    private function deleteEvidenceFile(ReportEvidence $evidence): void
+    {
+        $fileUrl = $evidence->file_url ?? '';
+
+        $path = null;
+        if (str_starts_with($fileUrl, '/storage/')) {
+            $path = substr($fileUrl, 9);
+        } elseif (str_starts_with($fileUrl, 'storage/')) {
+            $path = substr($fileUrl, 8);
+        }
+
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
+    }
+
+    private function upsertJourneyWithFiles(
+        Report $report,
+        ReportJourneyType $type,
+        array $description,
+        array $files = [],
+        ?int $divisionId = null,
+        ?int $institutionId = null,
+        bool $touchReportStatus = true,
+        ?string $docKindForLookup = null,
+        ?string $docNumberForLookup = null
+    ): ReportJourney {
+        $lookupKind = $docKindForLookup ?? ($description['doc_kind'] ?? null);
+        $lookupNumber = $docNumberForLookup ?? ($description['doc_number'] ?? null);
+
+        $existingJourney = $this->findJourneyByDocNumber(
+            $report,
+            $type,
+            $lookupNumber,
+            $lookupKind
+        );
+
+        $shouldReplaceEvidence = !empty(array_filter(
+            $files,
+            static fn ($file) => $file instanceof UploadedFile
+        ));
+
+        if ($existingJourney) {
+            $existingJourney->division_id = $divisionId;
+            $existingJourney->institution_id = $institutionId;
+            $existingJourney->type = $type->value;
+            $existingJourney->description = $description;
+            $existingJourney->save();
+
+            $createdFiles = $this->persistEvidenceFiles($existingJourney, $files, $shouldReplaceEvidence);
+
+            if ($touchReportStatus) {
+                $updateData = ['status' => $type->value];
+
+                if ($type === ReportJourneyType::COMPLETED) {
+                    $updateData['finish_time'] = $this->resolveFinishTimeValue();
+                }
+
+                $this->applyReportUpdate($report, $updateData);
+            }
+
+            if (!empty($createdFiles)) {
+                $this->notificationService->notifyBuktiDitambahkan(
+                    $existingJourney->report,
+                    implode(', ', $createdFiles)
+                );
+            }
+
+            return $existingJourney->refresh();
+        }
+
+        return $this->createJourney(
+            $report,
+            $type,
+            $description,
+            $files,
+            $divisionId,
+            $institutionId,
+            $touchReportStatus
+        );
+    }
+
     private function createJourney(
         Report $report,
         ReportJourneyType $type,
@@ -472,25 +647,7 @@ class ReportJourneyService
         /** @var ReportJourney $journey */
         $journey = $this->repository->store($journeyData);
 
-        $createdFiles = [];
-
-        foreach ($files as $file) {
-            if (!$file instanceof UploadedFile) {
-                continue;
-            }
-
-            $original = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $file->getClientOriginalName());
-            $filename = time() . '-' . $original;
-            $storedPath = $file->storeAs('evidences', $filename, 'public');
-
-            ReportEvidence::create([
-                'report_journey_id' => $journey->id,
-                'report_id' => $journey->report_id,
-                'file_url' => Storage::url($storedPath),
-                'file_type' => strtolower($file->getClientOriginalExtension()),
-            ]);
-            $createdFiles[] = $filename;
-        }
+        $createdFiles = $this->persistEvidenceFiles($journey, $files);
 
         if ($touchReportStatus) {
             $updateData = ['status' => $type->value];

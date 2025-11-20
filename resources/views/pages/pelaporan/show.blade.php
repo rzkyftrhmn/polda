@@ -121,20 +121,50 @@
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
                                         <div class="col-md-4">
                                             <label class="form-label">No Dokumen Pemeriksaan</label>
-                                            <input type="text" class="form-control" name="inspection_doc_number" placeholder="Masukkan nomor dokumen">
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                name="inspection_doc_number"
+                                                placeholder="Masukkan nomor dokumen"
+                                                value="{{ old('inspection_doc_number', $inspectionPrefill['doc_number'] ?? '') }}"
+                                            >
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Tanggal Dokumen Pemeriksaan</label>
-                                            <input type="date" class="form-control" name="inspection_doc_date">
+                                            <input
+                                                type="date"
+                                                class="form-control"
+                                                name="inspection_doc_date"
+                                                value="{{ old('inspection_doc_date', $inspectionPrefill['doc_date'] ?? '') }}"
+                                            >
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Upload File</label>
                                             <input type="file" class="form-control" name="inspection_files[]" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" multiple>
+                                            @if(!empty($inspectionEvidence))
+                                                <div class="mt-2">
+                                                    <small class="text-muted d-block">File tersimpan:</small>
+                                                    <ul class="mb-0 ps-3">
+                                                        @foreach($inspectionEvidence as $ev)
+                                                            @if(!empty($ev['url']))
+                                                                <li><a href="{{ $ev['url'] }}" target="_blank">{{ $ev['name'] ?? 'Lampiran' }}</a></li>
+                                                            @else
+                                                                <li>{{ $ev['name'] ?? 'Lampiran' }}</li>
+                                                            @endif
+                                                        @endforeach
+                                                    </ul>
+                                                </div>
+                                            @endif
                                         </div>
 
                                         <div class="col-12"><h6 class="fw-semibold">Input Kesimpulan Gelar Perkara</h6></div>
                                         <div class="col-12">
-                                            <textarea class="form-control" name="inspection_conclusion" rows="4" placeholder="Tuliskan kesimpulan"></textarea>
+                                            <textarea
+                                                class="form-control"
+                                                name="inspection_conclusion"
+                                                rows="4"
+                                                placeholder="Tuliskan kesimpulan"
+                                            >{{ old('inspection_conclusion', $inspectionPrefill['conclusion'] ?? '') }}</textarea>
                                         </div>
 
                                         <div class="col-12 d-flex flex-wrap gap-2">
@@ -153,7 +183,8 @@
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#adminDocModal">Tambah Dokumen</button>
                                         </div>
                                         <div class="col-12">
-                                            <table class="table table-striped">
+                                            <div class="table-responsive admin-doc-scroll">
+                                                <table class="table table-striped align-middle admin-doc-table mb-0">
                                                 <thead>
                                                     <tr>
                                                         <th>Nama Dokumen</th>
@@ -163,13 +194,42 @@
                                                         <th>Aksi</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody id="adminDocTableBody">
-                                                    <tr class="admin-placeholder">
-                                                        <td colspan="5" class="text-center">Belum ada dokumen administrasi</td>
-                                                    </tr>
+                                                <tbody id="adminDocTableBody" data-count="{{ count($adminDocuments ?? []) }}">
+                                                    @forelse($adminDocuments ?? [] as $idx => $doc)
+                                                        <tr id="admin-doc-row-{{ $idx }}">
+                                                            <td>{{ $doc['name'] ?? '-' }}</td>
+                                                            <td>{{ $doc['number'] ?? '-' }}</td>
+                                                            <td>{{ $doc['date'] ?? '-' }}</td>
+                                                            <td>
+                                                                @if(!empty($doc['file_url']))
+                                                                    <a href="{{ $doc['file_url'] }}" target="_blank" class="text-decoration-underline">
+                                                                        {{ $doc['file_name'] ?? basename($doc['file_url']) }}
+                                                                    </a>
+                                                                @else
+                                                                    {{ $doc['file_name'] ?? '-' }}
+                                                                @endif
+                                                            </td>
+                                                            <td>
+                                                                <button type="button" class="btn btn-danger btn-sm" data-row="admin-doc-row-{{ $idx }}">Hapus</button>
+                                                            </td>
+                                                        </tr>
+                                                    @empty
+                                                        <tr class="admin-placeholder">
+                                                            <td colspan="5" class="text-center">Belum ada dokumen administrasi</td>
+                                                        </tr>
+                                                    @endforelse
                                                 </tbody>
-                                            </table>
-                                            <div id="adminDocHiddenInputs" style="display:none"></div>
+                                                </table>
+                                            </div>
+                                            <div id="adminDocHiddenInputs" style="display:none">
+                                                @foreach($adminDocuments ?? [] as $idx => $doc)
+                                                    <div id="hidden-admin-doc-row-{{ $idx }}">
+                                                        <input type="hidden" name="admin_documents[{{ $idx }}][name]" value="{{ $doc['name'] ?? '' }}">
+                                                        <input type="hidden" name="admin_documents[{{ $idx }}][number]" value="{{ $doc['number'] ?? '' }}">
+                                                        <input type="hidden" name="admin_documents[{{ $idx }}][date]" value="{{ $doc['date'] ?? '' }}">
+                                                    </div>
+                                                @endforeach
+                                            </div>
                                         </div>
 
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Sidang</h6></div>
@@ -408,6 +468,38 @@
     #journeyModal .form-text {
         color: var(--bs-secondary-color);
     }
+
+    /* Admin doc table responsive */
+    .admin-doc-scroll {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .admin-doc-table th,
+    .admin-doc-table td {
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    @media (max-width: 768px) {
+        .admin-doc-table th,
+        .admin-doc-table td {
+            white-space: normal;
+        }
+
+        .admin-doc-table .btn {
+            padding: 4px 8px;
+        }
+    }
+
+    /* Timeline dot behind sidebar */
+    .cd-timeline::before {
+        z-index: 0;
+    }
+
+    .cd-timeline-img {
+        z-index: 1;
+    }
 </style>
 @endpush
 
@@ -445,7 +537,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  var adminIndex = 0;
+  var adminIndex = (function() {
+    var table = document.getElementById('adminDocTableBody');
+    var initial = table ? parseInt(table.getAttribute('data-count') || '0', 10) : 0;
+    return isNaN(initial) ? 0 : initial;
+  })();
   var bodyEl = document.getElementById('adminDocTableBody');
   var hiddenEl = document.getElementById('adminDocHiddenInputs');
   var saveBtn = document.getElementById('admin-doc-save');
