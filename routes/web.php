@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('get-cities/{provinceId}', [PelaporanController::class, 'getCitiesByProvince']);
         Route::get('get-districts/{cityId}', [PelaporanController::class, 'getDistrictsByCity']);
         Route::get('/api/divisions', [PelaporanController::class, 'byType'])->name('api.divisions');
+        Route::post('pelaporan/{report}/instructions', [PelaporanController::class, 'storeInstruction'])->name('reports.instructions.store');
 
 
         // report data routes

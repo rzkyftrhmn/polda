@@ -305,7 +305,7 @@ class PelaporanController extends Controller
         $division = $user?->division;
 
         $isAdmin = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['admin', 'super admin', 'super-admin'])
+            ? $user->hasAnyRole([ROLE_ADMIN])
             : false;
 
         // Cek akses
@@ -333,6 +333,10 @@ class PelaporanController extends Controller
         $adminDocuments = $this->journeyService->adminDocumentsPrefill($report);
         $trialEvidence = $this->journeyService->latestTrialEvidence($report);
 
+        $relatedUserOptions = $this->service->getRelatedUsersForReport($report);
+        $instructions = $this->service->getInstructionsForReport($report->id);
+        $userMap = $this->service->getUserMapForInstructions($instructions);
+
         return view('pages.pelaporan.show', [
             'report' => $report,
             'journeys' => $journeys,
@@ -351,6 +355,50 @@ class PelaporanController extends Controller
             'trialPrefill' => $trialPrefill,
             'trialEvidence' => $trialEvidence,
             'adminDocuments' => $adminDocuments,
+            'relatedUserOptions' => $relatedUserOptions,
+            'instructions' => $instructions,
+            'userMap' => $userMap,
+            'instructionStoreUrl' => route('reports.instructions.store', $report->id),
+        ]);
+    }
+
+    public function storeInstruction(Request $request, Report $report)
+    {
+        $user = auth()->user();
+        $division = $user?->division;
+        $isAdmin = $user && method_exists($user, 'hasAnyRole')
+            ? $user->hasAnyRole([ROLE_ADMIN])
+            : false;
+
+        $hasAccess = $this->journeyService->hasAccess($division, $report, $isAdmin);
+        if (!$hasAccess) {
+            return response()->json(['message' => 'Tidak memiliki akses untuk membuat instruksi.'], 403);
+        }
+
+        $validated = $request->validate([
+            'user_id_to' => 'required|integer',
+            'message' => 'required|string',
+        ]);
+
+        $instruction = $this->service->storeInstruction(
+            $report->id,
+            $user->id,
+            (int) $validated['user_id_to'],
+            $validated['message']
+        );
+
+        $fromName = $user->name ?? 'Anda';
+        $toUser = $report->accessDatas->pluck('division.users')->flatten(1)->firstWhere('id', (int) $validated['user_id_to']);
+        if (!$toUser) {
+            $toUser = \App\Models\User::find((int) $validated['user_id_to']);
+        }
+
+        return response()->json([
+            'id' => $instruction->id,
+            'created_at' => optional($instruction->created_at)->format('d M Y H:i'),
+            'from_name' => $fromName,
+            'to_name' => $toUser?->name ?? '-',
+            'message' => $instruction->message,
         ]);
     }
 

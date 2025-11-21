@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('divisions', function (Blueprint $table) {
+        Schema::create('instructions_and_directions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->string('name');
-            $table->enum('type', ['satwil', 'satker'])->default('satwil');
-            $table->enum('level', ['polda', 'polres', 'polsek'])->default('polda');
-            $table->json('permissions')->nullable();
+            $table->unsignedBigInteger('report_id');
+            $table->unsignedBigInteger('user_id_from');
+            $table->unsignedBigInteger('user_id_to');
+            $table->text('message');
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('divisions');
+        Schema::dropIfExists('instructions_and_directions');
     }
 };

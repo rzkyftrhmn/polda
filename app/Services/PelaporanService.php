@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ReportJourneyType;
 use App\Repositories\PelaporanRepository;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use App\Models\Report;
 use App\Models\AccessData;
@@ -261,6 +262,39 @@ class PelaporanService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function getRelatedUsersForReport(Report $report): Collection
+    {
+        $divisionIds = $report->accessDatas->pluck('division_id')->filter()->unique()->values()->all();
+        $accessUsers = $this->repo->getUsersByDivisionIds($divisionIds);
+        $adminUsers = $this->repo->getAdminUsers();
+        return $accessUsers->merge($adminUsers)->unique('id')->values();
+    }
+
+    public function getInstructionsForReport(int $reportId): Collection
+    {
+        return $this->repo->getInstructionsByReportId($reportId);
+    }
+
+    public function getUserMapForInstructions(Collection $instructions): Collection
+    {
+        $userIds = $instructions->flatMap(function ($i) {
+            return [optional($i)->user_id_from, optional($i)->user_id_to];
+        })->filter()->unique()->values()->all();
+
+        $users = $this->repo->getUsersByIds($userIds);
+        return $users->keyBy('id');
+    }
+
+    public function storeInstruction(int $reportId, int $fromUserId, int $toUserId, string $message)
+    {
+        return $this->repo->createInstruction([
+            'report_id' => $reportId,
+            'user_id_from' => $fromUserId,
+            'user_id_to' => $toUserId,
+            'message' => $message,
+        ]);
     }
 
 
