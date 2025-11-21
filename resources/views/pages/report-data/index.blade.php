@@ -29,7 +29,7 @@
                                     </select>
                                 </div>
                                 <div class="col-xl-4 col-lg-6">
-                                    <label class="form-label">Kategori</label>
+                                    <label class="form-label">Kategori Pelanggaran</label>
                                     <select class="form-control select2" id="filter_category_id" name="category_id">
                                         <option value="">Semua Kategori</option>
                                         @foreach ($categories as $category)
@@ -38,21 +38,12 @@
                                     </select>
                                 </div>
                                 <div class="col-xl-4 col-lg-6">
-                                    <label class="form-label">Provinsi</label>
-                                    <select class="form-control select2" id="filter_province_id" name="province_id">
-                                        <option value="12" selected>Jawa Barat</option>
-                                    </select>
-                                </div>
-                                <div class="col-xl-4 col-lg-6">
-                                    <label class="form-label">Kota/Kabupaten</label>
-                                    <select class="form-control select2" id="filter_city_id" name="city_id">
-                                        <option value="">Semua Kota/Kabupaten</option>
-                                    </select>
-                                </div>
-                                <div class="col-xl-4 col-lg-6">
-                                    <label class="form-label">Kecamatan</label>
-                                    <select class="form-control select2" id="filter_district_id" name="district_id">
-                                        <option value="">Semua Kecamatan</option>
+                                    <label class="form-label">Satwil/Satker (Unit)</label>
+                                    <select class="form-control select2" id="filter_division_id" name="division_id">
+                                        <option value="">Semua Unit</option>
+                                        @foreach ($divisions as $division)
+                                            <option value="{{ $division->id }}">{{ $division->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-xl-4 col-lg-6">
@@ -178,10 +169,6 @@
         const datatableUrl = '{{ route('datatables.report-data') }}';
         const exportExcelUrl = '{{ route('report-data.export.excel') }}';
         const exportPdfUrl = '{{ route('report-data.export.pdf') }}';
-        const citiesEndpointTemplate = '{{ route('report-data.cities', ['province' => '__province__']) }}';
-        const districtsEndpointTemplate = '{{ route('report-data.districts', ['city' => '__city__']) }}';
-        const defaultProvinceId = 12;
-
         const table = $('#report-data-table').DataTable({
             processing: true,
             serverSide: true,
@@ -272,16 +259,12 @@
             window.location.href = exportPdfUrl + '?' + params.toString();
         });
 
-        loadCities(defaultProvinceId);
-
         function getFilters() {
             return {
                 q: $('#filter_q').val() || '',
                 status: $('#filter_status').val() || '',
                 category_id: $('#filter_category_id').val() || '',
-                province_id: defaultProvinceId,
-                city_id: $('#filter_city_id').val() || '',
-                district_id: $('#filter_district_id').val() || '',
+                division_id: $('#filter_division_id').val() || '',
                 incident_from: $('#filter_incident_from').val() || '',
                 incident_to: $('#filter_incident_to').val() || '',
                 created_from: $('#filter_created_from').val() || '',
@@ -295,53 +278,7 @@
 
         function resetFilters() {
             $('#filter-form')[0].reset();
-            $('#filter_province_id').val(defaultProvinceId).trigger('change.select2');
-            loadCities(defaultProvinceId);
-            $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
-        }
-
-        // KOTA → KECAMATAN (sync select2)
-        $('#filter_city_id').on('change', function () {
-            const cityId = $(this).val();
-            $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
-
-            if (!cityId) {
-                $('#filter_district_id').trigger('change.select2');
-                return;
-            }
-
-            const url = districtsEndpointTemplate.replace('__city__', cityId);
-
-            $.get(url, function (response) {
-                $('#filter_district_id').html('<option value="">Pilih Kecamatan</option>');
-                if (Array.isArray(response)) {
-                    response.forEach(dist => {
-                        $('#filter_district_id').append(
-                            `<option value="${dist.id}">${dist.name}</option>`
-                        );
-                    });
-                }
-                $('#filter_district_id').trigger('change.select2');
-            });
-        });
-
-        function loadCities(provinceId) {
-            $('#filter_city_id').html('<option value="">Semua Kota/Kabupaten</option>');
-            $('#filter_district_id').html('<option value="">Semua Kecamatan</option>');
-
-            const url = citiesEndpointTemplate.replace('__province__', provinceId);
-
-            $.get(url, function (response) {
-                $('#filter_city_id').html('<option value="">Pilih Kota</option>');
-                if (Array.isArray(response)) {
-                    response.forEach(city => {
-                        $('#filter_city_id').append(
-                            `<option value="${city.id}">${city.name}</option>`
-                        );
-                    });
-                }
-                $('#filter_city_id').trigger('change.select2');
-            });
+            $('#filter_division_id').val('').trigger('change.select2');
         }
 
     });

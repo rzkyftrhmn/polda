@@ -120,7 +120,7 @@
                                     <div class="row g-3">
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
                                         <div class="col-md-4">
-                                            <label class="form-label">No Dokumen Pemeriksaan</label>
+                                            <label class="form-label">No Dokumen Lidik</label>
                                             <input
                                                 type="text"
                                                 class="form-control"
@@ -130,7 +130,7 @@
                                             >
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Tanggal Dokumen Pemeriksaan</label>
+                                            <label class="form-label">Tanggal Dokumen Lidik</label>
                                             <input
                                                 type="date"
                                                 class="form-control"
