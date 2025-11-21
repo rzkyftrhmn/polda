@@ -12,7 +12,7 @@
                 </div>
                 <div class="cm-content-body form excerpt">
                     <div class="card-body">
-                        <form action="{{ isset($pelaporan) ? route('pelaporan.update', $pelaporan->id) : route('pelaporan.store') }}" method="POST">
+                        <form id="pelaporanForm" action="{{ isset($pelaporan) ? route('pelaporan.update', $pelaporan) : route('pelaporan.store') }}" method="POST">
                             @csrf
                             @if(isset($pelaporan))
                                 @method('PUT')
@@ -313,6 +313,30 @@ document.addEventListener('DOMContentLoaded', function() {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('terlaporModal')).hide();
 
     document.getElementById('tlp-name').value = '';
+  });
+});
+
+// Konfirmasi sebelum submit store/update
+document.addEventListener('DOMContentLoaded', function() {
+  var form = document.getElementById('pelaporanForm');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var proceed = function() { form.submit(); };
+    if (window.Swal) {
+      Swal.fire({
+        title: '{{ isset($pelaporan) ? 'Update laporan?' : 'Simpan laporan?' }}',
+        text: 'Data akan disimpan dan tidak dapat diubah tanpa akses.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '{{ isset($pelaporan) ? 'Update' : 'Simpan' }}',
+        cancelButtonText: 'Batal'
+      }).then(function(result) {
+        if (result.isConfirmed) proceed();
+      });
+    } else {
+      if (confirm('{{ isset($pelaporan) ? 'Update laporan?' : 'Simpan laporan?' }}')) proceed();
+    }
   });
 });
 

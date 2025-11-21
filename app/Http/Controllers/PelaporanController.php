@@ -82,17 +82,17 @@ class PelaporanController extends Controller
         $data = [];
         foreach ($reports as $key => $report) {
             $htmlButton = '<td class="text-nowrap">
-                <a href="' . route('pelaporan.show', $report->id) . '" class="btn btn-info btn-sm content-icon btn-detail">
+                <a href="' . route('pelaporan.show', $report) . '" class="btn btn-info btn-sm content-icon btn-detail">
                     <i class="fa fa-eye"></i>
                 </a>
-                <a href="' . route('pelaporan.edit', $report->id) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
+                <a href="' . route('pelaporan.edit', $report) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
                     <i class="fa fa-edit"></i>
                 </a>
                 <a href="javascript:void(0);" 
                     class="btn btn-danger btn-sm content-icon btn-delete"
                     data-id="' . $report->id . '"
                     data-name="' . htmlspecialchars($report->title ?? '', ENT_QUOTES) . '"
-                    data-url="' . route('pelaporan.destroy', $report->id) . '"
+                    data-url="' . route('pelaporan.destroy', $report) . '"
                     data-title="Hapus Laporan?">
                     <i class="fa fa-times"></i>
                 </a>
@@ -192,7 +192,7 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
         $report = $this->service->store($validated);
-        return redirect()->route('pelaporan.show', $report->id)
+        return redirect()->route('pelaporan.show', $report)
                  ->with('success', 'Laporan Berhasil Dibuat.');
     }
 
@@ -204,7 +204,7 @@ class PelaporanController extends Controller
     }
 
     /** Form edit laporan */
-    public function edit($id)
+    public function edit(Report $report)
     {
 
         $division  = auth()->user()->division;
@@ -215,11 +215,6 @@ class PelaporanController extends Controller
                 ->with('error', 'Anda tidak memiliki izin untuk membuat laporan.');
         }
         
-        $report = $this->service->getById($id);
-        // dd($report->suspects->toArray());
-        if (!$report) return redirect()->route('pelaporan.index')
-            ->with('error', 'Laporan tidak ditemukan.');
-
         return view('pages.pelaporan.create', [
             'title' => 'Edit Laporan',
             'pelaporan' => $report,
@@ -239,7 +234,7 @@ class PelaporanController extends Controller
 
 
     /** Update laporan */
-    public function update(Request $request, $id)
+    public function update(Request $request, Report $report)
     {
         // dd($request->all());
         $validated = $request->validate([
@@ -258,15 +253,15 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
 
-        $this->service->update($id, $validated);
+        $this->service->update($report->id, $validated);
 
 
-        return redirect()->route('pelaporan.show', $id)
+        return redirect()->route('pelaporan.show', $report)
                  ->with('success', 'Laporan Berhasil Diperbaharui.');
     }
 
 
-    public function show($id)
+    public function show(Report $report)
     {
         $report = Report::with([
             'category',
@@ -276,7 +271,7 @@ class PelaporanController extends Controller
             'suspects.division',
             'accessDatas',
             'creator',
-        ])->findOrFail($id);
+        ])->findOrFail($report->id);
 
         // Pastikan akses awal creator dibuat
         $this->journeyService->ensureInitialAccess($report);
@@ -358,23 +353,14 @@ class PelaporanController extends Controller
             'relatedUserOptions' => $relatedUserOptions,
             'instructions' => $instructions,
             'userMap' => $userMap,
-            'instructionStoreUrl' => route('reports.instructions.store', $report->id),
+            'instructionStoreUrl' => route('reports.instructions.store', $report),
         ]);
     }
 
     public function storeInstruction(Request $request, Report $report)
     {
         $user = auth()->user();
-        $division = $user?->division;
-        $isAdmin = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole([ROLE_ADMIN])
-            : false;
-
-        $hasAccess = $this->journeyService->hasAccess($division, $report, $isAdmin);
-        if (!$hasAccess) {
-            return response()->json(['message' => 'Tidak memiliki akses untuk membuat instruksi.'], 403);
-        }
-
+        $this->journeyService->ensureInitialAccess($report);
         $validated = $request->validate([
             'user_id_to' => 'required|integer',
             'message' => 'required|string',
@@ -405,9 +391,9 @@ class PelaporanController extends Controller
 
 
     /** Hapus laporan */
-    public function destroy($id)
+    public function destroy(Report $report)
     {
-        $deleted = $this->service->delete($id);
+        $deleted = $this->service->delete($report->id);
 
         if (request()->ajax()) {
             return response()->json([

@@ -114,7 +114,7 @@
                             @elseif(!$showInspectionForm && !$showInvestigationForm)
                                 <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
                             @else
-                                <form id="progressForm" action="{{ route('reports.progress.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+                                <form id="progressForm" action="{{ route('reports.progress.store', $report) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="action" id="progress-action" value="save">
                                     <input type="hidden" name="flow" id="progress-flow" value="{{ $defaultFlow }}">
@@ -445,7 +445,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form action="{{ route('reports.journeys.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('reports.journeys.store', $report) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
@@ -903,20 +903,37 @@ document.addEventListener('DOMContentLoaded', function() {
       payload.append('user_id_to', instructionUserTo.value);
       payload.append('message', msg);
 
-      fetch(instructionForm.action, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: payload
-      }).then(function(res) {
-        if (!res.ok) throw new Error('Request gagal');
-        return res.json();
-      }).then(function(data) {
-        appendHistory(data.from_name || 'Anda', data.to_name || toName, (data.message || msg).replace(/\n/g, '<br>'));
-        instructionMessage.value = '';
-        if (window.Swal) Swal.fire('Pesan dikirim', '', 'success');
-      }).catch(function() {
-        if (window.Swal) Swal.fire('Gagal mengirim pesan', '', 'error'); else alert('Gagal mengirim pesan');
-      });
+      var proceed = function() {
+        fetch(instructionForm.action, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: payload
+        }).then(function(res) {
+          if (!res.ok) throw new Error('Request gagal');
+          return res.json();
+        }).then(function(data) {
+          appendHistory(data.from_name || 'Anda', data.to_name || toName, (data.message || msg).replace(/\n/g, '<br>'));
+          instructionMessage.value = '';
+          if (window.Swal) Swal.fire('Pesan dikirim', '', 'success');
+        }).catch(function() {
+          if (window.Swal) Swal.fire('Gagal mengirim pesan', '', 'error'); else alert('Gagal mengirim pesan');
+        });
+      };
+
+      if (window.Swal) {
+        Swal.fire({
+          title: 'Kirim instruksi?',
+          text: 'Pesan akan disimpan dan tampil di history.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Kirim',
+          cancelButtonText: 'Batal'
+        }).then(function(result) {
+          if (result.isConfirmed) proceed();
+        });
+      } else {
+        if (confirm('Kirim instruksi?')) proceed();
+      }
     });
   }
 

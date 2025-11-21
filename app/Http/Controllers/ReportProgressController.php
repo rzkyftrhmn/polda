@@ -236,7 +236,7 @@ class ReportProgressController extends Controller
 
         if ($result['status']) {
             return redirect()
-                ->route('pelaporan.show', $report->id)
+                ->route('pelaporan.show', $report)
                 ->with('success', $result['message']);
         }
 
