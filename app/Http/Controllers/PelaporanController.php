@@ -39,7 +39,6 @@ class PelaporanController extends Controller
     /** Menampilkan halaman utama */
     public function index()
     {
-        // dd(auth()->user()->getRoleNames());
         return view('pages.pelaporan.index', [
             'title' => $this->feature_title,
             'name' => $this->feature_name,
@@ -51,10 +50,8 @@ class PelaporanController extends Controller
     /** DataTables server-side */
     public function datatables(Request $request)
     {
-        // Panggil method service untuk mendapatkan query laporan
         $query = $this->service->datatables($request->input('filter_q', ''));
 
-        // Jika ada pencarian, tambahkan kondisi pencarian
         $search = $request->input('search.value', '');
         if (!empty($search)) {
             $query = $query->where(function($q) use ($search) {
@@ -63,23 +60,25 @@ class PelaporanController extends Controller
             });
         }
 
-        // Hitung jumlah total laporan yang ditemukan
         $total = $query->count();
 
-        // Ambil data laporan berdasarkan pagination
         $limit = $request->input('length', 10);
         $start = $request->input('start', 0);
         $orderColIndex = $request->input('order.0.column', 1);
         $dir = $request->input('order.0.dir', 'asc');
         $order = ['id', 'title', 'incident_datetime', 'status', 'action'][$orderColIndex] ?? 'created_at';
 
-        // Ambil laporan yang sesuai dengan pagination
+        $filter = $request->input('filter_q', '');
+
+        if (!empty($filter)) {
+            $query = $query->where('title', 'like', "%$filter%");
+        }
+
         $reports = $query->orderBy($order, $dir)
             ->skip($start)
             ->take($limit)
             ->get();
 
-        // Persiapkan data untuk DataTables
         $data = [];
         foreach ($reports as $key => $report) {
             $htmlButton = '<td class="text-nowrap">
@@ -110,7 +109,6 @@ class PelaporanController extends Controller
             ];
         }
 
-        // Kembalikan hasil ke DataTables
         return response()->json([
             'draw' => intval($request->input('draw')),
             'recordsTotal' => $total,
@@ -194,7 +192,7 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
         $report = $this->service->store($validated);
-        return redirect()->route('pelaporan.index')
+        return redirect()->route('pelaporan.show', $report->id)
                  ->with('success', 'Laporan Berhasil Dibuat.');
     }
 

@@ -111,28 +111,32 @@ class PelaporanService
 
         if (strtolower($user->getRoleNames()->first()) === 'admin') {
             return Report::with(['province', 'city', 'district']);
-        } else {
-            $userReportIds = Report::where('created_by', $user->id)
-                ->pluck('id')->toArray();
-
-            $allowedReportIds = AccessData::where('division_id', $user->division_id)
-                ->pluck('report_id')->toArray();
-
-            $finalIds = array_unique(array_merge($userReportIds, $allowedReportIds));
-
-            $query = Report::with(['province', 'city', 'district'])
-                ->whereIn('id', $finalIds)
-                ->where('division_id', $user->division_id);
-
-            if (empty($finalIds)) {
-                return Report::whereRaw('1=0');
-            } else {
-                return Report::with(['province', 'city', 'district'])
-                    ->whereIn('id', $finalIds)
-                    ->where('division_id', $user->division_id);  
-            }
         }
+
+        $userReportIds = Report::where('created_by', $user->id)
+            ->pluck('id')
+            ->toArray();
+
+        $allowedReportIds = AccessData::where('division_id', $user->division_id)
+            ->pluck('report_id')
+            ->toArray();
+
+        $finalIds = array_unique(array_merge($userReportIds, $allowedReportIds));
+
+        // logger("User Report IDs: " . json_encode($userReportIds));
+        // logger("Allowed Report IDs: " . json_encode($allowedReportIds));
+        // logger("Final Report IDs after merge: " . json_encode($finalIds));
+        // logger("User Division ID: " . $user->division_id);
+
+        if (empty($finalIds)) {
+            return Report::whereRaw('1=0');
+        }
+
+        return Report::with(['province', 'city', 'district'])
+            ->whereIn('id', $finalIds)
+            ->orderBy('created_at', 'desc');
     }
+
 
 
 
