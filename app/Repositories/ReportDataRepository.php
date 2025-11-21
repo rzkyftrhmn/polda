@@ -26,7 +26,11 @@ class ReportDataRepository
             $query->where(function (Builder $builder) use ($keyword): void {
                 $builder->where('code', 'like', "%{$keyword}%")
                     ->orWhere('title', 'like', "%{$keyword}%")
-                    ->orWhere('description', 'like', "%{$keyword}%");
+                    ->orWhere('description', 'like', "%{$keyword}%")
+                    ->orWhere('name_of_reporter', 'like', "%{$keyword}%")
+                    ->orWhereHas('suspects', function (Builder $q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
             });
         }
 
@@ -38,16 +42,8 @@ class ReportDataRepository
             $query->where('category_id', $filters['category_id']);
         }
 
-        if (!empty($filters['province_id'])) {
-            $query->where('province_id', $filters['province_id']);
-        }
-
-        if (!empty($filters['city_id'])) {
-            $query->where('city_id', $filters['city_id']);
-        }
-
-        if (!empty($filters['district_id'])) {
-            $query->where('district_id', $filters['district_id']);
+        if (!empty($filters['division_id'])) {
+            $query->where('division_id', $filters['division_id']);
         }
 
         $this->applyDateFilter($query, 'incident_datetime', $filters['incident_from'] ?? null, $filters['incident_to'] ?? null);
