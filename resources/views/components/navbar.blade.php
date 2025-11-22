@@ -95,33 +95,34 @@
 </nav>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $.get('/notifications')
-    .done(function(res) {
-        let data = res.data;
-        let html = '';
+    function loadNotifications() {
+        $.get('/notifications')
+        .done(function(res) {
+            let data = res.data;
+            let html = '';
 
-        data.sort(function(a, b) {
-            return new Date(b.created_at) - new Date(a.created_at);
-        });
-
-        if (!data || data.length === 0) {
-            html = `<li class="dropdown-item text-center text-muted">Tidak ada notifikasi</li>`;
-        } else {
-            data.forEach(function(n) {
-                html += `
-                    <li class="dropdown-item ${n.read_at ? 'read' : 'unread'}" style="cursor:pointer;" onclick="markAsRead(${n.id})">
-                        <div class="notif-text">${n.message}</div>
-                        <small class="text-muted">${n.created_at}</small>
-                    </li>
-                `;
+            data.sort(function(a, b) {
+                return new Date(b.created_at) - new Date(a.created_at);
             });
-        }
 
-        $('#notif-list').html(html);
-    })
-    .fail(function(err) {
-        console.log("AJAX ERROR:", err);
-    });
+            if (!data || data.length === 0) {
+                html = `<li class="dropdown-item text-center text-muted">Tidak ada notifikasi</li>`;
+            } else {
+                data.forEach(function(n) {
+                    html += `
+                        <li class="dropdown-item ${n.read_at ? 'read' : 'unread'}"
+                            style="cursor:pointer;"
+                            onclick="markAsRead(${n.id})">
+                            <div class="notif-text">${n.message}</div>
+                            <small class="text-muted">${n.created_at}</small>
+                        </li>`;
+                });
+            }
+
+            $('#notif-list').html(html);
+        });
+    }
+
 
     function loadNotifCount() {
         $.get('/notifications/unread-count', function(res) {
@@ -135,11 +136,21 @@
 
     function markAsRead(id) {
         $.post(`/notifications/${id}/read`, {_token: "{{ csrf_token() }}"})
-            .done(function() {
+            .done(function(res) {
+
+                if (res.redirect) {
+                    window.location.href = res.redirect;
+                    return;
+                }
+
                 loadNotifCount();
                 loadNotifications();
+            })
+            .fail(function(err) {
+                console.error("Error markAsRead navbar:", err.responseText);
             });
     }
+
 
     $('#markAllReadBtn').on('click', function () {
         $('#notif-list li').removeClass('unread').addClass('read');

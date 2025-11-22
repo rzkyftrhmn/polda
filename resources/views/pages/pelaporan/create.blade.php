@@ -7,7 +7,7 @@
             <div class="filter cm-content-box box-primary">
                 <div class="content-title SlideToolHeader">
                     <div class="cpa">
-                        <i class="fa-solid fa-file-plus me-1"></i>{{ isset($pelaporan) ? 'Edit Laporan' : 'Tambah Laporan' }}
+                        <i class="fa-solid fa-file-plus me-1"></i>{{ isset($pelaporan) ? 'Edit Dugaan Pelanggaran' : 'Dugaan Pelanggaran' }}
                     </div>
                 </div>
                 <div class="cm-content-body form excerpt">
@@ -50,7 +50,7 @@
                                     @error('incident_datetime')<div class="text-danger small">{{ $message }}</div>@enderror
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Kategori Laporan <span class="text-danger">*</span></label>
+                                    <label class="form-label">Kategori Pelanggaran <span class="text-danger">*</span></label>
                                     <select name="category_id" class="form-control select2" required>
                                         <option value="">Pilih Kategori</option>
                                         @foreach($categories as $category)

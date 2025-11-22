@@ -13,17 +13,19 @@ use Laravolt\Indonesia\Models\District;
 use App\Models\ReportCategory;
 use App\Models\Report;
 use App\Services\ReportJourneyService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PelaporanController extends Controller
 {
-    protected $service, $repository, $journeyService,$feature_title, $feature_name, $feature_path, $user;
+    protected $service, $repository, $notifService, $journeyService,$feature_title, $feature_name, $feature_path, $user;
 
-    public function __construct(PelaporanRepository $repository, PelaporanService $service,ReportJourneyService $journeyService)
+    public function __construct(PelaporanRepository $repository, PelaporanService $service,ReportJourneyService $journeyService, NotificationService $notifService)
     {
         $this->repository = $repository;
         $this->service = $service;
+        $this->notifService = $notifService;
         $this->journeyService = $journeyService;
         $this->feature_title = 'Pelaporan';
         $this->feature_name = 'Pelaporan';
@@ -54,9 +56,14 @@ class PelaporanController extends Controller
 
         $search = $request->input('search.value', '');
         if (!empty($search)) {
-            $query = $query->where(function($q) use ($search) {
-                $q->where('title', 'like', "%$search%")
-                    ->orWhere('status', 'like', "%$search%");
+            $query = $query->where(function ($q) use ($search) {
+                $q->where('name_of_reporter', 'like', "%$search%")
+                ->orWhereHas('suspects', function ($s) use ($search) {
+                    $s->where('name', 'like', "%$search%");
+                })
+                ->orWhereHas('journeys', function ($j) use ($search) {
+                    $j->where('description->doc_number', 'like', "%$search%");
+                });
             });
         }
 
@@ -71,7 +78,15 @@ class PelaporanController extends Controller
         $filter = $request->input('filter_q', '');
 
         if (!empty($filter)) {
-            $query = $query->where('title', 'like', "%$filter%");
+            $query = $query->where(function ($q) use ($filter) {
+                $q->where('name_of_reporter', 'like', "%$filter%")
+                ->orWhereHas('suspects', function ($s) use ($filter) {
+                    $s->where('name', 'like', "%$filter%");
+                })
+                ->orWhereHas('journeys', function ($j) use ($filter) {
+                    $j->where('description->doc_number', 'like', "%$filter%");
+                });
+            });
         }
 
         $reports = $query->orderBy($order, $dir)
@@ -81,32 +96,48 @@ class PelaporanController extends Controller
 
         $data = [];
         foreach ($reports as $key => $report) {
-            $htmlButton = '<td class="text-nowrap">
-                <a href="' . route('pelaporan.show', $report->id) . '" class="btn btn-info btn-sm content-icon btn-detail">
-                    <i class="fa fa-eye"></i>
-                </a>
-                <a href="' . route('pelaporan.edit', $report->id) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
-                    <i class="fa fa-edit"></i>
-                </a>
-                <a href="javascript:void(0);" 
-                    class="btn btn-danger btn-sm content-icon btn-delete"
-                    data-id="' . $report->id . '"
-                    data-name="' . htmlspecialchars($report->title ?? '', ENT_QUOTES) . '"
-                    data-url="' . route('pelaporan.destroy', $report->id) . '"
-                    data-title="Hapus Laporan?">
-                    <i class="fa fa-times"></i>
-                </a>
-            </td>';
+            $htmlButton = '
+            <div class="d-flex gap-1">
+                <td class="text-nowrap">
+                    <a href="' . route('pelaporan.show', $report->id) . '" class="btn btn-info btn-sm content-icon btn-detail">
+                        <i class="fa fa-eye"></i>
+                    </a>
+                    <a href="' . route('pelaporan.edit', $report->id) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
+                        <i class="fa fa-edit"></i>
+                    </a>
+                    <a href="javascript:void(0);" 
+                        class="btn btn-danger btn-sm content-icon btn-delete"
+                        data-id="' . $report->id . '"
+                        data-name="' . htmlspecialchars($report->title ?? '', ENT_QUOTES) . '"
+                        data-url="' . route('pelaporan.destroy', $report->id) . '"
+                        data-title="Hapus Laporan?">
+                        <i class="fa fa-times"></i>
+                    </a>
+                </td>
+            </div>';
 
             $data[] = [
                 'DT_RowIndex' => $key + 1 + $start,
+                'code' => $report->code ?? '-',
                 'title' => $report->title,
-                'incident_datetime' => $report->incident_datetime 
-                    ? \Carbon\Carbon::parse($report->incident_datetime)->format('d-m-Y') 
-                    : '-',
+                'category' => $report->category->name ?? '-',   
                 'status' => $report->status,
+                'incident_at' => $report->incident_datetime
+                    ? \Carbon\Carbon::parse($report->incident_datetime)->format('d-m-Y')
+                    : '-',
+                'province' => $report->province->name ?? '-', 
+                'city' => $report->city->name ?? '-', 
+                'district' => $report->district->name ?? '-',
+                'created_at' => $report->created_at
+                    ? $report->created_at->format('d-m-Y H:i')
+                    : '-',
+                'finished_at' => $report->finish_time
+                    ? \Carbon\Carbon::parse($report->finish_time)->format('d-m-Y H:i')
+                    : '-',
+
                 'action' => $htmlButton,
             ];
+
         }
 
         return response()->json([
@@ -191,6 +222,7 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
         $report = $this->service->store($validated);
+        $this->notifService->notifyReportStatus($report, 'SUBMITTED');
         return redirect()->route('pelaporan.show', $report->id)
                  ->with('success', 'Laporan Berhasil Dibuat.');
     }
@@ -257,7 +289,7 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
 
-        $this->service->update($id, $validated);
+        $report = $this->service->update($id, $validated);
 
 
         return redirect()->route('pelaporan.show', $report->id)

@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    public function toArray($notifiable)
+    {
+        return [
+            'message' => 'Ada laporan baru',
+            'report_id' => $this->report->id,
+        ];
+    }
+
     public function allNotifications()
     {
         $notifications = Notification::where('user_id', auth()->id())
@@ -38,13 +46,23 @@ class NotificationController extends Controller
 
     public function markAsRead($id)
     {
-        $notif = Notification::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail(); 
+        $notif = Notification::where('user_id', auth()->id())->findOrFail($id);
 
-        $notif->markAsRead();  
+        $notif->update([
+            'read_at' => now()
+        ]);
 
-        return response()->json(['success' => true, 'message' => 'Notifikasi berhasil ditandai sebagai dibaca']);
+        $reportId = $notif->report_id; 
+
+        if (!$reportId) {
+            return response()->json([
+                'error' => 'report_id kosong',
+            ], 500);
+        }
+
+        return response()->json([
+            'redirect' => route('pelaporan.show', $reportId)
+        ]);
     }
     
     public function markAllAsRead()
