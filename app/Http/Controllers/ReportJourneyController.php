@@ -37,7 +37,7 @@ class ReportJourneyController extends Controller
         });
     }
 
-    public function store(Request $request, int $reportId): RedirectResponse
+    public function store(Request $request, \App\Models\Report $report): RedirectResponse
     {
         $limpahValues = [
             ReportJourneyType::TRANSFER->value,
@@ -84,7 +84,7 @@ class ReportJourneyController extends Controller
 
             // Ambil journey terakhir untuk report ini
             $lastJourney = $this->repository
-                ->paginateByReport($reportId, 1, 'desc')
+                ->paginateByReport($report->id, 1, 'desc')
                 ->first();
 
             $currentType = ReportJourneyType::from($validated['type']);
@@ -175,7 +175,7 @@ class ReportJourneyController extends Controller
         if ($result['status'] ?? false) {
             return redirect()
                 // balik ke halaman pelaporan detail
-                ->route('pelaporan.show', ['pelaporan' => $reportId])
+                ->route('pelaporan.show', $report)
                 ->with('success', $result['message']);
         }
 

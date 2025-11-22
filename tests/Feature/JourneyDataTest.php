@@ -76,13 +76,13 @@ class JourneyDataTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->post(route('reports.journeys.store', $report->id), [
+        $response = $this->post(route('reports.journeys.store', $report), [
             'type' => 'PEMERIKSAAN',
             'description' => 'Melakukan pemeriksaan awal terhadap laporan.',
             'files' => $files,
         ]);
 
-        $response->assertRedirect(route('reports.show', $report->id));
+        $response->assertRedirect(route('pelaporan.show', $report));
         $response->assertSessionHas('success', 'Tahapan penanganan berhasil ditambahkan.');
 
         $this->assertDatabaseCount('report_journeys', 2);
@@ -110,7 +110,7 @@ class JourneyDataTest extends TestCase
             Storage::disk('public')->assertExists($relativePath);
         }
 
-        $detailResponse = $this->get(route('reports.show', $report->id));
+        $detailResponse = $this->get(route('pelaporan.show', $report));
         $detailResponse->assertOk();
         $detailResponse->assertSee('PENYELIDIKAN', false);
         $detailResponse->assertSee($journey->description, false);

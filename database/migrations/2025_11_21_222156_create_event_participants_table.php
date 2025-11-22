@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('divisions', function (Blueprint $table) {
+        Schema::create('event_participants', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->string('name');
-            $table->enum('type', ['satwil', 'satker'])->default('satwil');
-            $table->enum('level', ['polda', 'polres', 'polsek'])->default('polda');
-            $table->json('permissions')->nullable();
+            $table->unsignedBigInteger('event_id');
+            $table->unsignedBigInteger('division_id');
+            $table->boolean('is_required')->default(true);
+            $table->enum('status', ['pending', 'completed'])->default('pending');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('divisions');
+        Schema::dropIfExists('event_participants');
     }
 };
