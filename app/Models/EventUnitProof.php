@@ -4,31 +4,32 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EventParticipant extends Model
+class EventUnitProof extends Model
 {
     use HasFactory;
-
+    protected $table = 'event_unit_proofs';
     protected $fillable = [
         'event_id',
+        'user_id',
         'division_id',
-        'is_required',
-        'note',
+        'file_path',
+        'file_type',
+        'description',
     ];
 
-    protected $casts = [
-        'is_required' => 'boolean',
-    ];
-
-    public function event(): BelongsTo
+    public function event()
     {
         return $this->belongsTo(Event::class);
     }
 
-    public function division(): BelongsTo
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function division()
     {
         return $this->belongsTo(Division::class);
     }
 }
-
