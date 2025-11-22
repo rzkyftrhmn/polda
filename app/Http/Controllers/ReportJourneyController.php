@@ -47,7 +47,8 @@ class ReportJourneyController extends Controller
         ];
 
         try {
-            $validated = $request->validate([
+        $validated = $request->validate(
+            [
                 'type' => [
                     'required',
                     Rule::in(array_map(
@@ -57,7 +58,7 @@ class ReportJourneyController extends Controller
                 ],
                 'description' => ['required', 'string'],
                 'files'       => ['nullable', 'array'],
-                'files.*'     => ['nullable', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+                'files.*'     => ['nullable', 'file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
 
                 'institution_target_id' => [
                     'nullable',
@@ -75,7 +76,11 @@ class ReportJourneyController extends Controller
                     }),
                     Rule::requiredIf(fn () => in_array($request->input('type'), $limpahValues, true)),
                 ],
-            ]);
+            ],
+            [
+                'files.*.max' => 'File maksimal 2 MB.',
+            ]
+        );
 
             // Ambil journey terakhir untuk report ini
             $lastJourney = $this->repository

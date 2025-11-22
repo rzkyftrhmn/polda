@@ -12,9 +12,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Laravolt\Indonesia\Models\City;
-use Laravolt\Indonesia\Models\District;
-use Laravolt\Indonesia\Models\Province;
+use App\Models\City;
+use App\Models\District;
+use App\Models\Province;
 
 class ReportDataController extends Controller
 {
@@ -45,7 +45,7 @@ class ReportDataController extends Controller
             'value' => $type->value,
             'label' => $type->label(),
         ]);
-        $provinces = Province::orderBy('name')->get();
+        $provinces = Province::where('id', 12)->get();
 
         return view('pages.report-data.index', [
             'title' => $this->feature_title,

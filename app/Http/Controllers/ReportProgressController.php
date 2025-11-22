@@ -55,42 +55,50 @@ class ReportProgressController extends Controller
             return back()->with('error', 'Divisi Anda tidak dapat melakukan penyidikan.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'action' => ['required', Rule::in(['save', 'complete', 'transfer'])],
-            'flow' => ['required', Rule::in(['inspection', 'investigation'])],
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'action' => ['required', Rule::in(['save', 'complete', 'transfer'])],
+                'flow' => ['required', Rule::in(['inspection', 'investigation'])],
 
-            'inspection_doc_number' => ['nullable', 'string'],
-            'inspection_doc_date' => ['nullable', 'date'],
-            'inspection_conclusion' => ['nullable', 'string'],
-            'inspection_files' => ['nullable', 'array'],
-            'inspection_files.*' => ['nullable', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+                'inspection_doc_number' => ['nullable', 'string'],
+                'inspection_doc_date' => ['nullable', 'date'],
+                'inspection_conclusion' => ['nullable', 'string'],
+                'inspection_files' => ['nullable', 'array'],
+                'inspection_files.*' => ['nullable', 'file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
 
-            'admin_documents' => ['nullable', 'array'],
-            'admin_documents.*.name' => ['required_with:admin_documents', 'string'],
-            'admin_documents.*.number' => ['nullable', 'string'],
-            'admin_documents.*.date' => ['nullable', 'date'],
-            'admin_documents.*.file' => ['nullable', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+                'admin_documents' => ['nullable', 'array'],
+                'admin_documents.*.name' => ['required_with:admin_documents', 'string'],
+                'admin_documents.*.number' => ['nullable', 'string'],
+                'admin_documents.*.date' => ['nullable', 'date'],
+                'admin_documents.*.file' => ['nullable', 'file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
 
-            'trial_doc_number' => ['nullable', 'string'],
-            'trial_doc_date' => ['nullable', 'date'],
-            'trial_file' => ['nullable', 'file', 'max:4096', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
-            'trial_decision' => ['nullable', 'string'],
+                'trial_doc_number' => ['nullable', 'string'],
+                'trial_doc_date' => ['nullable', 'date'],
+                'trial_file' => ['nullable', 'file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+                'trial_decision' => ['nullable', 'string'],
 
-            'target_institution_id' => [
-                Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
-                'nullable',
-                'integer',
-                'exists:institutions,id',
+                'target_institution_id' => [
+                    Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
+                    'nullable',
+                    'integer',
+                    'exists:institutions,id',
+                ],
+                'target_division_id' => [
+                    Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
+                    'nullable',
+                    'integer',
+                    'exists:divisions,id',
+                ],
             ],
-            'target_division_id' => [
-                Rule::requiredIf(fn () => $action === 'transfer' && $flow === 'inspection'),
-                'nullable',
-                'integer',
-                'exists:divisions,id',
-            ],
-        ]);
+            [
+                'inspection_files.*.max' => 'File pemeriksaan maksimal 2 MB.',
+                'admin_documents.*.file.max' => 'File administrasi maksimal 2 MB.',
+                'trial_file.max' => 'File sidang maksimal 2 MB.',
+            ]
+        );
 
-        $validator->after(function ($validator) use ($request, $action, $flow) {
+            $validator->after(function ($validator) use ($request, $action, $flow, $report) {
             if ($flow === 'inspection' && in_array($action, ['save', 'complete', 'transfer'], true)) {
                 if (!$request->filled('inspection_doc_number')) {
                     $validator->errors()->add('inspection_doc_number', 'Nomor dokumen pemeriksaan wajib diisi.');
@@ -109,17 +117,42 @@ class ReportProgressController extends Controller
                         break;
                     }
                 }
-                if (!$hasInspectionFile) {
+                $existingInspectionEvidence = $this->service->journeyHasEvidence(
+                    $report,
+                    ReportJourneyType::INVESTIGATION,
+                    $request->input('inspection_doc_number'),
+                    null // tangkap data lama tanpa doc_kind
+                );
+                if (!$hasInspectionFile && !$existingInspectionEvidence) {
                     $validator->errors()->add('inspection_files', 'Minimal satu file pemeriksaan harus diunggah.');
                 }
             }
 
+            $adminDocNumbers = [];
             foreach ($request->input('admin_documents', []) as $idx => $doc) {
                 $file = $request->file("admin_documents.$idx.file");
+                $docNumber = $doc['number'] ?? null;
+
+                if ($docNumber) {
+                    if (isset($adminDocNumbers[$docNumber])) {
+                        $validator->errors()->add("admin_documents.$idx.number", 'Nomor dokumen administrasi duplikat.');
+                    } else {
+                        $adminDocNumbers[$docNumber] = true;
+                    }
+                }
+
+                $existingAdminEvidence = $docNumber
+                    ? $this->service->journeyHasEvidence(
+                        $report,
+                        ReportJourneyType::INVESTIGATION,
+                        $docNumber,
+                        null // tangkap data lama tanpa doc_kind
+                    )
+                    : false;
                 if (!($doc['name'] ?? null)) {
                     $validator->errors()->add("admin_documents.$idx.name", 'Nama dokumen administrasi wajib diisi.');
                 }
-                if (!$file) {
+                if (!$file && !$existingAdminEvidence) {
                     $validator->errors()->add("admin_documents.$idx.file", 'File dokumen administrasi wajib diunggah.');
                 }
                 if (!($doc['number'] ?? null)) {
@@ -139,6 +172,13 @@ class ReportProgressController extends Controller
             );
 
             if ($requiresTrial) {
+                $existingTrialEvidence = $this->service->journeyHasEvidence(
+                    $report,
+                    ReportJourneyType::TRIAL,
+                    $request->input('trial_doc_number'),
+                    null // dok_kind bisa null untuk data lama
+                );
+
                 foreach ([
                     'trial_doc_number' => 'Nomor dokumen sidang wajib diisi.',
                     'trial_doc_date' => 'Tanggal dokumen sidang wajib diisi.',
@@ -148,7 +188,7 @@ class ReportProgressController extends Controller
                         $validator->errors()->add($field, $message);
                     }
                 }
-                if (!$request->file('trial_file')) {
+                if (!$request->file('trial_file') && !$existingTrialEvidence) {
                     $validator->errors()->add('trial_file', 'File dokumen sidang wajib diunggah.');
                 }
             }
@@ -205,4 +245,3 @@ class ReportProgressController extends Controller
             ->with('error', $result['message'] ?? 'Gagal memperbarui progress laporan.');
     }
 }
-
