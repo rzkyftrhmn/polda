@@ -20,7 +20,7 @@
                             <div class="col-xl-3 col-sm-6">
                                 <label class="form-label">Search</label>
                                 <input type="text" class="form-control mb-xl-0 mb-3"
-                                       id="filter_q" placeholder="Search by Title">
+                                    id="filter_q" placeholder="nama pelapor / terlapor / no dokumen">
                             </div>
                             <div class="col-xl-3 col-sm-6 align-self-end">
                                 <div>
@@ -56,22 +56,36 @@
                             <table id="pelaporan-table" class="display min-w850">
                                 <thead>
                                     <tr>
-                                        <th>No</th>
-                                        <th>Judul Laporan</th>
-                                        <th>Tanggal Kejadian</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                    <th>No</th>
+                                    <th>Kode</th>
+                                    <th>Judul</th>
+                                    <th>Kategori</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Kejadian</th>
+                                    <th>Provinsi</th>
+                                    <th>Kota/Kabupaten</th>
+                                    <th>Kecamatan</th>
+                                    <th>Dibuat</th>
+                                    <th>Selesai</th>
+                                    <th>Aksi</th>
+                                </tr>
                                 </thead>
                                 <tbody></tbody>
                                 <tfoot>
                                     <tr>
-                                        <th>No</th>
-                                        <th>Judul Laporan</th>
-                                        <th>Tanggal Kejadian</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
+                                    <th>No</th>
+                                    <th>Kode</th>
+                                    <th>Judul</th>
+                                    <th>Kategori</th>
+                                    <th>Status</th>
+                                    <th>Tanggal Kejadian</th>
+                                    <th>Provinsi</th>
+                                    <th>Kota/Kabupaten</th>
+                                    <th>Kecamatan</th>
+                                    <th>Dibuat</th>
+                                    <th>Selesai</th>
+                                    <th>Aksi</th>
+                                </tr>
                                 </tfoot>
                             </table>
                         </div>
@@ -99,11 +113,19 @@ jQuery(function($) {
         },
         columns: [
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'code', name: 'code' },
             { data: 'title', name: 'title' },
-            { data: 'incident_datetime', name: 'incident_datetime' },
+            { data: 'category', name: 'category', orderable: false, searchable: false },
             { data: 'status', name: 'status' },
+            { data: 'incident_at', name: 'incident_datetime' },
+            { data: 'province', name: 'province', orderable: false, searchable: false },
+            { data: 'city', name: 'city', orderable: false, searchable: false },
+            { data: 'district', name: 'district', orderable: false, searchable: false },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'finished_at', name: 'finish_time' },
             { data: 'action', name: 'action', orderable: false, searchable: false },
         ],
+
         order: [[1, 'asc']],
         language: {
             paginate: {

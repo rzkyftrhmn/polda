@@ -97,6 +97,9 @@
     /* Navbar */
     .unread {
         font-weight: bold;
+        border-left: 4px solid #3b82f6; 
+        background: rgba(59, 130, 246, 0.08);
+        font-weight: 600;
     }
     .read {
         font-weight: normal;
@@ -107,6 +110,17 @@
     .timeline .dropdown-item {
         white-space: normal !important;
         padding: 10px 5px;
+    }
+    
+    /* semua notifikasi */
+    .notif-unread {
+        border-left: 4px solid #3b82f6; 
+        background: rgba(59, 130, 246, 0.08);
+        font-weight: 600;
+    }
+
+    .notif-read {
+        font-weight: 400;
     }
 </style>
 <style>

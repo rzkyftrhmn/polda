@@ -289,7 +289,18 @@ class ReportJourneyService
                     $this->finishAccess($report);
                 }
 
-                $this->notificationService->notifyReportStatus($journey->report, $type->value);
+                $context = null;
+
+                if ($type === ReportJourneyType::TRANSFER) {
+                    $context = 'INSPECTION_TRANSFER';
+                }
+
+                if ($type === ReportJourneyType::COMPLETED) {
+                    $context = 'INSPECTION_COMPLETE';
+                }
+
+                $this->notificationService->notifyReportStatus($journey->report, $type->value, $context);
+
 
                 DB::commit();
 
@@ -545,10 +556,34 @@ class ReportJourneyService
                 throw new RuntimeException('Tidak ada progress yang disimpan.');
             }
 
+            $lastJourney = $journeys[array_key_last($journeys)];
+            $context = null;
+
+            if ($flow === 'inspection') {
+
+                if ($action === 'transfer') {
+                    $context = 'INSPECTION_TRANSFER';
+                }
+
+                if ($action === 'complete') {
+                    $context = 'INSPECTION_COMPLETE';
+                }
+            }
+
+            else {
+
+                if ($action === 'complete') {
+                    // Ini SIDANG COMPLETE
+                    $context = 'SIDANG_COMPLETE';
+                }
+            }
+
             $this->notificationService->notifyReportStatus(
                 $report,
-                $journeys[array_key_last($journeys)]->type
+                $lastJourney->type,
+                $context
             );
+
 
             DB::commit();
 
@@ -736,13 +771,6 @@ class ReportJourneyService
             }
 
             $this->applyReportUpdate($report, $updateData);
-        }
-
-        if (!empty($createdFiles)) {
-            $this->notificationService->notifyBuktiDitambahkan(
-                $journey->report,
-                implode(', ', $createdFiles)
-            );
         }
 
         return $journey;
