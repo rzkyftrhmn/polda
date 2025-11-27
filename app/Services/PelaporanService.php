@@ -137,11 +137,6 @@ class PelaporanService
             ->orderBy('created_at', 'desc');
     }
 
-
-
-
-
-
     public function delete($id)
     {
         DB::beginTransaction();
@@ -269,6 +264,17 @@ class PelaporanService
         $accessUsers = $this->repo->getUsersByDivisionIds($divisionIds);
         $adminUsers = $this->repo->getAdminUsers();
         return $accessUsers->merge($adminUsers)->unique('id')->values();
+    }
+
+    public function canSendInstructionToUser(Report $report, int $userId): bool
+    {
+        $users = $this->getRelatedUsersForReport($report);
+        return $users->contains(fn ($u) => (int) $u->id === $userId);
+    }
+
+    public function getReportByUuid(string $uuid): ?Report
+    {
+        return $this->repo->findByUuid($uuid);
     }
 
     public function getInstructionsForReport(int $reportId): Collection

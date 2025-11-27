@@ -24,6 +24,8 @@ use App\Interfaces\PermissionRepositoryInterface;
 use App\Interfaces\InstitutionRepositoryInterface;
 use App\Interfaces\SubDivisionRepositoryInterface;
 use App\Interfaces\ReportJourneyRepositoryInterface;
+use App\Interfaces\EventRepositoryInterface;
+use App\Repositories\EventRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PelaporanRepositoryInterface::class, PelaporanRepository::class);
         $this->app->bind(AuthRepositoryInterface::class, AuthRepository::class);
         $this->app->bind(NotificationRepository::class, NotificationRepository::class);
+        $this->app->bind(EventRepositoryInterface::class, EventRepository::class);
 
     }
 

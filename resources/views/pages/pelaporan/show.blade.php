@@ -58,18 +58,18 @@
                                 <div class="col-12">
                                     <h6 class="fw-semibold">Data Identitas Pelapor</h6>
                                 </div>
-                                <div class="col-md-4"><p class="mb-1"><strong>Nama Pelapor:</strong> {{ $report->name_of_reporter ?? '-' }}</p></div>
-                                <div class="col-md-4"><p class="mb-1"><strong>Alamat Pelapor:</strong> {{ $report->address_of_reporter ?? '-' }}</p></div>
-                                <div class="col-md-4"><p class="mb-1"><strong>No Telepon Pelapor:</strong> {{ $report->phone_of_reporter ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Nama Pelapor:</strong> {{ $report->name_of_reporter ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Alamat Pelapor:</strong> {{ $report->address_of_reporter ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>No Telepon Pelapor:</strong> {{ $report->phone_of_reporter ?? '-' }}</p></div>
                                 <div class="col-12"><hr></div>
                                 <div class="col-12">
                                     <h6 class="fw-semibold">Data Laporan</h6>
                                 </div>
-                                <div class="col-md-6"><p class="mb-1"><strong>Judul Laporan:</strong> {{ $report->title ?? '-' }}</p></div>
-                                <div class="col-md-6"><p class="mb-1"><strong>Kategori Laporan:</strong> {{ $categoryName ?? '-' }}</p></div>
-                                <div class="col-md-6"><p class="mb-1"><strong>Kronologi:</strong> {!! nl2br(e($report->description)) !!}</p></div>
-                                <div class="col-md-6"><p class="mb-1"><strong>Tanggal:</strong> {{ $incidentAt ?? '-' }}</p></div>
-                                <div class="col-md-6"><p class="mb-1"><strong>Kota:</strong> {{ $cityName ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Tanggal:</strong> {{ $incidentAt ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Kota:</strong> {{ $cityName ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Dugaan Pelanggaran:</strong> {{ $report->title ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Kategori Laporan:</strong> {{ $categoryName ?? '-' }}</p></div>
+                                <div class="col-md-12"><p class="mb-1"><strong>Kronologi:</strong> {!! nl2br(e($report->description)) !!}</p></div>
                                 <div class="col-12"><hr></div>
                                 <div class="col-12 d-flex align-items-center justify-content-between">
                                     <h6 class="fw-semibold mb-0">Data Identitas Terlapor</h6>
@@ -378,7 +378,7 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Institusi Tujuan</label>
-                    <select id="transfer-institution" class="form-control">
+                    <select id="transfer-institution" class="form-control select2">
                         <option value="">-- Pilih Institusi --</option>
                         @foreach($institutions as $institution)
                             <option value="{{ $institution->id }}">{{ $institution->name }}</option>
@@ -387,7 +387,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Unit/Sub-bagian Tujuan</label>
-                    <select id="transfer-division" class="form-control">
+                    <select id="transfer-division" class="form-control select2">
                         <option value="">-- Pilih Unit/Sub-bagian --</option>
                         @foreach($investigationDivisions as $divisionOption)
                             <option value="{{ $divisionOption->id }}">{{ $divisionOption->parent ? $divisionOption->parent->name . ' - ' : '' }}{{ $divisionOption->name }}</option>
@@ -451,7 +451,7 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold" for="journey-type">Jenis Tahapan</label>
-                            <select name="type" id="journey-type" class="form-control" required>
+                            <select name="type" id="journey-type" class="form-control select2" required>
                                 <option value="">-- Pilih Tahapan --</option>
                                 @foreach($journeyTypes as $type)
                                     <option value="{{ $type->value }}" @selected(old('type') === $type->value)>
@@ -463,7 +463,7 @@
 
                         <div class="col-md-6" id="limpah-institution-field" hidden>
                             <label class="form-label fw-semibold" for="institution-target">Institusi Tujuan</label>
-                            <select name="institution_target_id" id="institution-target" class="form-control">
+                            <select name="institution_target_id" id="institution-target" class="form-control select2">
                                 <option value="">-- Pilih Institusi --</option>
                                 @foreach($institutions as $institution)
                                     <option value="{{ $institution->id }}" @selected((int) old('institution_target_id') === $institution->id)>
@@ -475,7 +475,7 @@
 
                         <div class="col-md-6" id="limpah-division-field" hidden>
                             <label class="form-label fw-semibold" for="subdivision-target">Unit/Sub-bagian Tujuan</label>
-                            <select name="subdivision_target_id" id="subdivision-target" class="form-control">
+                            <select name="subdivision_target_id" id="subdivision-target" class="form-control select2">
                                 <option value="">-- Pilih Unit/Sub-bagian --</option>
                                 @foreach($divisions as $division)
                                     <option value="{{ $division->id }}">

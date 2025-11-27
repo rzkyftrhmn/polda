@@ -33,27 +33,36 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     jQuery(function($){
-        var $selects = $('select.select2');
-        if ($selects.length) {
-            $selects.each(function(){
-                var $el = $(this);
-
-                // Jika sebelumnya ter-inisialisasi oleh bootstrap-select (default-select), hilangkan agar tidak double UI
-                if ($el.hasClass('default-select') && typeof $el.selectpicker === 'function') {
-                    try { $el.selectpicker('destroy'); } catch (e) {}
-                    $el.removeClass('default-select');
-                }
-
-                var placeholder = $el.find('option[value=""]').first().text() || 'Pilih';
-                $el.select2({
-                    placeholder: placeholder,
-                    allowClear: true,
-                    width: '100%',
-                    dropdownCssClass: 'select2-dark',
-                    selectionCssClass: 'select2-dark'
+        function initSelect2($container){
+            var $selects = ($container || $(document)).find('select.select2');
+            if ($selects.length) {
+                $selects.each(function(){
+                    var $el = $(this);
+                    if ($el.hasClass('default-select') && typeof $el.selectpicker === 'function') {
+                        try { $el.selectpicker('destroy'); } catch (e) {}
+                        $el.removeClass('default-select');
+                    }
+                    var placeholder = $el.find('option[value=""]').first().text() || 'Pilih';
+                    var options = {
+                        placeholder: placeholder,
+                        allowClear: true,
+                        width: '100%',
+                        dropdownCssClass: 'select2-dark',
+                        selectionCssClass: 'select2-dark'
+                    };
+                    var $modal = $el.closest('.modal');
+                    if ($modal.length) {
+                        options.dropdownParent = $modal;
+                    }
+                    $el.select2(options);
                 });
-            });
+            }
         }
+        initSelect2($(document));
+        $(document).on('shown.bs.modal', function(e){
+            var $m = $(e.target);
+            initSelect2($m);
+        });
     });
 </script>
 

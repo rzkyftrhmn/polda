@@ -1,21 +1,23 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RoleController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\InstitutionController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PelaporanController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\SubDivisionController;
-use App\Http\Controllers\DivisionController;
+use App\Http\Controllers\ReportDataController;
 use App\Http\Controllers\ReportJourneyController;
 use App\Http\Controllers\ReportProgressController;
-use App\Http\Controllers\PelaporanController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\ReportDataController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SubDivisionController;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -112,6 +114,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/reports/{report}/progress', [ReportProgressController::class, 'store'])
             ->name('reports.progress.store');
         Route::get('/dashboard/backlog-tahap', [DashboardController::class, 'backlogPerTahap']);
+        Route::get('/dashboard/events-summary', [DashboardController::class, 'eventSummary'])->name('dashboard.eventsSummary');
+        Route::get('/dashboard/recent-events', [DashboardController::class, 'recentEvents'])->name('dashboard.recentEvents');
         Route::get('/test-auth', function() {
             return dd(auth()->user());
         });
@@ -124,3 +128,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/notifications/all', [NotificationController::class, 'allNotifications'])->name('notifications.all');
     }
 );
+Route::resource('events', EventController::class)->parameters(['events' => 'event']);
+Route::get('datatables/events', [EventController::class, 'datatables'])->name('datatables.events');
+Route::post('events/{event}/proofs', [EventController::class, 'storeProof'])->name('events.proofs.store');

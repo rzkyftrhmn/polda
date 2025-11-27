@@ -16,8 +16,8 @@
                         <form id="filter-form">
                             <div class="row g-3">
                                 <div class="col-xl-4 col-lg-6">
-                                    <label class="form-label">Pencarian</label>
-                                    <input type="text" class="form-control" id="filter_q" name="q" placeholder="Kode / Judul / Deskripsi">
+                                    <label class="form-label">Pencarian <i class="fa-sharp fa-solid fa-info-circle me-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Pencarian akan dilakukan berdasarkan kode, judul, no dokumen, nama terlapor, dan nama pelapor."></i></label>
+                                    <input type="text" class="form-control" id="filter_q" name="q" placeholder="Masukan kata kunci ...">
                                 </div>
                                 <div class="col-xl-4 col-lg-6">
                                     <label class="form-label">Status</label>
@@ -166,6 +166,7 @@
 @section('scripts')
 <script>
     jQuery(function ($) {
+        [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function (el) { return new bootstrap.Tooltip(el); });
         const datatableUrl = '{{ route('datatables.report-data') }}';
         const exportExcelUrl = '{{ route('report-data.export.excel') }}';
         const exportPdfUrl = '{{ route('report-data.export.pdf') }}';

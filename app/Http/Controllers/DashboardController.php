@@ -142,4 +142,24 @@ class DashboardController extends Controller
         );
     }
 
+    public function eventSummary(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getEventSummary(
+                $request->start_date,
+                $request->end_date
+            )
+        );
+    }
+
+    public function recentEvents(Request $request)
+    {
+        return response()->json(
+            $this->dashboardRepo->getRecentEvents(
+                $request->start_date,
+                $request->end_date
+            )
+        );
+    }
+
 }

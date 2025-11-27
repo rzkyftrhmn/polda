@@ -99,17 +99,17 @@ class PelaporanController extends Controller
             $htmlButton = '
             <div class="d-flex gap-1">
                 <td class="text-nowrap">
-                    <a href="' . route('pelaporan.show', $report->id) . '" class="btn btn-info btn-sm content-icon btn-detail">
+                    <a href="' . route('pelaporan.show', $report->uuid) . '" class="btn btn-info btn-sm content-icon btn-detail">
                         <i class="fa fa-eye"></i>
                     </a>
-                    <a href="' . route('pelaporan.edit', $report->id) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
+                    <a href="' . route('pelaporan.edit', $report->uuid) . '" class="btn btn-warning btn-sm content-icon btn-edit" data-id="' . $report->id . '">
                         <i class="fa fa-edit"></i>
                     </a>
                     <a href="javascript:void(0);" 
                         class="btn btn-danger btn-sm content-icon btn-delete"
-                        data-id="' . $report->id . '"
+                        data-id="' . $report->uuid . '"
                         data-name="' . htmlspecialchars($report->title ?? '', ENT_QUOTES) . '"
-                        data-url="' . route('pelaporan.destroy', $report->id) . '"
+                        data-url="' . route('pelaporan.destroy', $report->uuid) . '"
                         data-title="Hapus Laporan?">
                         <i class="fa fa-times"></i>
                     </a>
@@ -224,7 +224,7 @@ class PelaporanController extends Controller
         ]);
         $report = $this->service->store($validated);
         $this->notifService->notifyReportStatus($report, 'SUBMITTED');
-        return redirect()->route('pelaporan.show', $report->id)
+        return redirect()->route('pelaporan.show', $report->uuid)
                  ->with('success', 'Laporan Berhasil Dibuat.');
     }
 
@@ -410,6 +410,19 @@ class PelaporanController extends Controller
         if (!$toUser) {
             $toUser = \App\Models\User::find((int) $validated['user_id_to']);
         }
+
+        // Notifikasi pengiriman
+        $this->notifService->notifyPetunjukDanArahan(
+            $report,
+            [$user],
+            NOTIF_PETUNJUK_DAN_ARAHAN_SEND
+        );
+        // Notifikasi
+        $this->notifService->notifyPetunjukDanArahan(
+            $report,
+            [$toUser],
+            NOTIF_PETUNJUK_DAN_ARAHAN
+        );
 
         return response()->json([
             'id' => $instruction->id,

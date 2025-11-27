@@ -18,6 +18,7 @@ class Notification extends Model
         'title',
         'message',
         'read_at',
+        'event_id',
     ];
 
     protected $dates = ['read_at'];

@@ -28,11 +28,11 @@
                         </div>
 
                         <div class="col-md-3 mb-2 d-flex align-items-end">
-                            <button id="btn_apply_date_filter" class="btn btn-primary w-100">Terapkan Filter</button>
+                            <button id="btn_apply_date_filter" type="button" class="btn btn-primary w-100">Terapkan Filter</button>
                         </div>
 
                         <div class="col-md-3 mb-2 d-flex align-items-end">
-                            <button id="btn_reset_date_filter" class="btn btn-secondary w-100">Reset Filter</button>
+                            <button id="btn_reset_date_filter" type="button" class="btn btn-secondary w-100">Reset Filter</button>
                         </div>
 
                     </div>
@@ -115,6 +115,35 @@
                 </div>
             </div>
             <div class="row">
+                <div class="col-xl-4 col-md-6">
+                    <div class="card card-box bg-primary">
+                        <div class="card-header border-0 pb-0">
+                            <h6 class="text-white mb-1">Total Kegiatan</h6>
+                            <h3 class="text-white mb-0"><span id="kpi_total_events">-</span></h3>
+                        </div>
+                        <div class="card-body p-2"><small class="text-white-50">Jumlah Event terdaftar</small></div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6">
+                    <div class="card card-box bg-info">
+                        <div class="card-header border-0 pb-0">
+                            <h6 class="text-white mb-1">Total Peserta Kegiatan</h6>
+                            <h3 class="text-white mb-0"><span id="kpi_total_event_participants">-</span></h3>
+                        </div>
+                        <div class="card-body p-2"><small class="text-white-50">Akumulasi seluruh peserta</small></div>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6">
+                    <div class="card card-box bg-success">
+                        <div class="card-header border-0 pb-0">
+                            <h6 class="text-white mb-1">Total File Bukti Kegiatan</h6>
+                            <h3 class="text-white mb-0"><span id="kpi_total_event_files">-</span></h3>
+                        </div>
+                        <div class="card-body p-2"><small class="text-white-50">File kegiatan & laporan</small></div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-xl-6">
                     <div class="card">
                         <div class="card-header pb-0 border-0">
@@ -153,18 +182,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-6">
-                    <div class="card">
-                        <div class="card-header pb-0 border-0">
-                            <h4 class="card-title">Top Institusi berdasarkan jumlah laporan</h4>
-                        </div>
-                        <div class="card-body pt-2">
-                            <div id="chart_top_institusi" class="w-100" style="min-height:280px;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
                 <div class="col-xl-6">
                     <div class="card">
                         <div class="card-header border-0 pb-0">
@@ -266,6 +283,37 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="card">
+                        <div class="card-header pb-0 border-0">
+                            <h4 class="card-title">Kegiatan Terbaru</h4>
+                            <p>Ringkasan peserta dan bukti terunggah</p>
+                        </div>
+                        <div class="card-body pt-2">
+                            <div class="table-responsive">
+                                <table class="table table-responsive-md" id="table_recent_events">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Nama</th>
+                                            <th>Lokasi</th>
+                                            <th>Mulai</th>
+                                            <th class="text-center">Peserta</th>
+                                            <th class="text-center">Berkas</th>
+                                            <th class="text-center">Progress Upload</th>
+                                            <th class="text-end">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Diisi via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -317,6 +365,12 @@
 
         $.get('/dashboard/top-category-active', f, res => {
             $("#kpi_top_category").text(res.category);
+        });
+
+        $.get('/dashboard/events-summary', f, res => {
+            $("#kpi_total_events").text(res.total_events ?? 0);
+            $("#kpi_total_event_participants").text(res.total_participants ?? 0);
+            $("#kpi_total_event_files").text(res.total_files ?? 0);
         });
     }
 
@@ -555,6 +609,47 @@
         });
     }
 
+    // ======================================================
+    // RECENT EVENTS
+    // ======================================================
+    function loadRecentEvents() {
+        $.ajax({
+            url: '/dashboard/recent-events',
+            method: 'GET',
+            data: getFilterParams(),
+            success: function(res) {
+                const tbody = $("#table_recent_events tbody");
+                tbody.empty();
+                if (!res || res.length === 0) {
+                    tbody.append('<tr><td colspan="8" class="text-center text-muted">Tidak ada data kegiatan.</td></tr>');
+                    return;
+                }
+                res.forEach(function(item, index){
+                    const progress = item.progress_pct || 0;
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.name || '-'}</td>
+                            <td>${item.location || '-'}</td>
+                            <td>${item.start_at || '-'}</td>
+                            <td class="text-center">${item.participants_total || 0}</td>
+                            <td class="text-center">${item.files_count || 0}</td>
+                            <td class="text-center" style="min-width:160px;">
+                                <div class="progress" style="height:8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: ${progress}%"></div>
+                                </div>
+                                <small class="text-muted">${progress}%</small>
+                            </td>
+                            <td class="text-end">
+                                <a href="/events/${item.uuid}" class="btn btn-sm btn-info"><i class="fa fa-eye"></i></a>
+                            </td>
+                        </tr>`;
+                    tbody.append(row);
+                });
+            }
+        });
+    }
+
 
 
 
@@ -569,7 +664,7 @@
         loadTopInstitusiChart();
         loadBacklogTable();
         loadRecentReports();
-        loadReportsWithoutEvidence();
+        loadRecentEvents();
     }
 
 
@@ -577,7 +672,7 @@
     // ======================================================
     // INIT PAGE
     // ======================================================
-    $(document).ready(function(){
+$(document).ready(function(){
 
         // Load pertama kali
         loadDashboardAll();
@@ -588,9 +683,28 @@
             $('#filter_start_date').val('');
             $('#filter_end_date').val('');
             loadDashboardAll();
-        });
-
     });
+
+});
+
+document.addEventListener('DOMContentLoaded', function(){
+    var applyBtn = document.getElementById('btn_apply_date_filter');
+    var resetBtn = document.getElementById('btn_reset_date_filter');
+    if (!window.jQuery && applyBtn) {
+        applyBtn.addEventListener('click', function(){
+            loadDashboardAll();
+        });
+    }
+    if (!window.jQuery && resetBtn) {
+        resetBtn.addEventListener('click', function(){
+            var s = document.getElementById('filter_start_date');
+            var e = document.getElementById('filter_end_date');
+            if (s) s.value = '';
+            if (e) e.value = '';
+            loadDashboardAll();
+        });
+    }
+});
 
 </script>
 

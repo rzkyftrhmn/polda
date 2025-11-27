@@ -31,7 +31,7 @@ class CheckJwt
         } catch (TokenInvalidException $e) {
             return response()->json(format_error('Token invalid'), 401);
         } catch (JWTException $e) {
-            return response()->json(format_error('Token error'), 400);
+            return response()->json(format_error('Token error'), 401);
         }
 
         return $next($request);

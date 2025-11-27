@@ -40,7 +40,7 @@
                                     <h5 class="fw-semibold">Data Laporan</h5>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Judul Laporan <span class="text-danger">*</span></label>
+                                    <label class="form-label">Dugaan Pelanggaran <span class="text-danger">*</span></label>
                                     <input type="text" name="title" class="form-control" value="{{ old('title', $pelaporan->title ?? '') }}" required>
                                     @error('title')<div class="text-danger small">{{ $message }}</div>@enderror
                                 </div>

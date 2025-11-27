@@ -47,6 +47,15 @@ class PelaporanRepository
         ])->find($id);
     }
 
+    public function findByUuid(string $uuid): ?Report
+    {
+        return Report::with([
+            'suspects',
+            'journeys',
+            'accessDatas',
+        ])->where('uuid', $uuid)->first();
+    }
+
 
     public function updateReport($report, array $data)
     {
@@ -63,7 +72,12 @@ class PelaporanRepository
 
     public function getAdminUsers(): Collection
     {
-        return User::role([ROLE_ADMIN])->get();
+        $adminRoleNames = [ROLE_ADMIN];
+
+        return User::whereHas('roles', function ($q) use ($adminRoleNames) {
+            $q->whereIn('name', $adminRoleNames)
+              ->where('guard_name', 'web');
+        })->get();
     }
 
     public function getInstructionsByReportId(int $reportId): Collection

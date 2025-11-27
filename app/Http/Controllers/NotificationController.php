@@ -2,11 +2,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Notification;
+use App\Repositories\PelaporanRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    protected PelaporanRepository $pelaporanRepository;
+
+    public function __construct(PelaporanRepository $pelaporanRepository)
+    {
+        $this->pelaporanRepository = $pelaporanRepository;
+    }
+    
+    public function toArray($notifiable)
+    {
+        return [
+            'message' => 'Ada laporan baru',
+            'report_id' => $this->report->id,
+        ];
+    }
 
     public function allNotifications()
     {
@@ -47,6 +62,14 @@ class NotificationController extends Controller
 
         $reportId = $notif->report_id; 
 
+        // get report
+        $report = $this->pelaporanRepository->find($reportId);
+        if (!$report) {
+            return response()->json([
+                'error' => 'Laporan tidak ditemukan',
+            ], 404);
+        }
+
         if (!$reportId) {
             return response()->json([
                 'error' => 'report_id kosong',
@@ -54,7 +77,7 @@ class NotificationController extends Controller
         }
 
         return response()->json([
-            'redirect' => route('pelaporan.show', $reportId)
+            'redirect' => route('pelaporan.show', $report->uuid)
         ]);
     }
     

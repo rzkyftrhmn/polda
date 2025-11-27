@@ -129,4 +129,5 @@
     body[data-theme-version="dark"] #icon-dark { display: inline !important; }
     body[data-theme-version="light"] #icon-dark { display: none !important; }
     body[data-theme-version="light"] #icon-light { display: inline !important; }
+    .tooltip { --bs-tooltip-bg: #ffffff; --bs-tooltip-color: #111827; }
 </style>

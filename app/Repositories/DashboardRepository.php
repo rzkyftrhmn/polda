@@ -3,6 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\Report;
+use App\Models\Event;
+use App\Models\EventParticipant;
+use App\Models\EventUnitProof;
+use App\Models\EventUnitProofFile;
 use App\Models\Suspect;
 use App\Models\Institution;
 use App\Models\ReportCategory;
@@ -25,6 +29,17 @@ class DashboardRepository
             ]);
         }
 
+        return $query;
+    }
+
+    private function applyEventFilters($query, $start, $end)
+    {
+        if ($start && $end) {
+            $query->whereBetween('start_at', [
+                $start . ' 00:00:00',
+                $end . ' 23:59:59'
+            ]);
+        }
         return $query;
     }
 
@@ -283,6 +298,70 @@ class DashboardRepository
         }
 
         return $result;
+    }
+
+    // =========================================
+    // EVENT DASHBOARD
+    // =========================================
+    public function getEventSummary($start = null, $end = null): array
+    {
+        $eventsQuery = Event::query();
+        $eventsQuery = $this->applyEventFilters($eventsQuery, $start, $end);
+
+        $totalEvents = $eventsQuery->count();
+        $totalParticipants = EventParticipant::query()
+            ->when($start && $end, function ($q) use ($start, $end) {
+                $q->whereHas('event', function ($e) use ($start, $end) {
+                    $e->whereBetween('start_at', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                });
+            })
+            ->count();
+
+        $totalFiles = EventUnitProofFile::query()
+            ->when($start && $end, function ($q) use ($start, $end) {
+                $q->whereHas('eventUnitProof', function ($p) use ($start, $end) {
+                    $p->whereHas('event', function ($e) use ($start, $end) {
+                        $e->whereBetween('start_at', [$start . ' 00:00:00', $end . ' 23:59:59']);
+                    });
+                });
+            })
+            ->count();
+
+        return [
+            'total_events' => $totalEvents,
+            'total_participants' => $totalParticipants,
+            'total_files' => $totalFiles,
+        ];
+    }
+
+    public function getRecentEvents($start = null, $end = null, $limit = 5)
+    {
+        $events = Event::withCount('participants')
+            ->orderByDesc('id')
+            ->take($limit);
+
+        $events = $this->applyEventFilters($events, $start, $end)->get();
+
+        return $events->map(function ($ev) {
+            $headerIds = EventUnitProof::where('event_id', $ev->id)->pluck('id');
+            $filesCount = $headerIds->isNotEmpty()
+                ? EventUnitProofFile::whereIn('event_unit_proof_id', $headerIds)->count()
+                : 0;
+            $uploadedDivisions = EventUnitProof::where('event_id', $ev->id)->pluck('division_id')->filter()->unique();
+            $participantsTotal = (int) ($ev->participants_count ?? 0);
+            $progressPct = $participantsTotal > 0 ? round(($uploadedDivisions->count() / $participantsTotal) * 100) : 0;
+
+            return [
+                'id' => $ev->id,
+                'name' => $ev->name,
+                'location' => $ev->location,
+                'start_at' => optional($ev->start_at)->format('d M Y H:i'),
+                'participants_total' => $participantsTotal,
+                'files_count' => $filesCount,
+                'progress_pct' => $progressPct,
+                'uuid' => $ev->uuid,
+            ];
+        });
     }
 
 }

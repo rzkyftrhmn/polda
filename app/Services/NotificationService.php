@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Models\Event;
 use App\Models\Report;
 use App\Models\User;
 use App\Models\AccessData;
@@ -23,6 +24,19 @@ class NotificationService
         return $this->repo->store([
             'user_id'   => $userId,
             'report_id' => $reportId,
+            'type'      => $type,
+            'title'     => $title,
+            'message'   => $message,
+            'read_at'   => null,
+        ]);
+    }
+
+    // send event
+    public function sendEvent($userId, $title, $message, $eventId = null, $type = 'event_participant')
+    {
+        return $this->repo->store([
+            'user_id'   => $userId,
+            'event_id'  => $eventId,
             'type'      => $type,
             'title'     => $title,
             'message'   => $message,
@@ -89,6 +103,21 @@ class NotificationService
                 "Penyelidikan dan sidang untuk laporan [$code, $title] telah selesai."
             ],
 
+            'PETUNJUK_DAN_ARAHAN_SEND' => [
+                'Petunjuk dan Arahan',
+                "Petunjuk dan arahan untuk laporan [$code, $title] telah dikirim."
+            ],
+
+            'PETUNJUK_DAN_ARAHAN' => [
+                'Petunjuk dan Arahan',
+                "Petunjuk dan arahan untuk laporan [$code, $title] diterima."
+            ],
+
+            'EVENT_PARTICIPANT' => [
+                'Kegiatan',
+                "Anda telah ditambahkan pada kegiatan $title, harap mengikuti event tersebut dan upload bukti partisipasinya."
+            ],
+
             default => [
                 'Laporan Diperbarui',
                 "Laporan [$code, $title] telah diperbarui."
@@ -96,4 +125,54 @@ class NotificationService
         };
     }
 
+    public function buildMessageForStatusEvent(Event $event, $status)
+    {
+        $title = $event->name;
+
+        return match ($status) {
+            'EVENT_PARTICIPANT' => [
+                'Kegiatan',
+                "Anda telah ditambahkan pada kegiatan $title, harap mengikuti event tersebut dan upload bukti partisipasinya."
+            ],
+
+            default => [
+                'Laporan Diperbarui',
+                "Laporan $title telah diperbarui."
+            ],
+        };
+    }
+
+    public function notifyPetunjukDanArahan(Report $report, $recipientIds, $context = null)
+    {
+        [$title, $message] = $this->buildMessageForStatus(
+            $report,
+            $context ?? NOTIF_PETUNJUK_DAN_ARAHAN
+        );
+
+        foreach ($recipientIds as $user) {
+            $this->send(
+                $user->id,
+                $title,
+                $message,
+                $report->id
+            );
+        }
+    }
+
+    public function notifyEvent(Event $event, $recipientIds, $context = null)
+    {
+        [$title, $message] = $this->buildMessageForStatusEvent(
+            $event,
+            $context ?? NOTIF_EVENT_PARTICIPANT
+        );
+
+        foreach ($recipientIds as $userId) {
+            $this->sendEvent(
+                $userId,
+                $title,
+                $message,
+                $event->id
+            );
+        }
+    }
 }

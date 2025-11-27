@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_participants', function (Blueprint $table) {
+        Schema::create('event_unit_proofs', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('division_id')->nullable();
             $table->unsignedBigInteger('event_id');
-            $table->unsignedBigInteger('division_id');
-            $table->boolean('is_required')->default(true);
-            $table->enum('status', ['pending', 'completed'])->default('pending');
-            $table->text('notes')->nullable();
+            $table->string('file_path')->nullable();
+            $table->string('file_type')->default('image');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('event_participants');
+        Schema::dropIfExists('event_unit_proofs');
     }
 };
