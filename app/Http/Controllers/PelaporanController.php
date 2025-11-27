@@ -156,7 +156,7 @@ class PelaporanController extends Controller
 
         if (!$division) {
             return redirect()->route('pelaporan.index')
-                ->with('error', 'Divisi anda tidak valid. Hubungi admin.');
+                ->with('error', 'Divisi anda tidak valid.');
         }
 
         //error fix perrmission check

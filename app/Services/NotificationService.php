@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\Report;
 use App\Models\User;
+use App\Models\AccessData;
 use App\Repositories\NotificationRepository;
 
 class NotificationService
@@ -39,15 +40,19 @@ class NotificationService
             $context ?? $status
         );
 
-        $users = User::all();
+        $reportId = $report->id;
 
-        foreach ($users as $user) {
-            $this->send(
-                $user->id,
-                $title,
-                $message,
-                $report->id
-            );
+        $divisionIds = AccessData::where('report_id', $reportId)
+            ->pluck('division_id')
+            ->toArray();
+        $usersFromDivision = User::whereIn('division_id', $divisionIds)
+            ->pluck('id')
+            ->toArray();
+        $adminUsers = User::role('admin')->pluck('id')->toArray();
+        $recipients = array_unique(array_merge($usersFromDivision, $adminUsers));
+
+        foreach ($recipients as $user) {
+            $this->send($user, $title, $message, $report->id);
         }
     }
 

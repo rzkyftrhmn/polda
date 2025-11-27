@@ -7,14 +7,16 @@ use App\Repositories\PelaporanRepository;
 use Illuminate\Support\Facades\DB;
 use App\Models\Report;
 use App\Models\AccessData;
+use App\Services\NotificationService;
 
 class PelaporanService
 {
-    protected $repo;
+    protected $repo, $notifService;
 
-    public function __construct(PelaporanRepository $repo)
+    public function __construct(PelaporanRepository $repo, NotificationService $notifService)
     {
         $this->repo = $repo;
+        $this->notifService = $notifService;
     }
     
     public function store(array $data){
@@ -65,16 +67,13 @@ class PelaporanService
                 'name'        => $suspect['name'],
                 'division_id' => $suspectDivision,
             ]);
-
-            // Tambahkan access hanya jika division beda
-            if ($suspectDivision != auth()->user()->division_id) {
-                $this->repo->createAccess([
-                    'report_id'  => $report->id,
-                    'division_id'=> $suspectDivision,
-                    'is_finish'  => false,
-                ]);
-            }
         }
+
+        $this->repo->createAccess([
+            'report_id' => $report->id,
+            'division_id' => auth()->user()->division_id,
+            'is_finish' => false,
+        ]);
 
 
 

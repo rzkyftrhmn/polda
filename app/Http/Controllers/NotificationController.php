@@ -7,13 +7,6 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function toArray($notifiable)
-    {
-        return [
-            'message' => 'Ada laporan baru',
-            'report_id' => $this->report->id,
-        ];
-    }
 
     public function allNotifications()
     {
