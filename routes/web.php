@@ -76,11 +76,13 @@ Route::middleware(['auth'])->group(function () {
             ->name('datatables.division');
 
         //pelaporan route
-        Route::resource('pelaporan', PelaporanController::class);
+        Route::resource('pelaporan', PelaporanController::class)
+            ->parameters(['pelaporan' => 'report']);
         Route::get('datatables/pelaporan', [PelaporanController::class, 'datatables'])->name('datatables.pelaporan');
         Route::get('get-cities/{provinceId}', [PelaporanController::class, 'getCitiesByProvince']);
         Route::get('get-districts/{cityId}', [PelaporanController::class, 'getDistrictsByCity']);
         Route::get('/api/divisions', [PelaporanController::class, 'byType'])->name('api.divisions');
+        Route::post('pelaporan/{report}/instructions', [PelaporanController::class, 'storeInstruction'])->name('reports.instructions.store');
 
 
         // report data routes

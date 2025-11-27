@@ -8,6 +8,7 @@
                         <span class="nav-text">Dashboard</span>
                     </a>
                 </li>
+                @if(auth()->user()->hasRole(ROLE_ADMIN))
                 <li>
                     <a class="has-arrow" href="javascript:void()" aria-expanded="false">
                         <i class="material-symbols-outlined">lab_profile</i>
@@ -24,6 +25,8 @@
                         <span class="nav-text">Unit</span>
                     </a>
                 </li>
+                @endif
+
                 <li><a href="{{ route('pelaporan.index') }}" class="" aria-expanded="false">
                         <i class="material-symbols-outlined">lab_profile</i>
                         <span class="nav-text">Pelaporan</span>

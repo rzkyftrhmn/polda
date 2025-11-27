@@ -35,6 +35,11 @@
                                 <i class="fa fa-clock me-2"></i>Timeline
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-direction" type="button" role="tab">
+                                <i class="fa fa-directions me-2"></i>Petunjuk dan Arahan
+                            </button>
+                        </li>
                     </ul>
 
                     <div class="tab-content pt-4">
@@ -109,7 +114,7 @@
                             @elseif(!$showInspectionForm && !$showInvestigationForm)
                                 <div class="alert alert-warning mb-0">Anda tidak memiliki akses untuk mengupdate progress laporan ini.</div>
                             @else
-                                <form id="progressForm" action="{{ route('reports.progress.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+                                <form id="progressForm" action="{{ route('reports.progress.store', $report) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     <input type="hidden" name="action" id="progress-action" value="save">
                                     <input type="hidden" name="flow" id="progress-flow" value="{{ $defaultFlow }}">
@@ -120,7 +125,7 @@
                                     <div class="row g-3">
                                         <div class="col-12"><h6 class="fw-semibold">Upload Dokumen Pemeriksaan</h6></div>
                                         <div class="col-md-4">
-                                            <label class="form-label">No Dokumen Pemeriksaan</label>
+                                            <label class="form-label">No Dokumen Lidik</label>
                                             <input
                                                 type="text"
                                                 class="form-control"
@@ -130,7 +135,7 @@
                                             >
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label">Tanggal Dokumen Pemeriksaan</label>
+                                            <label class="form-label">Tanggal Dokumen Lidik</label>
                                             <input
                                                 type="date"
                                                 class="form-control"
@@ -298,6 +303,64 @@
                             <h5 class="mt-1 mb-3"><i class="fa fa-route me-2"></i>Timeline Penanganan</h5>
                             @include('components.timeline', ['items' => $journeys])
                         </div>
+                        <div class="tab-pane fade" id="tab-direction" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <h5 class="mb-3"><i class="fa fa-directions me-2"></i>Petunjuk dan Arahan</h5>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <form id="instructionForm" autocomplete="off" method="POST" action="{{ $instructionStoreUrl }}">
+                                                @csrf
+                                                <input type="hidden" name="report_id" value="{{ $report->id }}">
+                                                <div class="row g-3">
+                                                    <div class="col-lg-12 col-md-6">
+                                                        <label class="form-label">User Terkait</label>
+                                                        <select class="form-control select2 select2-dark" id="instruction_user_id_to" name="user_id_to" data-placeholder="Pilih user">
+                                                            <option value="">Pilih user</option>
+                                                            @foreach ($relatedUserOptions as $u)
+                                                                <option value="{{ $u->id }}">{{ $u->name }} — {{ $u->division?->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-lg-12 col-md-6">
+                                                        <label class="form-label">Message</label>
+                                                        <textarea class="form-control" id="instruction_message" name="message" rows="3" placeholder="Tulis perintah seperti GitLab: @todo @assign @due"></textarea>
+                                                    </div>
+                                                    <div class="col-12 d-flex gap-2">
+                                                        <button type="submit" class="btn btn-primary"><i class="fa fa-paper-plane me-1"></i>Kirim</button>
+                                                        <button type="button" class="btn btn-secondary" id="instruction_reset">Reset</button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-12" style="margin-top: 30px;">
+                                    <h6 class="fw-semibold mb-2">History Message</h6>
+                                    <div class="list-group" id="instruction_history">
+                                        @forelse($instructions as $item)
+                                            @php
+                                                $from = $userMap[$item->user_id_from] ?? null;
+                                                $to = $userMap[$item->user_id_to] ?? null;
+                                            @endphp
+                                            <div class="list-group-item d-flex align-items-start gap-3">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex justify-content-between">
+                                                        <strong>{{ $from?->name ?? 'Unknown' }}</strong>
+                                                        <small class="text-muted">{{ $item->created_at?->format('d M Y H:i') ?? '' }}</small>
+                                                    </div>
+                                                    <div class="text-muted">→ {{ $to?->name ?? 'Unknown' }}</div>
+                                                    <div class="mt-2">{!! nl2br(e($item->message)) !!}</div>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="list-group-item">Belum ada pesan.</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -382,7 +445,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form action="{{ route('reports.journeys.store', $report->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('reports.journeys.store', $report) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
@@ -793,6 +856,104 @@ document.addEventListener('DOMContentLoaded', function() {
       resetFileInputs();
     });
   });
+
+  var instructionForm = document.getElementById('instructionForm');
+  var instructionUserTo = document.getElementById('instruction_user_id_to');
+  var instructionMessage = document.getElementById('instruction_message');
+  var instructionReset = document.getElementById('instruction_reset');
+  var instructionHistory = document.getElementById('instruction_history');
+
+  function appendHistory(fromName, toName, message) {
+    var item = document.createElement('div');
+    item.className = 'list-group-item d-flex align-items-start gap-3';
+    var now = new Date();
+    var dt = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    item.innerHTML = '<div class="flex-grow-1">' +
+      '<div class="d-flex justify-content-between"><strong>' + (fromName || 'Anda') + '</strong><small class="text-muted">' + dt + '</small></div>' +
+      '<div class="text-muted">→ ' + (toName || '-') + '</div>' +
+      '<div class="mt-2">' + (message || '') + '</div>' +
+      '</div>';
+    if (instructionHistory) {
+      var empty = instructionHistory.querySelector('.list-group-item');
+      if (empty && empty.textContent.trim() === 'Belum ada pesan.') empty.remove();
+      instructionHistory.insertBefore(item, instructionHistory.firstChild);
+    }
+  }
+
+  if (instructionForm) {
+    instructionForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var toOption = instructionUserTo ? instructionUserTo.selectedOptions[0] : null;
+      var toName = toOption ? toOption.textContent : '';
+      var msg = (instructionMessage ? instructionMessage.value : '').trim();
+      var tokenEl = instructionForm.querySelector('input[name="_token"]');
+      var token = tokenEl ? tokenEl.value : '';
+
+      if (!instructionUserTo || !instructionUserTo.value) {
+        if (window.Swal) Swal.fire('Pilih user terkait', '', 'warning'); else alert('Pilih user terkait');
+        return;
+      }
+      if (!msg) {
+        if (window.Swal) Swal.fire('Tulis pesan', '', 'warning'); else alert('Tulis pesan');
+        return;
+      }
+
+      var payload = new URLSearchParams();
+      payload.append('_token', token);
+      payload.append('user_id_to', instructionUserTo.value);
+      payload.append('message', msg);
+
+      var proceed = function() {
+        fetch(instructionForm.action, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: payload
+        }).then(function(res) {
+          if (!res.ok) throw new Error('Request gagal');
+          return res.json();
+        }).then(function(data) {
+          appendHistory(data.from_name || 'Anda', data.to_name || toName, (data.message || msg).replace(/\n/g, '<br>'));
+          instructionMessage.value = '';
+          if (window.Swal) Swal.fire('Pesan dikirim', '', 'success');
+        }).catch(function() {
+          if (window.Swal) Swal.fire('Gagal mengirim pesan', '', 'error'); else alert('Gagal mengirim pesan');
+        });
+      };
+
+      if (window.Swal) {
+        Swal.fire({
+          title: 'Kirim instruksi?',
+          text: 'Pesan akan disimpan dan tampil di history.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Kirim',
+          cancelButtonText: 'Batal'
+        }).then(function(result) {
+          if (result.isConfirmed) proceed();
+        });
+      } else {
+        if (confirm('Kirim instruksi?')) proceed();
+      }
+    });
+  }
+
+  if (instructionReset) {
+    instructionReset.addEventListener('click', function() {
+      if (instructionUserTo) instructionUserTo.value = '';
+      if (instructionMessage) instructionMessage.value = '';
+      if (window.$ && window.jQuery && $(instructionUserTo).data('select2')) {
+        $(instructionUserTo).val('').trigger('change');
+      }
+    });
+  }
+
+  if (window.$ && window.jQuery && instructionUserTo) {
+    $(instructionUserTo).select2({
+      width: '100%',
+      theme: 'default',
+      minimumResultsForSearch: 10
+    });
+  }
 });
 </script>
 @endsection

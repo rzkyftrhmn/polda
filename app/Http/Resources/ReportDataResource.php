@@ -43,7 +43,7 @@ class ReportDataResource extends JsonResource
             'district' => optional($this->district)->name ?? '-',
             'created_at' => $created ? $created->format('d/m/Y H:i') : '-',
             'finished_at' => $finish ? $finish->format('d/m/Y H:i') : '-',
-            'action' => '<a href="' . route('pelaporan.show', $this->id) . '" class="btn btn-sm btn-info">'
+            'action' => '<a href="' . route('pelaporan.show', $this->resource) . '" class="btn btn-sm btn-info">'
                 . '<i class="fa fa-eye me-1"></i>Detail</a>',
         ];
     }

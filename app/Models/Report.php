@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 class Report extends Model
 {
     use HasFactory;
@@ -30,12 +31,28 @@ class Report extends Model
         'phone_of_reporter',
         'address_of_reporter',
         'created_by',
+        'uuid',
     ];
 
     protected $casts = [
         'incident_datetime' => 'datetime',
         'finish_time' => 'datetime',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->uuid)) {
+                $model->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     protected function finishTime(): Attribute
     {

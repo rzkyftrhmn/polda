@@ -11,10 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('divisions', function (Blueprint $table) {
-            $table->dropColumn('type');
-            $table->enum('level', ['polda', 'polres', 'polsek'])->after('parent_id')->default('polda');
-            $table->json('permissions')->after('level')->nullable();
+        Schema::table('reports', function (Blueprint $table) {
+            $table->uuid('uuid')->unique()->after('id');
         });
     }
 

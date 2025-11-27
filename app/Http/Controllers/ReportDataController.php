@@ -6,6 +6,7 @@ use App\Enums\ReportJourneyType;
 use App\Exports\ReportDataExcelExport;
 use App\Http\Requests\ReportDataFilterRequest;
 use App\Http\Resources\ReportDataResource;
+use App\Models\Division;
 use App\Models\ReportCategory;
 use App\Services\ReportDataService;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -46,6 +47,7 @@ class ReportDataController extends Controller
             'label' => $type->label(),
         ]);
         $provinces = Province::where('id', 12)->get();
+        $divisions = Division::orderBy('name')->get(['id', 'name']);
 
         return view('pages.report-data.index', [
             'title' => $this->feature_title,
@@ -55,6 +57,7 @@ class ReportDataController extends Controller
             'categories' => $categories,
             'statuses' => $statuses,
             'provinces' => $provinces,
+            'divisions' => $divisions,
         ]);
     }
 

@@ -236,7 +236,7 @@ class PelaporanController extends Controller
     }
 
     /** Form edit laporan */
-    public function edit($id)
+    public function edit(Report $report)
     {
 
         $division  = auth()->user()->division;
@@ -247,11 +247,6 @@ class PelaporanController extends Controller
                 ->with('error', 'Anda tidak memiliki izin untuk membuat laporan.');
         }
         
-        $report = $this->service->getById($id);
-        // dd($report->suspects->toArray());
-        if (!$report) return redirect()->route('pelaporan.index')
-            ->with('error', 'Laporan tidak ditemukan.');
-
         return view('pages.pelaporan.create', [
             'title' => 'Edit Laporan',
             'pelaporan' => $report,
@@ -271,7 +266,7 @@ class PelaporanController extends Controller
 
 
     /** Update laporan */
-    public function update(Request $request, $id)
+    public function update(Request $request, Report $report)
     {
         // dd($request->all());
         $validated = $request->validate([
@@ -293,12 +288,12 @@ class PelaporanController extends Controller
         $report = $this->service->update($id, $validated);
 
 
-        return redirect()->route('pelaporan.show', $id)
+        return redirect()->route('pelaporan.show', $report)
                  ->with('success', 'Laporan Berhasil Diperbaharui.');
     }
 
 
-    public function show($id)
+    public function show(Report $report)
     {
         $report = Report::with([
             'category',
@@ -308,7 +303,7 @@ class PelaporanController extends Controller
             'suspects.division',
             'accessDatas',
             'creator',
-        ])->findOrFail($id);
+        ])->findOrFail($report->id);
 
         // Pastikan akses awal creator dibuat
         $this->journeyService->ensureInitialAccess($report);
@@ -337,7 +332,7 @@ class PelaporanController extends Controller
         $division = $user?->division;
 
         $isAdmin = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole(['admin', 'super admin', 'super-admin'])
+            ? $user->hasAnyRole([ROLE_ADMIN])
             : false;
 
         // Cek akses
@@ -365,6 +360,10 @@ class PelaporanController extends Controller
         $adminDocuments = $this->journeyService->adminDocumentsPrefill($report);
         $trialEvidence = $this->journeyService->latestTrialEvidence($report);
 
+        $relatedUserOptions = $this->service->getRelatedUsersForReport($report);
+        $instructions = $this->service->getInstructionsForReport($report->id);
+        $userMap = $this->service->getUserMapForInstructions($instructions);
+
         return view('pages.pelaporan.show', [
             'report' => $report,
             'journeys' => $journeys,
@@ -383,15 +382,50 @@ class PelaporanController extends Controller
             'trialPrefill' => $trialPrefill,
             'trialEvidence' => $trialEvidence,
             'adminDocuments' => $adminDocuments,
+            'relatedUserOptions' => $relatedUserOptions,
+            'instructions' => $instructions,
+            'userMap' => $userMap,
+            'instructionStoreUrl' => route('reports.instructions.store', $report),
+        ]);
+    }
+
+    public function storeInstruction(Request $request, Report $report)
+    {
+        $user = auth()->user();
+        $this->journeyService->ensureInitialAccess($report);
+        $validated = $request->validate([
+            'user_id_to' => 'required|integer',
+            'message' => 'required|string',
+        ]);
+
+        $instruction = $this->service->storeInstruction(
+            $report->id,
+            $user->id,
+            (int) $validated['user_id_to'],
+            $validated['message']
+        );
+
+        $fromName = $user->name ?? 'Anda';
+        $toUser = $report->accessDatas->pluck('division.users')->flatten(1)->firstWhere('id', (int) $validated['user_id_to']);
+        if (!$toUser) {
+            $toUser = \App\Models\User::find((int) $validated['user_id_to']);
+        }
+
+        return response()->json([
+            'id' => $instruction->id,
+            'created_at' => optional($instruction->created_at)->format('d M Y H:i'),
+            'from_name' => $fromName,
+            'to_name' => $toUser?->name ?? '-',
+            'message' => $instruction->message,
         ]);
     }
 
 
 
     /** Hapus laporan */
-    public function destroy($id)
+    public function destroy(Report $report)
     {
-        $deleted = $this->service->delete($id);
+        $deleted = $this->service->delete($report->id);
 
         if (request()->ajax()) {
             return response()->json([
