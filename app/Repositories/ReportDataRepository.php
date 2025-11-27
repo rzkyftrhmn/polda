@@ -23,13 +23,20 @@ class ReportDataRepository
     {
         if (!empty($filters['q'])) {
             $keyword = $filters['q'];
-            $query->where(function (Builder $builder) use ($keyword): void {
-                $builder->where('code', 'like', "%{$keyword}%")
-                    ->orWhere('title', 'like', "%{$keyword}%")
-                    ->orWhere('description', 'like', "%{$keyword}%")
-                    ->orWhere('name_of_reporter', 'like', "%{$keyword}%")
-                    ->orWhereHas('suspects', function (Builder $q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%");
+            $keywordLike = '%' . $keyword . '%';
+            $keywordLowerLike = '%' . strtolower($keyword) . '%';
+
+            $query->where(function (Builder $builder) use ($keywordLike, $keywordLowerLike): void {
+                $builder->where('code', 'like', $keywordLike)
+                    ->orWhere('title', 'like', $keywordLike)
+                    ->orWhere('description', 'like', $keywordLike)
+                    ->orWhere('name_of_reporter', 'like', $keywordLike)
+                    ->orWhereHas('journeys', function (Builder $q) use ($keywordLike, $keywordLowerLike) {
+                        $q->where('description', 'like', $keywordLike)
+                            ->orWhereRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(description, '$.doc_number'))) LIKE ?", [$keywordLowerLike]);
+                    })
+                    ->orWhereHas('suspects', function (Builder $q) use ($keywordLike) {
+                        $q->where('name', 'like', $keywordLike);
                     });
             });
         }
