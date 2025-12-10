@@ -1,6 +1,9 @@
 <?php
 
 const ROLE_ADMIN = 'Admin';
+const ROLE_OPERATOR = 'Operator';
+const ROLE_KASUBBID = 'Kasubbid';
+const ROLE_SUB_BAG_REHAB = 'SubBagRehab';
 
 // for notif
 const NOTIF_PETUNJUK_DAN_ARAHAN_SEND = 'PETUNJUK_DAN_ARAHAN_SEND';

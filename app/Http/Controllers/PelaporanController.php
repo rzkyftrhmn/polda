@@ -54,6 +54,19 @@ class PelaporanController extends Controller
     {
         $query = $this->service->datatables($request->input('filter_q', ''));
 
+        $user = $this->user;
+        $roleName = strtolower(optional(optional($user)->roles->first())->name);
+        $isAdmin = $roleName === strtolower(ROLE_ADMIN);
+        $isSubBagRehab = $roleName === strtolower(ROLE_SUB_BAG_REHAB);
+
+        if ($isAdmin) {
+            $query = Report::with(['province', 'city', 'district']);
+        }
+
+        if ($isSubBagRehab) {
+            $query = $query->where('status', ReportJourneyType::COMPLETED->value);
+        }
+
         $search = $request->input('search.value', '');
         if (!empty($search)) {
             $query = $query->where(function ($q) use ($search) {
@@ -147,7 +160,6 @@ class PelaporanController extends Controller
             'data' => $data,
         ]);
     }
-
 
     /** Form tambah laporan */
     public function create()
@@ -268,7 +280,6 @@ class PelaporanController extends Controller
     /** Update laporan */
     public function update(Request $request, Report $report)
     {
-        // dd($request->all());
         $validated = $request->validate([
             'title'               => 'required|string',
             'incident_datetime'   => 'required|date',
@@ -285,7 +296,7 @@ class PelaporanController extends Controller
             'suspects.*.division_id' => 'nullable|integer',
         ]);
 
-        $report = $this->service->update($id, $validated);
+        $report = $this->service->update($report->id, $validated);
 
 
         return redirect()->route('pelaporan.show', $report)
@@ -331,9 +342,8 @@ class PelaporanController extends Controller
         $user = auth()->user();
         $division = $user?->division;
 
-        $isAdmin = $user && method_exists($user, 'hasAnyRole')
-            ? $user->hasAnyRole([ROLE_ADMIN])
-            : false;
+        $roleName = strtolower(optional(optional($user)->roles->first())->name);
+        $isAdmin = $roleName === strtolower(ROLE_ADMIN);
 
         // Cek akses
         $hasAccess = $this->journeyService->hasAccess(

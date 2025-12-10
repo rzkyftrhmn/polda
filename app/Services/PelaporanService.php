@@ -110,10 +110,6 @@ class PelaporanService
     {
         $user = auth()->user();
 
-        if (strtolower($user->getRoleNames()->first()) === 'admin') {
-            return Report::with(['province', 'city', 'district']);
-        }
-
         $userReportIds = Report::where('created_by', $user->id)
             ->pluck('id')
             ->toArray();
@@ -123,11 +119,6 @@ class PelaporanService
             ->toArray();
 
         $finalIds = array_unique(array_merge($userReportIds, $allowedReportIds));
-
-        // logger("User Report IDs: " . json_encode($userReportIds));
-        // logger("Allowed Report IDs: " . json_encode($allowedReportIds));
-        // logger("Final Report IDs after merge: " . json_encode($finalIds));
-        // logger("User Division ID: " . $user->division_id);
 
         if (empty($finalIds)) {
             return Report::whereRaw('1=0');

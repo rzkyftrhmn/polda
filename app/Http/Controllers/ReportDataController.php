@@ -69,6 +69,11 @@ class ReportDataController extends Controller
 
         $filters = $request->filters();
 
+        $roleName = strtolower(optional(optional($this->user)->roles->first())->name);
+        if ($roleName === strtolower(ROLE_SUB_BAG_REHAB)) {
+            $filters['status'] = ReportJourneyType::COMPLETED->value;
+        }
+
         $columnMap = [
             1 => 'code',
             2 => 'title',
@@ -121,6 +126,10 @@ class ReportDataController extends Controller
     public function exportExcel(ReportDataFilterRequest $request)
     {
         $filters = $request->filters();
+        $roleName = strtolower(optional(optional($this->user)->roles->first())->name);
+        if ($roleName === strtolower(ROLE_SUB_BAG_REHAB)) {
+            $filters['status'] = ReportJourneyType::COMPLETED->value;
+        }
         $filters['sort_by'] = $filters['sort_by'] ?? 'created_at';
         $filters['sort_dir'] = $filters['sort_dir'] ?? 'desc';
 
@@ -134,6 +143,10 @@ class ReportDataController extends Controller
     public function exportPdf(ReportDataFilterRequest $request)
     {
         $filters = $request->filters();
+        $roleName = strtolower(optional(optional($this->user)->roles->first())->name);
+        if ($roleName === strtolower(ROLE_SUB_BAG_REHAB)) {
+            $filters['status'] = ReportJourneyType::COMPLETED->value;
+        }
         $filters['sort_by'] = $filters['sort_by'] ?? 'created_at';
         $filters['sort_dir'] = $filters['sort_dir'] ?? 'desc';
 
